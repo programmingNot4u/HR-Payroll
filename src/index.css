@@ -1,0 +1,6 @@
+@import "tailwindcss";
+
+/* Custom colors for industrial theme */
+.bg-gray-750 {
+  background-color: #374151;
+}
