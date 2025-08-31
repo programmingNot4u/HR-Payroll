@@ -96,7 +96,7 @@ const sections = [
   },
   {
     title: 'Payroll',
-    items: ['Salary & Payslips', 'Deductions & Benefits'],
+            items: ['Salary & Payslips', 'Bonuses & Penalties'],
   },
   {
     title: 'Attendance',

@@ -1,26 +1,4 @@
-function Card({ title, total, children }) {
-  return (
-    <div className="rounded border border-gray-200 bg-white p-4">
-      <div className="flex items-start justify-between">
-        <div className="font-medium">{title}</div>
-        <div className="text-xl font-semibold text-orange-600">{total}</div>
-      </div>
-      <div className="mt-3 space-y-2 text-sm text-gray-700">
-        {children}
-      </div>
-    </div>
-  )
-}
-
-function Row({ label, value }) {
-  return (
-    <div className="flex items-center justify-between">
-      <span>{label}</span>
-      <span className="font-medium">{value}</span>
-    </div>
-  )
-}
-
+import { useState, useEffect } from 'react'
 import {
   Chart as ChartJS,
   CategoryScale,
@@ -32,8 +10,9 @@ import {
   Title,
   Tooltip,
   Legend,
+  RadialLinearScale,
 } from 'chart.js'
-import { Line, Doughnut, Bar } from 'react-chartjs-2'
+import { Line, Doughnut, Bar, Radar, PolarArea } from 'react-chartjs-2'
 
 ChartJS.register(
   CategoryScale,
@@ -45,253 +24,628 @@ ChartJS.register(
   Title,
   Tooltip,
   Legend,
+  RadialLinearScale,
 )
 
-import { useState } from 'react'
+// Sample data for comprehensive overview
+const overviewData = {
+  // Employee Statistics
+  employeeStats: {
+    total: 1245,
+    present: 1197,
+    absent: 48,
+    onLeave: 35,
+    newHires: 28,
+    resigned: 8,
+    terminated: 3,
+    onProbation: 12
+  },
+  
+  // Level-wise breakdown
+  levelBreakdown: {
+    Worker: 850,
+    Staff: 320,
+    Management: 75
+  },
+  
+  // Department breakdown
+  departmentBreakdown: {
+    'Cutting': 180,
+    'Sewing': 450,
+    'Finishing': 220,
+    'Quality Control': 120,
+    'Management': 75,
+    'HR & Admin': 60,
+    'Finance': 40,
+    'IT': 30,
+    'Maintenance': 70
+  },
+  
+  // Attendance data
+  attendanceData: {
+    present: 1197,
+    absent: 48,
+    late: 25,
+    onLeave: 35,
+    attendanceRate: 96.1
+  },
+  
+  // Overtime data
+  overtimeData: {
+    totalHours: 785,
+    totalPayment: 235500,
+    byDepartment: {
+      'Cutting': 156,
+      'Sewing': 342,
+      'Finishing': 198,
+      'Quality Control': 89
+    }
+  },
+  
+  // Extra overtime data
+  extraOvertimeData: {
+    totalHours: 244,
+    totalPayment: 97600,
+    byDepartment: {
+      'Cutting': 45,
+      'Sewing': 98,
+      'Finishing': 67,
+      'Quality Control': 34
+    }
+  },
+  
+  // Payroll data
+  payrollData: {
+    totalSalary: 48230000,
+    basicSalary: 38584000,
+    allowances: 9656000,
+    overtime: 235500,
+    extraOvertime: 97600,
+    bonuses: 387500,
+    penalties: 125000
+  },
+  
+  // Monthly trends
+  monthlyTrends: {
+    labels: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'],
+    headcount: [1180, 1205, 1220, 1235, 1240, 1245, 1250, 1245, 1255, 1260, 1265, 1270],
+    payroll: [420000, 415000, 430000, 440000, 450000, 455000, 470000, 482300, 475000, 480000, 485000, 490000],
+    overtime: [720, 680, 750, 780, 800, 785, 790, 785, 800, 810, 820, 830]
+  },
+  
+  // Performance metrics
+  performanceData: {
+    averageRating: 4.2,
+    topPerformers: 45,
+    needsImprovement: 12,
+    byDepartment: {
+      'Cutting': 4.1,
+      'Sewing': 4.3,
+      'Finishing': 4.0,
+      'Quality Control': 4.4,
+      'Management': 4.5
+    }
+  },
+  
+  // Asset data
+  assetData: {
+    totalAssets: 1250,
+    assigned: 1180,
+    unassigned: 70,
+    underMaintenance: 25,
+    byCategory: {
+      'Machinery': 450,
+      'Computers': 200,
+      'Furniture': 300,
+      'Vehicles': 50,
+      'Tools': 250
+    }
+  },
+  
+  // Leave data
+  leaveData: {
+    casual: 45,
+    sick: 12,
+    maternity: 5,
+    earned: 25,
+    short: 18,
+    withoutPay: 8
+  }
+}
+
+// Utility functions
+const formatCurrency = (amount) => {
+  return new Intl.NumberFormat('en-BD', { 
+    style: 'currency', 
+    currency: 'BDT', 
+    maximumFractionDigits: 0 
+  }).format(amount)
+}
+
+const formatNumber = (num) => {
+  return new Intl.NumberFormat('en-IN').format(num)
+}
+
+const getPercentage = (part, total) => {
+  return total > 0 ? ((part / total) * 100).toFixed(1) : 0
+}
+
+// Chart configurations
+const chartColors = {
+  primary: '#f97316',
+  secondary: '#3b82f6',
+  success: '#10b981',
+  warning: '#f59e0b',
+  danger: '#ef4444',
+  info: '#8b5cf6',
+  light: '#f3f4f6'
+}
 
 export default function Overview() {
-  const monthOptions = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec']
-  const [payrollMonth, setPayrollMonth] = useState('Aug')
+  const [selectedPeriod, setSelectedPeriod] = useState('month')
+  const [selectedView, setSelectedView] = useState('overview')
 
-  const data = {
-    manpower: { Worker: 0, Staff: 0, Management: 0 },
-    present: { Worker: 0, Staff: 0, Management: 0 },
-    absent: { Worker: 0, Staff: 0, Management: 0 },
-    leaveStatus: {
-      'Casual Leave': 0,
-      'Sick Leave': 0,
-      'Leave Without Pay': 0,
-      'Maternity Leave': 0,
-      'Earn Leave': 0,
-      'Short Leave': 0,
-      'Leave Withour Notice': 0,
-    },
-    employeeStatus: {
-      'Active Employee': 0,
-      'InActive Employee': 0,
-      'New Joined Employee': 0,
-      'Resigned Employee': 0,
-      'Terminated Employee': 0,
-      'On Probation': 0,
-      
-    },
-    overtime: {
-      Cutting: 0,
-      Sewing: 0,
-      Finishing: 0,
-      'Quality Control': 0,
-      'Total OverTime Working Hour\'s': 0,
-      'Total Payment For OverTime': 0,
-    },
-    extraOvertime: {
-      Cutting: 0,
-      Sewing: 0,
-      Finishing: 0,
-      'Quality Control': 0,
-      "Total OverTime Hour's": 0,
-      'Total Payment For Extra OverTime': 0,
-    },
-    payrollByMonth: {
-      Jan: { thisMonth: 420000, today: 18000, mtd: 220000 },
-      Feb: { thisMonth: 415000, today: 16500, mtd: 195000 },
-      Mar: { thisMonth: 430000, today: 17000, mtd: 210000 },
-      Apr: { thisMonth: 440000, today: 16000, mtd: 205000 },
-      May: { thisMonth: 450000, today: 17500, mtd: 230000 },
-      Jun: { thisMonth: 455000, today: 15000, mtd: 190000 },
-      Jul: { thisMonth: 470000, today: 15500, mtd: 200000 },
-      Aug: { thisMonth: 482300, today: 16250, mtd: 215000 },
-      Sep: { thisMonth: 0, today: 0, mtd: 0 },
-      Oct: { thisMonth: 0, today: 0, mtd: 0 },
-      Nov: { thisMonth: 0, today: 0, mtd: 0 },
-      Dec: { thisMonth: 0, today: 0, mtd: 0 },
-    },
-  }
+  const StatCard = ({ title, value, change, icon, color, subtitle }) => (
+    <div className="bg-white rounded-xl border border-gray-200 p-6 hover:shadow-lg transition-shadow">
+      <div className="flex items-center justify-between">
+        <div>
+          <p className="text-sm font-medium text-gray-600">{title}</p>
+          <p className="text-3xl font-bold text-gray-900 mt-2">{value}</p>
+          {subtitle && <p className="text-sm text-gray-500 mt-1">{subtitle}</p>}
+        </div>
+        <div className={`p-3 rounded-full bg-${color}-100`}>
+          <span className="text-2xl">{icon}</span>
+        </div>
+      </div>
+      {change && (
+        <div className="mt-4 flex items-center">
+          <span className={`text-sm font-medium ${
+            change > 0 ? 'text-green-600' : 'text-red-600'
+          }`}>
+            {change > 0 ? '↗' : '↘'} {Math.abs(change)}%
+          </span>
+          <span className="text-sm text-gray-500 ml-2">vs last month</span>
+        </div>
+      )}
+    </div>
+  )
 
-  const sum = (obj) => Object.values(obj).reduce((a, b) => a + (Number(b) || 0), 0)
+  const MetricCard = ({ title, value, trend, color = 'blue' }) => (
+    <div className="bg-white rounded-lg border border-gray-200 p-4">
+      <div className="flex items-center justify-between">
+        <div>
+          <p className="text-sm text-gray-600">{title}</p>
+          <p className="text-xl font-semibold text-gray-900">{value}</p>
+        </div>
+        {trend && (
+          <div className={`text-${color}-500 text-sm font-medium`}>
+            {trend > 0 ? '↗' : '↘'} {Math.abs(trend)}%
+          </div>
+        )}
+      </div>
+    </div>
+  )
 
   return (
     <div className="space-y-6">
-      <div>
-        <h1 className="text-2xl font-semibold">Overview</h1>
-        <p className="text-sm text-gray-500">Company-wide data and statistics</p>
-      </div>
-
-      <section className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
-        <Card title="Total Manpower" total={sum(data.manpower)}>
-          <Row label="Worker" value={data.manpower.Worker} />
-          <Row label="Staff" value={data.manpower.Staff} />
-          <Row label="Management" value={data.manpower.Management} />
-        </Card>
-
-        <Card title="Present" total={sum(data.present)}>
-          <Row label="Worker" value={data.present.Worker} />
-          <Row label="Staff" value={data.present.Staff} />
-          <Row label="Management" value={data.present.Management} />
-        </Card>
-
-        <Card title="Absent" total={sum(data.absent)}>
-          <Row label="Worker" value={data.absent.Worker} />
-          <Row label="Staff" value={data.absent.Staff} />
-          <Row label="Management" value={data.absent.Management} />
-        </Card>
-
-        <Card title="Leave Status" total={sum(data.leaveStatus)}>
-          {Object.entries(data.leaveStatus).map(([k, v]) => (
-            <Row key={k} label={k} value={v} />
-          ))}
-        </Card>
-
-        <Card title="Entire Employee Status" total={sum(data.employeeStatus)}>
-          {Object.entries(data.employeeStatus).map(([k, v]) => (
-            <Row key={k} label={k} value={v} />
-          ))}
-        </Card>
-
-        <Card title="OverTime Attandance" total={sum(data.overtime)}>
-          {Object.entries(data.overtime).map(([k, v]) => (
-            <Row key={k} label={k} value={v} />
-          ))}
-        </Card>
-
-        <Card title="Extra OverTime Attandance" total={sum(data.extraOvertime)}>
-          {Object.entries(data.extraOvertime).map(([k, v]) => (
-            <Row key={k} label={k} value={v} />
-          ))}
-        </Card>
-
-        <div className="rounded border border-gray-200 bg-white p-4">
-          <div className="flex items-center justify-between mb-3">
-            <div className="font-medium">Payroll</div>
-            <div className="flex items-center gap-2">
-              <label className="text-sm text-gray-500">Month</label>
-              <select
-                value={payrollMonth}
-                onChange={(e) => setPayrollMonth(e.target.value)}
-                className="h-9 rounded border border-gray-300 px-2 text-sm focus:outline-none focus:ring-2 focus:ring-orange-500 bg-white"
-              >
-                {monthOptions.map(m => (
-                  <option key={m} value={m}>{m}</option>
-                ))}
-              </select>
-            </div>
-          </div>
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-            {(() => {
-              const p = data.payrollByMonth[payrollMonth]
-              const entries = [
-                ['This Month', p.thisMonth],
-                ['Today', p.today],
-                ['Month To Date', p.mtd],
-              ]
-              return entries.map(([k, v]) => (
-                <div key={k} className="rounded border border-gray-200 p-3">
-                  <div className="text-sm text-gray-500">{k}</div>
-                  <div className="mt-1 text-lg font-semibold">{new Intl.NumberFormat('en-BD', { style: 'currency', currency: 'BDT', maximumFractionDigits: 0 }).format(v)}</div>
-                </div>
-              ))
-            })()}
+      {/* Header */}
+      <div className="flex items-center justify-between">
+        <div>
+          <h1 className="text-3xl font-bold text-gray-900">HR Dashboard Overview</h1>
+          <p className="text-gray-600 mt-2">Comprehensive view of your organization's HR metrics and performance</p>
+        </div>
+        <div className="flex items-center gap-4">
+          <select
+            value={selectedPeriod}
+            onChange={(e) => setSelectedPeriod(e.target.value)}
+            className="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent"
+          >
+            <option value="week">This Week</option>
+            <option value="month">This Month</option>
+            <option value="quarter">This Quarter</option>
+            <option value="year">This Year</option>
+          </select>
+          <div className="flex bg-gray-100 rounded-lg p-1">
+            <button
+              onClick={() => setSelectedView('overview')}
+              className={`px-3 py-2 rounded-md text-sm font-medium transition-colors ${
+                selectedView === 'overview' 
+                  ? 'bg-white text-gray-900 shadow-sm' 
+                  : 'text-gray-600 hover:text-gray-900'
+              }`}
+            >
+              Overview
+            </button>
+            <button
+              onClick={() => setSelectedView('analytics')}
+              className={`px-3 py-2 rounded-md text-sm font-medium transition-colors ${
+                selectedView === 'analytics' 
+                  ? 'bg-white text-gray-900 shadow-sm' 
+                  : 'text-gray-600 hover:text-gray-900'
+              }`}
+            >
+              Analytics
+            </button>
           </div>
         </div>
-      </section>
+      </div>
 
-      <section className="grid grid-cols-1 lg:grid-cols-3 gap-4">
-        <div className="rounded border border-gray-200 bg-white p-4">
-          <div className="font-medium mb-3">Total Manpower Breakdown</div>
+      {/* Key Metrics */}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+        <StatCard
+          title="Total Employees"
+          value={formatNumber(overviewData.employeeStats.total)}
+          change={2.1}
+          icon="👥"
+          color="blue"
+          subtitle="Active workforce"
+        />
+        <StatCard
+          title="Present Today"
+          value={formatNumber(overviewData.employeeStats.present)}
+          change={-0.8}
+          icon="✅"
+          color="green"
+          subtitle={`${overviewData.attendanceData.attendanceRate}% attendance rate`}
+        />
+        <StatCard
+          title="Monthly Payroll"
+          value={formatCurrency(overviewData.payrollData.totalSalary)}
+          change={1.5}
+          icon="💰"
+          color="yellow"
+          subtitle="Total salary disbursement"
+        />
+        <StatCard
+          title="Overtime Hours"
+          value={formatNumber(overviewData.overtimeData.totalHours)}
+          change={3.2}
+          icon="⏰"
+          color="purple"
+          subtitle={`৳${formatNumber(overviewData.overtimeData.totalPayment)} total payment`}
+        />
+      </div>
+
+      {/* Employee Distribution Charts */}
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        <div className="bg-white rounded-xl border border-gray-200 p-6">
+          <h3 className="text-lg font-semibold text-gray-900 mb-4">Employee Level Distribution</h3>
           <Doughnut
             data={{
               labels: ['Worker', 'Staff', 'Management'],
-              datasets: [
-                {
-                  data: [data.manpower.Worker, data.manpower.Staff, data.manpower.Management],
-                  backgroundColor: ['#fb923c', '#fdba74', '#fed7aa'],
-                  borderWidth: 0,
-                },
-              ],
-            }}
-            options={{ plugins: { legend: { position: 'bottom' } } }}
-          />
-        </div>
-        <div className="rounded border border-gray-200 bg-white p-4 lg:col-span-2">
-          <div className="font-medium mb-3">Total Manpower by Category</div>
-          <Bar
-            data={{
-              labels: ['Worker', 'Staff', 'Management'],
-              datasets: [
-                {
-                  label: 'Headcount',
-                  data: [data.manpower.Worker, data.manpower.Staff, data.management?.Management || data.manpower.Management],
-                  backgroundColor: '#fb923c',
-                },
-              ],
+              datasets: [{
+                data: [
+                  overviewData.levelBreakdown.Worker,
+                  overviewData.levelBreakdown.Staff,
+                  overviewData.levelBreakdown.Management
+                ],
+                backgroundColor: [chartColors.primary, chartColors.secondary, chartColors.info],
+                borderWidth: 0,
+              }]
             }}
             options={{
-              plugins: { legend: { display: false } },
-              scales: { x: { grid: { display: false } }, y: { grid: { color: '#f3f4f6' } } },
+              responsive: true,
+              plugins: {
+                legend: { position: 'bottom' },
+                tooltip: {
+                  callbacks: {
+                    label: (context) => {
+                      const total = context.dataset.data.reduce((a, b) => a + b, 0)
+                      const percentage = ((context.parsed / total) * 100).toFixed(1)
+                      return `${context.label}: ${context.parsed} (${percentage}%)`
+                    }
+                  }
+                }
+              }
             }}
           />
         </div>
-      </section>
 
-      <section className="grid grid-cols-1 lg:grid-cols-3 gap-4">
-        <div className="rounded border border-gray-200 bg-white p-4">
-          <div className="font-medium mb-3">Headcount Trend (Last 6 months)</div>
-          <Line
+        <div className="bg-white rounded-xl border border-gray-200 p-6">
+          <h3 className="text-lg font-semibold text-gray-900 mb-4">Department Headcount</h3>
+          <Bar
             data={{
-              labels: ['Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug'],
-              datasets: [
-                {
-                  label: 'Employees',
-                  data: [1180, 1205, 1220, 1235, 1240, 1245],
-                  borderColor: '#f97316',
-                  backgroundColor: 'rgba(249, 115, 22, 0.2)',
-                  tension: 0.3,
-                  fill: true,
-                },
-              ],
+              labels: Object.keys(overviewData.departmentBreakdown),
+              datasets: [{
+                label: 'Employees',
+                data: Object.values(overviewData.departmentBreakdown),
+                backgroundColor: chartColors.primary,
+                borderRadius: 6,
+              }]
             }}
             options={{
               responsive: true,
               plugins: { legend: { display: false } },
-              scales: { x: { grid: { display: false } }, y: { grid: { color: '#f3f4f6' } } },
+              scales: {
+                x: { grid: { display: false } },
+                y: { grid: { color: chartColors.light } }
+              }
             }}
           />
         </div>
-        <div className="rounded border border-gray-200 bg-white p-4">
-          <div className="font-medium mb-3">Leave Breakdown</div>
-          <Doughnut
+
+        <div className="bg-white rounded-xl border border-gray-200 p-6">
+          <h3 className="text-lg font-semibold text-gray-900 mb-4">Performance by Department</h3>
+          <Radar
             data={{
-              labels: Object.keys(data.leaveStatus),
-              datasets: [
-                {
-                  data: Object.values(data.leaveStatus).map((v, i) => (i + 1) * 2),
-                  backgroundColor: ['#fb923c', '#fdba74', '#fed7aa', '#fef3c7', '#93c5fd', '#a7f3d0', '#fca5a5'],
-                  borderWidth: 0,
-                },
-              ],
-            }}
-            options={{ plugins: { legend: { position: 'bottom' } } }}
-          />
-        </div>
-        <div className="rounded border border-gray-200 bg-white p-4">
-          <div className="font-medium mb-3">OverTime Hours by Department</div>
-          <Bar
-            data={{
-              labels: ['Cutting', 'Sewing', 'Finishing', 'Quality Control'],
-              datasets: [
-                {
-                  label: 'Hours',
-                  data: [12, 28, 17, 9],
-                  backgroundColor: '#fb923c',
-                },
-              ],
+              labels: Object.keys(overviewData.performanceData.byDepartment),
+              datasets: [{
+                label: 'Performance Rating',
+                data: Object.values(overviewData.performanceData.byDepartment),
+                backgroundColor: 'rgba(249, 115, 22, 0.2)',
+                borderColor: chartColors.primary,
+                borderWidth: 2,
+                pointBackgroundColor: chartColors.primary,
+              }]
             }}
             options={{
+              responsive: true,
               plugins: { legend: { display: false } },
-              scales: { x: { grid: { display: false } }, y: { grid: { color: '#f3f4f6' } } },
+              scales: {
+                r: {
+                  beginAtZero: true,
+                  max: 5,
+                  grid: { color: chartColors.light },
+                  ticks: { stepSize: 1 }
+                }
+              }
             }}
           />
         </div>
-      </section>
+      </div>
+
+      {/* Attendance & Overtime Analysis */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <div className="bg-white rounded-xl border border-gray-200 p-6">
+          <h3 className="text-lg font-semibold text-gray-900 mb-4">Monthly Headcount Trend</h3>
+          <Line
+            data={{
+              labels: overviewData.monthlyTrends.labels,
+              datasets: [{
+                label: 'Total Employees',
+                data: overviewData.monthlyTrends.headcount,
+                borderColor: chartColors.primary,
+                backgroundColor: 'rgba(249, 115, 22, 0.1)',
+                tension: 0.4,
+                fill: true,
+                pointBackgroundColor: chartColors.primary,
+                pointBorderColor: '#fff',
+                pointBorderWidth: 2,
+              }]
+            }}
+            options={{
+              responsive: true,
+              plugins: { legend: { display: false } },
+              scales: {
+                x: { grid: { display: false } },
+                y: { grid: { color: chartColors.light } }
+              }
+            }}
+          />
+        </div>
+
+        <div className="bg-white rounded-xl border border-gray-200 p-6">
+          <h3 className="text-lg font-semibold text-gray-900 mb-4">Overtime vs Extra Overtime</h3>
+          <Bar
+            data={{
+              labels: Object.keys(overviewData.overtimeData.byDepartment),
+              datasets: [
+                {
+                  label: 'Regular Overtime',
+                  data: Object.values(overviewData.overtimeData.byDepartment),
+                  backgroundColor: chartColors.primary,
+                  borderRadius: 4,
+                },
+                {
+                  label: 'Extra Overtime',
+                  data: Object.values(overviewData.extraOvertimeData.byDepartment),
+                  backgroundColor: chartColors.info,
+                  borderRadius: 4,
+                }
+              ]
+            }}
+            options={{
+              responsive: true,
+              plugins: { legend: { position: 'top' } },
+              scales: {
+                x: { grid: { display: false } },
+                y: { grid: { color: chartColors.light } }
+              }
+            }}
+          />
+        </div>
+      </div>
+
+      {/* Detailed Metrics Grid */}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+        <MetricCard
+          title="Absent Today"
+          value={overviewData.employeeStats.absent}
+          trend={-15}
+          color="red"
+        />
+        <MetricCard
+          title="On Leave"
+          value={overviewData.employeeStats.onLeave}
+          trend={8}
+          color="yellow"
+        />
+        <MetricCard
+          title="New Hires"
+          value={overviewData.employeeStats.newHires}
+          trend={12}
+          color="green"
+        />
+        <MetricCard
+          title="Resigned"
+          value={overviewData.employeeStats.resigned}
+          trend={-25}
+          color="red"
+        />
+      </div>
+
+      {/* Payroll & Financial Overview */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <div className="bg-white rounded-xl border border-gray-200 p-6">
+          <h3 className="text-lg font-semibold text-gray-900 mb-4">Payroll Breakdown</h3>
+          <div className="space-y-4">
+            <div className="flex justify-between items-center">
+              <span className="text-gray-600">Basic Salary</span>
+              <span className="font-semibold">{formatCurrency(overviewData.payrollData.basicSalary)}</span>
+            </div>
+            <div className="flex justify-between items-center">
+              <span className="text-gray-600">Allowances</span>
+              <span className="font-semibold">{formatCurrency(overviewData.payrollData.allowances)}</span>
+            </div>
+            <div className="flex justify-between items-center">
+              <span className="text-gray-600">Overtime</span>
+              <span className="font-semibold text-blue-600">{formatCurrency(overviewData.payrollData.overtime)}</span>
+            </div>
+            <div className="flex justify-between items-center">
+              <span className="text-gray-600">Extra Overtime</span>
+              <span className="font-semibold text-purple-600">{formatCurrency(overviewData.payrollData.extraOvertime)}</span>
+            </div>
+            <div className="flex justify-between items-center">
+              <span className="text-gray-600">Bonuses</span>
+              <span className="font-semibold text-green-600">{formatCurrency(overviewData.payrollData.bonuses)}</span>
+            </div>
+            <div className="flex justify-between items-center">
+              <span className="text-gray-600">Penalties</span>
+              <span className="font-semibold text-red-600">-{formatCurrency(overviewData.payrollData.penalties)}</span>
+            </div>
+            <hr className="border-gray-200" />
+            <div className="flex justify-between items-center text-lg font-bold">
+              <span>Total Payroll</span>
+              <span className="text-green-600">{formatCurrency(overviewData.payrollData.totalSalary)}</span>
+            </div>
+          </div>
+        </div>
+
+        <div className="bg-white rounded-xl border border-gray-200 p-6">
+          <h3 className="text-lg font-semibold text-gray-900 mb-4">Asset Management</h3>
+          <div className="space-y-4">
+            <div className="flex justify-between items-center">
+              <span className="text-gray-600">Total Assets</span>
+              <span className="font-semibold">{formatNumber(overviewData.assetData.totalAssets)}</span>
+            </div>
+            <div className="flex justify-between items-center">
+              <span className="text-gray-600">Assigned</span>
+              <span className="font-semibold text-green-600">{formatNumber(overviewData.assetData.assigned)}</span>
+            </div>
+            <div className="flex justify-between items-center">
+              <span className="text-gray-600">Unassigned</span>
+              <span className="font-semibold text-yellow-600">{formatNumber(overviewData.assetData.unassigned)}</span>
+            </div>
+            <div className="flex justify-between items-center">
+              <span className="text-gray-600">Under Maintenance</span>
+              <span className="font-semibold text-red-600">{formatNumber(overviewData.assetData.underMaintenance)}</span>
+            </div>
+          </div>
+          
+          <div className="mt-6">
+            <h4 className="font-medium text-gray-900 mb-3">Assets by Category</h4>
+            <div className="space-y-2">
+              {Object.entries(overviewData.assetData.byCategory).map(([category, count]) => (
+                <div key={category} className="flex justify-between items-center">
+                  <span className="text-sm text-gray-600">{category}</span>
+                  <span className="text-sm font-medium">{count}</span>
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Leave & Performance Summary */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <div className="bg-white rounded-xl border border-gray-200 p-6">
+          <h3 className="text-lg font-semibold text-gray-900 mb-4">Leave Distribution</h3>
+          <PolarArea
+            data={{
+              labels: Object.keys(overviewData.leaveData),
+              datasets: [{
+                data: Object.values(overviewData.leaveData),
+                backgroundColor: [
+                  'rgba(249, 115, 22, 0.8)',
+                  'rgba(59, 130, 246, 0.8)',
+                  'rgba(16, 185, 129, 0.8)',
+                  'rgba(245, 158, 11, 0.8)',
+                  'rgba(139, 92, 246, 0.8)',
+                  'rgba(239, 68, 68, 0.8)'
+                ],
+                borderWidth: 2,
+                borderColor: '#fff'
+              }]
+            }}
+            options={{
+              responsive: true,
+              plugins: {
+                legend: { position: 'bottom' },
+                tooltip: {
+                  callbacks: {
+                    label: (context) => `${context.label}: ${context.parsed} employees`
+                  }
+                }
+              }
+            }}
+          />
+        </div>
+
+        <div className="bg-white rounded-xl border border-gray-200 p-6">
+          <h3 className="text-lg font-semibold text-gray-900 mb-4">Performance Overview</h3>
+          <div className="space-y-6">
+            <div className="text-center">
+              <div className="text-4xl font-bold text-gray-900">{overviewData.performanceData.averageRating}</div>
+              <div className="text-sm text-gray-600 mt-1">Average Performance Rating</div>
+              <div className="flex justify-center mt-2">
+                {[...Array(5)].map((_, i) => (
+                  <span key={i} className={`text-xl ${
+                    i < Math.floor(overviewData.performanceData.averageRating) 
+                      ? 'text-yellow-400' 
+                      : 'text-gray-300'
+                  }`}>
+                    ★
+                  </span>
+                ))}
+              </div>
+            </div>
+            
+            <div className="grid grid-cols-2 gap-4">
+              <div className="text-center p-4 bg-green-50 rounded-lg">
+                <div className="text-2xl font-bold text-green-600">{overviewData.performanceData.topPerformers}</div>
+                <div className="text-sm text-green-700">Top Performers</div>
+              </div>
+              <div className="text-center p-4 bg-red-50 rounded-lg">
+                <div className="text-2xl font-bold text-red-600">{overviewData.performanceData.needsImprovement}</div>
+                <div className="text-sm text-red-700">Need Improvement</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Quick Actions */}
+      <div className="bg-white rounded-xl border border-gray-200 p-6">
+        <h3 className="text-lg font-semibold text-gray-900 mb-4">Quick Actions</h3>
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+          <button className="p-4 bg-blue-50 hover:bg-blue-100 rounded-lg text-center transition-colors">
+            <div className="text-2xl mb-2">📊</div>
+            <div className="text-sm font-medium text-blue-700">Generate Reports</div>
+          </button>
+          <button className="p-4 bg-green-50 hover:bg-green-100 rounded-lg text-center transition-colors">
+            <div className="text-2xl mb-2">👥</div>
+            <div className="text-sm font-medium text-green-700">Add Employee</div>
+          </button>
+          <button className="p-4 bg-purple-50 hover:bg-purple-100 rounded-lg text-center transition-colors">
+            <div className="text-2xl mb-2">💰</div>
+            <div className="text-sm font-medium text-purple-700">Process Payroll</div>
+          </button>
+          <button className="p-4 bg-orange-50 hover:bg-orange-100 rounded-lg text-center transition-colors">
+            <div className="text-2xl mb-2">📅</div>
+            <div className="text-sm font-medium text-orange-700">Manage Leave</div>
+          </button>
+        </div>
+      </div>
     </div>
   )
 }

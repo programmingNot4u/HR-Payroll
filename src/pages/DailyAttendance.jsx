@@ -79,7 +79,7 @@ const sampleAttendance = [
     name: 'Mohammad Hassan',
     designation: 'Production Manager',
     department: 'Management',
-    levelOfWork: 'Management',
+    levelOfWork: 'Staff',
     checkIn: '08:00',
     lunchBreak: '13:00-14:00',
     checkOut: '18:30',
@@ -150,7 +150,7 @@ const sampleAttendance = [
 
 const departments = ['All', 'Cutting', 'Sewing', 'Finishing', 'Quality Control', 'Management']
 const designations = ['All', 'Senior Tailor', 'Quality Inspector', 'Cutting Master', 'Finishing Supervisor', 'Production Manager', 'Junior Tailor', 'Machine Operator', 'Quality Assistant']
-const workLevels = ['All', 'Worker', 'Staff', 'Management']
+const workLevels = ['All', 'Worker', 'Staff']
 
 export default function DailyAttendance() {
   const [selectedDate, setSelectedDate] = useState(new Date().toISOString().split('T')[0])
@@ -193,17 +193,21 @@ export default function DailyAttendance() {
   const uninformedEmployees = filteredAttendance.filter(emp => emp.status === 'Uninformed').length
   const lateLoginEmployees = filteredAttendance.filter(emp => emp.status === 'Late Login').length
   const totalWorkingHours = filteredAttendance.reduce((sum, emp) => sum + emp.workingHours, 0)
-  const totalOvertime = filteredAttendance.reduce((sum, emp) => sum + emp.overtime, 0)
-  const totalExtraOvertime = filteredAttendance.reduce((sum, emp) => sum + emp.extraOvertime, 0)
+  // Only calculate overtime for Workers
+  const totalOvertime = filteredAttendance.reduce((sum, emp) => 
+    emp.levelOfWork === 'Worker' ? sum + emp.overtime : sum, 0)
+  const totalExtraOvertime = filteredAttendance.reduce((sum, emp) => 
+    emp.levelOfWork === 'Worker' ? sum + emp.extraOvertime : sum, 0)
 
   return (
     <div className="space-y-6">
-      <div>
-        <h1 className="text-2xl font-semibold">Daily Attendance</h1>
-        <p className="text-sm text-gray-500">Track employee attendance from fingerprint machine</p>
-        <p className="text-xs text-gray-400 mt-1">Standard Hours: {timeSettings.safeEntryTime} - {timeSettings.safeExitTime} | Overtime: {timeSettings.safeExitTime} - 7:00 PM | Extra Overtime: After 7:00 PM</p>
-        <p className="text-xs text-gray-400 mt-1">Working Hours = (Check Out - Check In - 1 Hour Lunch Break)</p>
-      </div>
+             <div>
+         <h1 className="text-2xl font-semibold">Daily Attendance</h1>
+         <p className="text-sm text-gray-500">Track employee attendance from fingerprint machine</p>
+         <p className="text-xs text-gray-400 mt-1">Standard Hours: {timeSettings.safeEntryTime} - {timeSettings.safeExitTime} | Overtime: {timeSettings.safeExitTime} - 7:00 PM | Extra Overtime: After 7:00 PM</p>
+         <p className="text-xs text-gray-400 mt-1">Working Hours = (Check Out - Check In - 1 Hour Lunch Break)</p>
+         <p className="text-xs text-blue-600 mt-1 font-medium">⚠️ Overtime & Extra Overtime calculations are only applicable for Workers</p>
+       </div>
 
       {/* Statistics Cards */}
       <div className="grid grid-cols-1 md:grid-cols-7 gap-6">
@@ -357,8 +361,12 @@ export default function DailyAttendance() {
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Lunch Break</th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Check Out</th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Working Hours</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Overtime</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Extra Overtime</th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  Overtime <span className="text-blue-600">(Workers Only)</span>
+                </th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  Extra Overtime <span className="text-blue-600">(Workers Only)</span>
+                </th>
               </tr>
             </thead>
             <tbody className="bg-white divide-y divide-gray-200">
@@ -373,20 +381,28 @@ export default function DailyAttendance() {
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{attendance.lunchBreak}</td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{attendance.checkOut}</td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{attendance.workingHours}h</td>
-                  <td className="px-6 py-4 whitespace-nowrap">
-                    <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${
-                      attendance.overtime > 0 ? 'bg-orange-100 text-orange-800' : 'bg-gray-100 text-gray-800'
-                    }`}>
-                      {attendance.overtime}h
-                    </span>
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap">
-                    <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${
-                      attendance.extraOvertime > 0 ? 'bg-red-100 text-red-800' : 'bg-gray-100 text-gray-800'
-                    }`}>
-                      {attendance.extraOvertime}h
-                    </span>
-                  </td>
+                                     <td className="px-6 py-4 whitespace-nowrap">
+                     {attendance.levelOfWork === 'Worker' ? (
+                       <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${
+                         attendance.overtime > 0 ? 'bg-orange-100 text-orange-800' : 'bg-gray-100 text-gray-800'
+                       }`}>
+                         {attendance.overtime}h
+                       </span>
+                     ) : (
+                       <span className="text-gray-400 text-xs">N/A</span>
+                     )}
+                   </td>
+                   <td className="px-6 py-4 whitespace-nowrap">
+                     {attendance.levelOfWork === 'Worker' ? (
+                       <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${
+                         attendance.extraOvertime > 0 ? 'bg-red-100 text-red-800' : 'bg-gray-100 text-gray-800'
+                       }`}>
+                         {attendance.extraOvertime}h
+                       </span>
+                     ) : (
+                       <span className="text-gray-400 text-xs">N/A</span>
+                     )}
+                   </td>
                 </tr>
               ))}
             </tbody>
@@ -394,28 +410,31 @@ export default function DailyAttendance() {
         </div>
       </div>
 
-      {/* Summary */}
-      <div className="rounded border border-gray-200 bg-white p-6">
-        <h3 className="text-lg font-medium mb-4">Summary for {new Date(selectedDate).toLocaleDateString()}</h3>
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-          <div className="text-center">
-            <div className="text-2xl font-semibold text-green-600">{presentEmployees}</div>
-            <div className="text-sm text-gray-500">Present Employees</div>
-          </div>
-          <div className="text-center">
-            <div className="text-2xl font-semibold">{totalWorkingHours.toFixed(2)}h</div>
-            <div className="text-sm text-gray-500">Total Working Hours</div>
-          </div>
-          <div className="text-center">
-            <div className="text-2xl font-semibold text-orange-600">{totalOvertime.toFixed(2)}h</div>
-            <div className="text-sm text-gray-500">Total Overtime</div>
-          </div>
-          <div className="text-center">
-            <div className="text-2xl font-semibold text-red-600">{totalExtraOvertime.toFixed(2)}h</div>
-            <div className="text-sm text-gray-500">Total Extra Overtime</div>
-          </div>
-        </div>
-      </div>
+             {/* Summary */}
+       <div className="rounded border border-gray-200 bg-white p-6">
+         <h3 className="text-lg font-medium mb-4">Summary for {new Date(selectedDate).toLocaleDateString()}</h3>
+         <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+           <div className="text-center">
+             <div className="text-2xl font-semibold text-green-600">{presentEmployees}</div>
+             <div className="text-sm text-gray-500">Present Employees</div>
+           </div>
+           <div className="text-center">
+             <div className="text-2xl font-semibold">{totalWorkingHours.toFixed(2)}h</div>
+             <div className="text-sm text-gray-500">Total Working Hours</div>
+           </div>
+           <div className="text-center">
+             <div className="text-2xl font-semibold text-orange-600">{totalOvertime.toFixed(2)}h</div>
+             <div className="text-sm text-gray-500">Worker Overtime Only</div>
+           </div>
+           <div className="text-center">
+             <div className="text-2xl font-semibold text-red-600">{totalExtraOvertime.toFixed(2)}h</div>
+             <div className="text-sm text-gray-500">Worker Extra Overtime Only</div>
+           </div>
+         </div>
+         <div className="mt-4 text-xs text-gray-500 text-center">
+           * Overtime and Extra Overtime calculations are only applicable for Workers
+         </div>
+       </div>
     </div>
   )
 }

@@ -1,6 +1,6 @@
 import { useState, useMemo } from 'react'
 
-// Sample employee data (in real app, this would come from Employee Dashboard)
+// Sample employee data with salary breakdown and attendance
 const sampleEmployees = [
   {
     id: 'EMP001',
@@ -8,9 +8,23 @@ const sampleEmployees = [
     mobile: '+880 1712-345678',
     designation: 'Senior Tailor',
     department: 'Sewing',
-    grossSalary: 25000,
-    paidAmount: 20000,
-    status: 'Not Paid'
+    levelOfWork: 'Worker',
+    basicSalary: 20000,
+    houseRentAllowance: 2400,
+    medicalAllowance: 800,
+    transportAllowance: 400,
+    otherAllowances: 400,
+    attendanceBonus: 775,
+    totalPenalties: 0,
+    overtime: 12,
+    extraOvertime: 8,
+    attendance: {
+      totalDays: 26,
+      presentDays: 26,
+      absentDays: 0,
+      leaveDays: 0,
+      lateDays: 0
+    }
   },
   {
     id: 'EMP002',
@@ -18,9 +32,23 @@ const sampleEmployees = [
     mobile: '+880 1712-345679',
     designation: 'Quality Inspector',
     department: 'Quality Control',
-    grossSalary: 30000,
-    paidAmount: 30000,
-    status: 'Full Paid'
+    levelOfWork: 'Staff',
+    basicSalary: 24000,
+    houseRentAllowance: 2880,
+    medicalAllowance: 960,
+    transportAllowance: 480,
+    otherAllowances: 480,
+    attendanceBonus: 0,
+    totalPenalties: 0,
+    overtime: 0,
+    extraOvertime: 0,
+    attendance: {
+      totalDays: 26,
+      presentDays: 24,
+      absentDays: 1,
+      leaveDays: 1,
+      lateDays: 0
+    }
   },
   {
     id: 'EMP003',
@@ -28,9 +56,23 @@ const sampleEmployees = [
     mobile: '+880 1712-345680',
     designation: 'Cutting Master',
     department: 'Cutting',
-    grossSalary: 35000,
-    paidAmount: 28000,
-    status: 'Custom Amount'
+    levelOfWork: 'Worker',
+    basicSalary: 28000,
+    houseRentAllowance: 3360,
+    medicalAllowance: 1120,
+    transportAllowance: 560,
+    otherAllowances: 560,
+    attendanceBonus: 775,
+    totalPenalties: 500,
+    overtime: 18,
+    extraOvertime: 12,
+    attendance: {
+      totalDays: 26,
+      presentDays: 25,
+      absentDays: 0,
+      leaveDays: 1,
+      lateDays: 1
+    }
   },
   {
     id: 'EMP004',
@@ -38,9 +80,23 @@ const sampleEmployees = [
     mobile: '+880 1712-345681',
     designation: 'Finishing Supervisor',
     department: 'Finishing',
-    grossSalary: 32000,
-    paidAmount: 0,
-    status: 'Not Paid'
+    levelOfWork: 'Staff',
+    basicSalary: 25600,
+    houseRentAllowance: 3072,
+    medicalAllowance: 1024,
+    transportAllowance: 512,
+    otherAllowances: 512,
+    attendanceBonus: 0,
+    totalPenalties: 0,
+    overtime: 0,
+    extraOvertime: 0,
+    attendance: {
+      totalDays: 26,
+      presentDays: 26,
+      absentDays: 0,
+      leaveDays: 0,
+      lateDays: 0
+    }
   },
   {
     id: 'EMP005',
@@ -48,9 +104,23 @@ const sampleEmployees = [
     mobile: '+880 1712-345682',
     designation: 'Production Manager',
     department: 'Management',
-    grossSalary: 45000,
-    paidAmount: 45000,
-    status: 'Full Paid'
+    levelOfWork: 'Staff',
+    basicSalary: 36000,
+    houseRentAllowance: 4320,
+    medicalAllowance: 1440,
+    transportAllowance: 720,
+    otherAllowances: 720,
+    attendanceBonus: 0,
+    totalPenalties: 0,
+    overtime: 0,
+    extraOvertime: 0,
+    attendance: {
+      totalDays: 26,
+      presentDays: 25,
+      absentDays: 0,
+      leaveDays: 1,
+      lateDays: 0
+    }
   },
   {
     id: 'EMP006',
@@ -58,9 +128,23 @@ const sampleEmployees = [
     mobile: '+880 1712-345683',
     designation: 'Junior Tailor',
     department: 'Sewing',
-    grossSalary: 20000,
-    paidAmount: 0,
-    status: 'Not Paid'
+    levelOfWork: 'Worker',
+    basicSalary: 16000,
+    houseRentAllowance: 1920,
+    medicalAllowance: 640,
+    transportAllowance: 320,
+    otherAllowances: 320,
+    attendanceBonus: 775,
+    totalPenalties: 300,
+    overtime: 15,
+    extraOvertime: 6,
+    attendance: {
+      totalDays: 26,
+      presentDays: 24,
+      absentDays: 1,
+      leaveDays: 1,
+      lateDays: 2
+    }
   },
   {
     id: 'EMP007',
@@ -68,9 +152,23 @@ const sampleEmployees = [
     mobile: '+880 1712-345684',
     designation: 'Machine Operator',
     department: 'Sewing',
-    grossSalary: 22000,
-    paidAmount: 18000,
-    status: 'Custom Amount'
+    levelOfWork: 'Worker',
+    basicSalary: 17600,
+    houseRentAllowance: 2112,
+    medicalAllowance: 704,
+    transportAllowance: 352,
+    otherAllowances: 352,
+    attendanceBonus: 775,
+    totalPenalties: 0,
+    overtime: 20,
+    extraOvertime: 10,
+    attendance: {
+      totalDays: 26,
+      presentDays: 26,
+      absentDays: 0,
+      leaveDays: 0,
+      lateDays: 0
+    }
   },
   {
     id: 'EMP008',
@@ -78,9 +176,23 @@ const sampleEmployees = [
     mobile: '+880 1712-345685',
     designation: 'Quality Assistant',
     department: 'Quality Control',
-    grossSalary: 18000,
-    paidAmount: 0,
-    status: 'Not Paid'
+    levelOfWork: 'Worker',
+    basicSalary: 14400,
+    houseRentAllowance: 1728,
+    medicalAllowance: 576,
+    transportAllowance: 288,
+    otherAllowances: 288,
+    attendanceBonus: 775,
+    totalPenalties: 0,
+    overtime: 10,
+    extraOvertime: 5,
+    attendance: {
+      totalDays: 26,
+      presentDays: 25,
+      absentDays: 0,
+      leaveDays: 1,
+      lateDays: 0
+    }
   }
 ]
 
@@ -88,18 +200,17 @@ const months = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 
 const years = ['2024', '2023', '2022']
 const designations = ['All', 'Senior Tailor', 'Quality Inspector', 'Cutting Master', 'Finishing Supervisor', 'Production Manager', 'Junior Tailor', 'Machine Operator', 'Quality Assistant']
 const departments = ['All', 'Cutting', 'Sewing', 'Finishing', 'Quality Control', 'Management']
+const levelsOfWork = ['All', 'Worker', 'Staff']
 
 export default function SalaryPayslips() {
   const [filters, setFilters] = useState({
     month: 'August',
     year: '2024',
     designation: 'All',
-    department: 'All'
+    department: 'All',
+    levelOfWork: 'All'
   })
   
-  const [selectedEmployees, setSelectedEmployees] = useState([])
-  const [bulkPaymentAmount, setBulkPaymentAmount] = useState('')
-  const [showBulkPayment, setShowBulkPayment] = useState(false)
   const [showPayslip, setShowPayslip] = useState(false)
   const [selectedEmployee, setSelectedEmployee] = useState(null)
 
@@ -108,45 +219,13 @@ export default function SalaryPayslips() {
     return sampleEmployees.filter(employee => {
       const matchesDesignation = filters.designation === 'All' || employee.designation === filters.designation
       const matchesDepartment = filters.department === 'All' || employee.department === filters.department
-      return matchesDesignation && matchesDepartment
+      const matchesLevelOfWork = filters.levelOfWork === 'All' || employee.levelOfWork === filters.levelOfWork
+      return matchesDesignation && matchesDepartment && matchesLevelOfWork
     })
   }, [filters])
 
   const handleFilterChange = (field, value) => {
     setFilters(prev => ({ ...prev, [field]: value }))
-  }
-
-  const handleEmployeeSelect = (employeeId) => {
-    setSelectedEmployees(prev => 
-      prev.includes(employeeId) 
-        ? prev.filter(id => id !== employeeId)
-        : [...prev, employeeId]
-    )
-  }
-
-  const handleSelectAll = () => {
-    if (selectedEmployees.length === filteredEmployees.length) {
-      setSelectedEmployees([])
-    } else {
-      setSelectedEmployees(filteredEmployees.map(emp => emp.id))
-    }
-  }
-
-  const handleBulkPayment = () => {
-    if (selectedEmployees.length === 0) {
-      alert('Please select employees for bulk payment')
-      return
-    }
-    if (!bulkPaymentAmount || bulkPaymentAmount <= 0) {
-      alert('Please enter a valid payment amount')
-      return
-    }
-    
-    console.log(`Bulk payment of ${bulkPaymentAmount} for employees:`, selectedEmployees)
-    alert(`Bulk payment of ৳${bulkPaymentAmount} processed for ${selectedEmployees.length} employees`)
-    setShowBulkPayment(false)
-    setBulkPaymentAmount('')
-    setSelectedEmployees([])
   }
 
   const handleExport = (format) => {
@@ -159,51 +238,81 @@ export default function SalaryPayslips() {
     setShowPayslip(true)
   }
 
-  const getStatusColor = (status) => {
-    switch (status) {
-      case 'Full Paid': return 'bg-green-100 text-green-800'
-      case 'Not Paid': return 'bg-red-100 text-red-800'
-      case 'Custom Amount': return 'bg-yellow-100 text-yellow-800'
-      default: return 'bg-gray-100 text-gray-800'
+  // Calculate salary components
+  const calculateSalary = (employee) => {
+    const grossSalary = employee.basicSalary + employee.houseRentAllowance + employee.medicalAllowance + 
+                       employee.transportAllowance + employee.otherAllowances
+    
+    // Calculate overtime payments (only for Workers)
+    const overtimeRate = 200 // ৳200 per hour
+    const extraOvertimeRate = 300 // ৳300 per hour
+    const overtimePayment = employee.levelOfWork === 'Worker' ? employee.overtime * overtimeRate : 0
+    const extraOvertimePayment = employee.levelOfWork === 'Worker' ? employee.extraOvertime * extraOvertimeRate : 0
+    
+    // Calculate deductions based on attendance
+    const absentDeduction = (employee.attendance.absentDays / employee.attendance.totalDays) * employee.basicSalary
+    const lateDeduction = (employee.attendance.lateDays / employee.attendance.totalDays) * (employee.basicSalary * 0.5)
+    
+    const totalDeductions = absentDeduction + lateDeduction + employee.totalPenalties
+    const netSalary = grossSalary + employee.attendanceBonus + overtimePayment + extraOvertimePayment - totalDeductions
+    
+    return {
+      grossSalary,
+      overtimePayment,
+      extraOvertimePayment,
+      absentDeduction,
+      lateDeduction,
+      totalDeductions,
+      netSalary
     }
   }
 
-  const totalSalary = filteredEmployees.reduce((sum, emp) => sum + emp.grossSalary, 0)
-  const totalPaid = filteredEmployees.reduce((sum, emp) => sum + emp.paidAmount, 0)
-  const paidEmployees = filteredEmployees.filter(emp => emp.status === 'Full Paid').length
-  const unpaidEmployees = filteredEmployees.filter(emp => emp.status === 'Not Paid').length
+  const totalGrossSalary = filteredEmployees.reduce((sum, emp) => sum + calculateSalary(emp).grossSalary, 0)
+  const totalNetSalary = filteredEmployees.reduce((sum, emp) => sum + calculateSalary(emp).netSalary, 0)
+  const totalAttendanceBonuses = filteredEmployees.reduce((sum, emp) => sum + emp.attendanceBonus, 0)
+  const totalOvertime = filteredEmployees.reduce((sum, emp) => sum + calculateSalary(emp).overtimePayment, 0)
+  const totalExtraOvertime = filteredEmployees.reduce((sum, emp) => sum + calculateSalary(emp).extraOvertimePayment, 0)
+  const totalPenalties = filteredEmployees.reduce((sum, emp) => sum + emp.totalPenalties, 0)
 
   return (
     <div className="space-y-6">
       <div>
         <h1 className="text-2xl font-semibold">Salary & Payslips</h1>
-        <p className="text-sm text-gray-500">Manage employee salaries and generate payslips</p>
+        <p className="text-sm text-gray-500">Generate employee payslips with salary breakdown and attendance</p>
       </div>
 
       {/* Statistics Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
-        <div className="rounded border border-gray-200 bg-white p-6">
+      <div className="grid grid-cols-1 md:grid-cols-6 gap-4">
+        <div className="rounded border border-gray-200 bg-white p-4">
           <div className="text-sm text-gray-500">Total Employees</div>
-          <div className="mt-1 text-2xl font-semibold">{filteredEmployees.length}</div>
+          <div className="mt-1 text-xl font-semibold">{filteredEmployees.length}</div>
         </div>
-        <div className="rounded border border-gray-200 bg-white p-6">
-          <div className="text-sm text-gray-500">Total Salary</div>
-          <div className="mt-1 text-2xl font-semibold">৳{totalSalary.toLocaleString()}</div>
+        <div className="rounded border border-gray-200 bg-white p-4">
+          <div className="text-sm text-gray-500">Gross Salary</div>
+          <div className="mt-1 text-xl font-semibold">৳{totalGrossSalary.toLocaleString()}</div>
         </div>
-        <div className="rounded border border-gray-200 bg-white p-6">
-          <div className="text-sm text-gray-500">Total Paid</div>
-          <div className="mt-1 text-2xl font-semibold text-green-600">৳{totalPaid.toLocaleString()}</div>
+        <div className="rounded border border-gray-200 bg-white p-4">
+          <div className="text-sm text-gray-500">Overtime</div>
+          <div className="mt-1 text-xl font-semibold text-blue-600">৳{totalOvertime.toLocaleString()}</div>
         </div>
-        <div className="rounded border border-gray-200 bg-white p-6">
-          <div className="text-sm text-gray-500">Unpaid Employees</div>
-          <div className="mt-1 text-2xl font-semibold text-red-600">{unpaidEmployees}</div>
+        <div className="rounded border border-gray-200 bg-white p-4">
+          <div className="text-sm text-gray-500">Extra Overtime</div>
+          <div className="mt-1 text-xl font-semibold text-purple-600">৳{totalExtraOvertime.toLocaleString()}</div>
+        </div>
+        <div className="rounded border border-gray-200 bg-white p-4">
+          <div className="text-sm text-gray-500">Bonuses</div>
+          <div className="mt-1 text-xl font-semibold text-green-600">৳{totalAttendanceBonuses.toLocaleString()}</div>
+        </div>
+        <div className="rounded border border-gray-200 bg-white p-4">
+          <div className="text-sm text-gray-500">Net Salary</div>
+          <div className="mt-1 text-xl font-semibold text-green-600">৳{totalNetSalary.toLocaleString()}</div>
         </div>
       </div>
 
       {/* Filters */}
       <div className="rounded border border-gray-200 bg-white p-6">
         <h2 className="text-lg font-medium mb-4">Filters</h2>
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+        <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-2">Month</label>
             <select
@@ -252,22 +361,23 @@ export default function SalaryPayslips() {
               ))}
             </select>
           </div>
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">Level of Work</label>
+            <select
+              value={filters.levelOfWork}
+              onChange={(e) => handleFilterChange('levelOfWork', e.target.value)}
+              className="w-full h-10 rounded border border-gray-300 px-3 focus:outline-none focus:ring-2 focus:ring-orange-500"
+            >
+              {levelsOfWork.map(level => (
+                <option key={level} value={level}>{level}</option>
+              ))}
+            </select>
+          </div>
         </div>
       </div>
 
       {/* Action Buttons */}
       <div className="flex flex-wrap gap-4">
-        <button
-          onClick={() => setShowBulkPayment(true)}
-          disabled={selectedEmployees.length === 0}
-          className={`px-4 py-2 rounded font-medium ${
-            selectedEmployees.length === 0
-              ? 'bg-gray-100 text-gray-400 cursor-not-allowed'
-              : 'bg-blue-600 text-white hover:bg-blue-700'
-          }`}
-        >
-          Bulk Payment ({selectedEmployees.length})
-        </button>
         <button
           onClick={() => handleExport('PDF')}
           className="px-4 py-2 bg-red-600 text-white rounded hover:bg-red-700 font-medium"
@@ -282,100 +392,67 @@ export default function SalaryPayslips() {
         </button>
       </div>
 
-      {/* Bulk Payment Modal */}
-      {showBulkPayment && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <div className="bg-white rounded-lg p-6 w-96">
-            <h3 className="text-lg font-semibold mb-4">Bulk Payment</h3>
-            <div className="mb-4">
-              <label className="block text-sm font-medium text-gray-700 mb-2">Payment Amount (৳)</label>
-              <input
-                type="number"
-                value={bulkPaymentAmount}
-                onChange={(e) => setBulkPaymentAmount(e.target.value)}
-                className="w-full h-10 rounded border border-gray-300 px-3 focus:outline-none focus:ring-2 focus:ring-orange-500"
-                placeholder="Enter amount"
-              />
-            </div>
-            <div className="text-sm text-gray-600 mb-4">
-              Selected employees: {selectedEmployees.length}
-            </div>
-            <div className="flex gap-3">
-              <button
-                onClick={handleBulkPayment}
-                className="flex-1 px-4 py-2 bg-green-600 text-white rounded hover:bg-green-700"
-              >
-                Process Payment
-              </button>
-              <button
-                onClick={() => setShowBulkPayment(false)}
-                className="flex-1 px-4 py-2 bg-gray-600 text-white rounded hover:bg-gray-700"
-              >
-                Cancel
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
-
       {/* Employee Table */}
       <div className="rounded border border-gray-200 bg-white overflow-hidden">
         <div className="overflow-x-auto">
           <table className="w-full">
             <thead className="bg-gray-50">
               <tr>
-                <th className="px-6 py-3 text-left">
-                  <input
-                    type="checkbox"
-                    checked={selectedEmployees.length === filteredEmployees.length && filteredEmployees.length > 0}
-                    onChange={handleSelectAll}
-                    className="rounded border-gray-300"
-                  />
-                </th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Employee ID</th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Name</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Mobile</th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Designation</th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Department</th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Level</th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Gross Salary</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Paid Amount</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Overtime</th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Extra Overtime</th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Attendance Bonus</th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Penalties</th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Net Salary</th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Pay Slip</th>
               </tr>
             </thead>
             <tbody className="bg-white divide-y divide-gray-200">
-              {filteredEmployees.map((employee) => (
-                <tr key={employee.id} className="hover:bg-gray-50">
-                  <td className="px-6 py-4">
-                    <input
-                      type="checkbox"
-                      checked={selectedEmployees.includes(employee.id)}
-                      onChange={() => handleEmployeeSelect(employee.id)}
-                      className="rounded border-gray-300"
-                    />
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">{employee.id}</td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{employee.name}</td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{employee.mobile}</td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{employee.designation}</td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{employee.department}</td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">৳{employee.grossSalary.toLocaleString()}</td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">৳{employee.paidAmount.toLocaleString()}</td>
-                  <td className="px-6 py-4 whitespace-nowrap">
-                    <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${getStatusColor(employee.status)}`}>
-                      {employee.status}
-                    </span>
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
-                    <button
-                      onClick={() => handlePaySlip(employee)}
-                      className="px-3 py-1 bg-orange-600 text-white rounded hover:bg-orange-700 text-xs"
-                    >
-                      Pay Slip
-                    </button>
-                  </td>
-                </tr>
-              ))}
+              {filteredEmployees.map((employee) => {
+                const salary = calculateSalary(employee)
+                return (
+                  <tr key={employee.id} className="hover:bg-gray-50">
+                    <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">{employee.id}</td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">{employee.name}</td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{employee.designation}</td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{employee.department}</td>
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${
+                        employee.levelOfWork === 'Worker' ? 'bg-blue-100 text-blue-800' : 'bg-green-100 text-green-800'
+                      }`}>
+                        {employee.levelOfWork}
+                      </span>
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">৳{salary.grossSalary.toLocaleString()}</td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-blue-600">
+                      {salary.overtimePayment > 0 ? `৳${salary.overtimePayment.toLocaleString()}` : '-'}
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-purple-600">
+                      {salary.extraOvertimePayment > 0 ? `৳${salary.extraOvertimePayment.toLocaleString()}` : '-'}
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-green-600">
+                      {employee.attendanceBonus > 0 ? `৳${employee.attendanceBonus.toLocaleString()}` : '-'}
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-red-600">
+                      {employee.totalPenalties > 0 ? `৳${employee.totalPenalties.toLocaleString()}` : '-'}
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">৳{salary.netSalary.toLocaleString()}</td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                      <button
+                        onClick={() => handlePaySlip(employee)}
+                        className="px-3 py-1 bg-orange-600 text-white rounded hover:bg-orange-700 text-xs"
+                      >
+                        Pay Slip
+                      </button>
+                    </td>
+                  </tr>
+                )
+              })}
             </tbody>
           </table>
         </div>
@@ -384,221 +461,264 @@ export default function SalaryPayslips() {
       {/* Summary */}
       <div className="rounded border border-gray-200 bg-white p-6">
         <h3 className="text-lg font-medium mb-4">Summary for {filters.month} {filters.year}</h3>
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+        <div className="grid grid-cols-1 md:grid-cols-6 gap-4">
           <div className="text-center">
-            <div className="text-2xl font-semibold text-green-600">{paidEmployees}</div>
-            <div className="text-sm text-gray-500">Paid Employees</div>
+            <div className="text-xl font-semibold">{filteredEmployees.length}</div>
+            <div className="text-sm text-gray-500">Total Employees</div>
           </div>
           <div className="text-center">
-            <div className="text-2xl font-semibold text-red-600">{unpaidEmployees}</div>
-            <div className="text-sm text-gray-500">Unpaid Employees</div>
+            <div className="text-xl font-semibold">৳{totalGrossSalary.toLocaleString()}</div>
+            <div className="text-sm text-gray-500">Gross Salary</div>
           </div>
           <div className="text-center">
-            <div className="text-2xl font-semibold">৳{totalSalary.toLocaleString()}</div>
-            <div className="text-sm text-gray-500">Total Salary</div>
+            <div className="text-xl font-semibold text-blue-600">৳{totalOvertime.toLocaleString()}</div>
+            <div className="text-sm text-gray-500">Overtime</div>
           </div>
           <div className="text-center">
-            <div className="text-2xl font-semibold text-green-600">৳{totalPaid.toLocaleString()}</div>
-            <div className="text-sm text-gray-500">Total Paid</div>
+            <div className="text-xl font-semibold text-purple-600">৳{totalExtraOvertime.toLocaleString()}</div>
+            <div className="text-sm text-gray-500">Extra Overtime</div>
+          </div>
+          <div className="text-center">
+            <div className="text-xl font-semibold text-green-600">৳{totalAttendanceBonuses.toLocaleString()}</div>
+            <div className="text-sm text-gray-500">Bonuses</div>
+          </div>
+          <div className="text-center">
+            <div className="text-xl font-semibold text-green-600">৳{totalNetSalary.toLocaleString()}</div>
+            <div className="text-sm text-gray-500">Net Salary</div>
           </div>
         </div>
       </div>
 
-      {/* Payslip Modal */}
+      {/* Payslip Modal - A4 Format */}
       {showPayslip && selectedEmployee && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
           <div className="bg-white rounded-lg shadow-lg w-full max-w-4xl max-h-[90vh] overflow-y-auto">
             <div className="p-6">
-              {/* Header */}
-              <div className="flex justify-between items-start mb-6">
-                <div>
-                  <h1 className="text-2xl font-bold text-gray-900">RP Creations & Apparels Limited</h1>
-                  <p className="text-gray-600 mt-2">Salary Payslip</p>
-                  <p className="text-gray-600">For the month of {filters.month} {filters.year}</p>
+              {/* A4 Page Header */}
+              <div className="text-center mb-6 border-b-2 border-gray-300 pb-4">
+                <h1 className="text-3xl font-bold text-gray-900">RP Creations & Apparels Limited</h1>
+                <p className="text-lg text-gray-600 mt-2">Salary Payslip</p>
+                <p className="text-gray-600">For the month of {filters.month} {filters.year}</p>
+                <p className="text-sm text-gray-500 mt-1">Generated on: {new Date().toLocaleDateString()}</p>
+              </div>
+
+              {/* Employee Information Section */}
+              <div className="grid grid-cols-2 gap-6 mb-6">
+                <div className="space-y-3">
+                  <div className="flex justify-between">
+                    <span className="font-medium text-gray-700">Employee ID:</span>
+                    <span className="font-semibold">{selectedEmployee.id}</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="font-medium text-gray-700">Name:</span>
+                    <span className="font-semibold">{selectedEmployee.name}</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="font-medium text-gray-700">Designation:</span>
+                    <span className="font-semibold">{selectedEmployee.designation}</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="font-medium text-gray-700">Department:</span>
+                    <span className="font-semibold">{selectedEmployee.department}</span>
+                  </div>
                 </div>
-                <div className="text-right">
-                  <div className="text-xl font-bold text-orange-600">৳{selectedEmployee.grossSalary.toLocaleString()}</div>
-                  <div className="text-sm text-gray-500">Gross Salary</div>
+                <div className="space-y-3">
+                  <div className="flex justify-between">
+                    <span className="font-medium text-gray-700">Level of Work:</span>
+                    <span className="font-semibold">{selectedEmployee.levelOfWork}</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="font-medium text-gray-700">Mobile:</span>
+                    <span className="font-semibold">{selectedEmployee.mobile}</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="font-medium text-gray-700">Month:</span>
+                    <span className="font-semibold">{filters.month} {filters.year}</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="font-medium text-gray-700">Total Working Days:</span>
+                    <span className="font-semibold">{selectedEmployee.attendance.totalDays}</span>
+                  </div>
                 </div>
               </div>
 
-              {/* Employee Information */}
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
-                <div>
-                  <label className="block text-sm font-medium text-gray-500">Employee ID</label>
-                  <p className="font-semibold">{selectedEmployee.id}</p>
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-500">Name</label>
-                  <p className="font-semibold">{selectedEmployee.name}</p>
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-500">Designation</label>
-                  <p className="font-semibold">{selectedEmployee.designation}</p>
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-500">Department</label>
-                  <p className="font-semibold">{selectedEmployee.department}</p>
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-500">Mobile</label>
-                  <p className="font-semibold">{selectedEmployee.mobile}</p>
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-500">Payment Date</label>
-                  <p className="font-semibold">{new Date().toLocaleDateString()}</p>
-                </div>
-              </div>
-
-              {/* Salary Details */}
+              {/* Salary Breakdown Section */}
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
-                <div>
-                  <h3 className="text-lg font-medium text-green-600 mb-3">Earnings</h3>
+                <div className="border border-gray-200 rounded-lg p-4">
+                  <h3 className="text-lg font-semibold text-green-600 mb-3 border-b border-green-200 pb-2">Earnings</h3>
                   <div className="space-y-2">
                     <div className="flex justify-between">
                       <span className="text-gray-600">Basic Salary</span>
-                      <span className="font-semibold">৳{(selectedEmployee.grossSalary * 0.8).toLocaleString()}</span>
+                      <span className="font-semibold">৳{selectedEmployee.basicSalary.toLocaleString()}</span>
                     </div>
                     <div className="flex justify-between">
                       <span className="text-gray-600">House Rent Allowance</span>
-                      <span className="font-semibold">৳{(selectedEmployee.grossSalary * 0.12).toLocaleString()}</span>
+                      <span className="font-semibold">৳{selectedEmployee.houseRentAllowance.toLocaleString()}</span>
                     </div>
                     <div className="flex justify-between">
                       <span className="text-gray-600">Medical Allowance</span>
-                      <span className="font-semibold">৳{(selectedEmployee.grossSalary * 0.04).toLocaleString()}</span>
+                      <span className="font-semibold">৳{selectedEmployee.medicalAllowance.toLocaleString()}</span>
                     </div>
                     <div className="flex justify-between">
                       <span className="text-gray-600">Transport Allowance</span>
-                      <span className="font-semibold">৳{(selectedEmployee.grossSalary * 0.02).toLocaleString()}</span>
+                      <span className="font-semibold">৳{selectedEmployee.transportAllowance.toLocaleString()}</span>
                     </div>
                     <div className="flex justify-between">
                       <span className="text-gray-600">Other Allowances</span>
-                      <span className="font-semibold">৳{(selectedEmployee.grossSalary * 0.02).toLocaleString()}</span>
+                      <span className="font-semibold">৳{selectedEmployee.otherAllowances.toLocaleString()}</span>
                     </div>
-                    <hr className="my-2" />
-                    <div className="flex justify-between text-lg font-bold">
+                    {selectedEmployee.attendanceBonus > 0 && (
+                      <div className="flex justify-between text-green-600">
+                        <span className="font-medium">Attendance Bonus</span>
+                        <span className="font-semibold">৳{selectedEmployee.attendanceBonus.toLocaleString()}</span>
+                      </div>
+                    )}
+                    <hr className="my-2 border-gray-300" />
+                    <div className="flex justify-between text-lg font-bold text-green-600">
                       <span>Gross Salary</span>
-                      <span>৳{selectedEmployee.grossSalary.toLocaleString()}</span>
+                      <span>৳{(selectedEmployee.basicSalary + selectedEmployee.houseRentAllowance + selectedEmployee.medicalAllowance + selectedEmployee.transportAllowance + selectedEmployee.otherAllowances).toLocaleString()}</span>
                     </div>
                   </div>
                 </div>
 
-                <div>
-                  <h3 className="text-lg font-medium text-red-600 mb-3">Deductions & Payments</h3>
+                {/* Overtime Section */}
+                {selectedEmployee.levelOfWork === 'Worker' && (selectedEmployee.overtime > 0 || selectedEmployee.extraOvertime > 0) && (
+                  <div className="border border-gray-200 rounded-lg p-4 mb-6">
+                    <h3 className="text-lg font-semibold text-blue-600 mb-3 border-b border-blue-200 pb-2">Overtime Payments</h3>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                      <div>
+                        <h4 className="font-medium text-blue-700 mb-2">Regular Overtime</h4>
+                        <div className="space-y-2">
+                          <div className="flex justify-between">
+                            <span className="text-gray-600">Hours Worked</span>
+                            <span className="font-semibold">{selectedEmployee.overtime} hours</span>
+                          </div>
+                          <div className="flex justify-between">
+                            <span className="text-gray-600">Rate per Hour</span>
+                            <span className="font-semibold">৳200</span>
+                          </div>
+                          <div className="flex justify-between text-blue-600">
+                            <span className="font-medium">Total Overtime</span>
+                            <span className="font-semibold">৳{(selectedEmployee.overtime * 200).toLocaleString()}</span>
+                          </div>
+                        </div>
+                      </div>
+                      <div>
+                        <h4 className="font-medium text-purple-700 mb-2">Extra Overtime</h4>
+                        <div className="space-y-2">
+                          <div className="flex justify-between">
+                            <span className="text-gray-600">Hours Worked</span>
+                            <span className="font-semibold">{selectedEmployee.extraOvertime} hours</span>
+                          </div>
+                          <div className="flex justify-between">
+                            <span className="text-gray-600">Rate per Hour</span>
+                            <span className="font-semibold">৳300</span>
+                          </div>
+                          <div className="flex justify-between text-purple-600">
+                            <span className="font-medium">Total Extra Overtime</span>
+                            <span className="font-semibold">৳{(selectedEmployee.extraOvertime * 300).toLocaleString()}</span>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                )}
+
+                <div className="border border-gray-200 rounded-lg p-4">
+                  <h3 className="text-lg font-semibold text-red-600 mb-3 border-b border-red-200 pb-2">Deductions</h3>
                   <div className="space-y-2">
-                    <div className="flex justify-between">
-                      <span className="text-gray-600">Absent Deduction</span>
-                      <span className="font-semibold text-red-600">-৳{(selectedEmployee.grossSalary * 0.04).toLocaleString()}</span>
-                    </div>
-                    <div className="flex justify-between">
-                      <span className="text-gray-600">Late Deduction</span>
-                      <span className="font-semibold text-red-600">-৳{(selectedEmployee.grossSalary * 0.01).toLocaleString()}</span>
-                    </div>
-                    <div className="flex justify-between">
-                      <span className="text-gray-600">Other Deductions</span>
-                      <span className="font-semibold text-red-600">-৳{(selectedEmployee.grossSalary * 0.01).toLocaleString()}</span>
-                    </div>
-                    <hr className="my-2" />
+                    {selectedEmployee.attendance.absentDays > 0 && (
+                      <div className="flex justify-between">
+                        <span className="text-gray-600">Absent Days ({selectedEmployee.attendance.absentDays})</span>
+                        <span className="font-semibold text-red-600">-৳{((selectedEmployee.attendance.absentDays / selectedEmployee.attendance.totalDays) * selectedEmployee.basicSalary).toFixed(0)}</span>
+                      </div>
+                    )}
+                    {selectedEmployee.attendance.lateDays > 0 && (
+                      <div className="flex justify-between">
+                        <span className="text-gray-600">Late Days ({selectedEmployee.attendance.lateDays})</span>
+                        <span className="font-semibold text-red-600">-৳{((selectedEmployee.attendance.lateDays / selectedEmployee.attendance.totalDays) * (selectedEmployee.basicSalary * 0.5)).toFixed(0)}</span>
+                      </div>
+                    )}
+                    {selectedEmployee.totalPenalties > 0 && (
+                      <div className="flex justify-between">
+                        <span className="text-gray-600">Penalties</span>
+                        <span className="font-semibold text-red-600">-৳{selectedEmployee.totalPenalties.toLocaleString()}</span>
+                      </div>
+                    )}
+                    <hr className="my-2 border-gray-300" />
                     <div className="flex justify-between text-lg font-bold text-red-600">
                       <span>Total Deductions</span>
-                      <span>-৳{(selectedEmployee.grossSalary * 0.06).toLocaleString()}</span>
-                    </div>
-                    <hr className="my-2" />
-                    <div className="flex justify-between text-lg font-bold text-green-600">
-                      <span>Paid Amount</span>
-                      <span>৳{selectedEmployee.paidAmount.toLocaleString()}</span>
-                    </div>
-                    <div className="flex justify-between text-lg font-bold text-orange-600">
-                      <span>Remaining Amount</span>
-                      <span>৳{(selectedEmployee.grossSalary - selectedEmployee.paidAmount).toLocaleString()}</span>
+                      <span>-৳{calculateSalary(selectedEmployee).totalDeductions.toFixed(0)}</span>
                     </div>
                   </div>
                 </div>
               </div>
 
-              {/* Attendance & Leave Summary */}
+              {/* Attendance Summary Section */}
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
-                <div>
-                  <h3 className="text-lg font-medium text-blue-600 mb-3">Attendance</h3>
+                <div className="border border-gray-200 rounded-lg p-4">
+                  <h3 className="text-lg font-semibold text-blue-600 mb-3 border-b border-blue-200 pb-2">Attendance Summary</h3>
                   <div className="space-y-2">
                     <div className="flex justify-between">
                       <span className="text-gray-600">Total Working Days</span>
-                      <span className="font-semibold">26</span>
+                      <span className="font-semibold">{selectedEmployee.attendance.totalDays}</span>
                     </div>
                     <div className="flex justify-between">
                       <span className="text-gray-600">Present Days</span>
-                      <span className="font-semibold text-green-600">24</span>
+                      <span className="font-semibold text-green-600">{selectedEmployee.attendance.presentDays}</span>
                     </div>
                     <div className="flex justify-between">
                       <span className="text-gray-600">Absent Days</span>
-                      <span className="font-semibold text-red-600">2</span>
+                      <span className="font-semibold text-red-600">{selectedEmployee.attendance.absentDays}</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span className="text-gray-600">Leave Days</span>
+                      <span className="font-semibold text-blue-600">{selectedEmployee.attendance.leaveDays}</span>
                     </div>
                     <div className="flex justify-between">
                       <span className="text-gray-600">Late Days</span>
-                      <span className="font-semibold text-yellow-600">1</span>
+                      <span className="font-semibold text-yellow-600">{selectedEmployee.attendance.lateDays}</span>
                     </div>
                   </div>
                 </div>
 
-                <div>
-                  <h3 className="text-lg font-medium text-purple-600 mb-3">Leave Details</h3>
+                <div className="border border-gray-200 rounded-lg p-4">
+                  <h3 className="text-lg font-semibold text-purple-600 mb-3 border-b border-purple-200 pb-2">Final Calculation</h3>
                   <div className="space-y-2">
                     <div className="flex justify-between">
-                      <span className="text-gray-600">Casual Leave</span>
-                      <span className="font-semibold">2 days</span>
+                      <span className="text-gray-600">Gross Salary</span>
+                      <span className="font-semibold">৳{calculateSalary(selectedEmployee).grossSalary.toLocaleString()}</span>
+                    </div>
+                    {selectedEmployee.levelOfWork === 'Worker' && selectedEmployee.overtime > 0 && (
+                      <div className="flex justify-between">
+                        <span className="text-gray-600">Overtime Payment</span>
+                        <span className="font-semibold text-blue-600">+৳{calculateSalary(selectedEmployee).overtimePayment.toLocaleString()}</span>
+                      </div>
+                    )}
+                    {selectedEmployee.levelOfWork === 'Worker' && selectedEmployee.extraOvertime > 0 && (
+                      <div className="flex justify-between">
+                        <span className="text-gray-600">Extra Overtime Payment</span>
+                        <span className="font-semibold text-purple-600">+৳{calculateSalary(selectedEmployee).extraOvertimePayment.toLocaleString()}</span>
+                      </div>
+                    )}
+                    <div className="flex justify-between">
+                      <span className="text-gray-600">Attendance Bonus</span>
+                      <span className="font-semibold text-green-600">+৳{selectedEmployee.attendanceBonus.toLocaleString()}</span>
                     </div>
                     <div className="flex justify-between">
-                      <span className="text-gray-600">Sick Leave</span>
-                      <span className="font-semibold">0 days</span>
+                      <span className="text-gray-600">Total Deductions</span>
+                      <span className="font-semibold text-red-600">-৳{calculateSalary(selectedEmployee).totalDeductions.toFixed(0)}</span>
                     </div>
-                    <div className="flex justify-between">
-                      <span className="text-gray-600">Earned Leave</span>
-                      <span className="font-semibold">0 days</span>
-                    </div>
-                    <div className="flex justify-between">
-                      <span className="text-gray-600">Maternity Leave</span>
-                      <span className="font-semibold">0 days</span>
-                    </div>
-                    <hr className="my-2" />
-                    <div className="flex justify-between font-bold">
-                      <span>Total Leave Days</span>
-                      <span>2 days</span>
+                    <hr className="my-2 border-gray-300" />
+                    <div className="flex justify-between text-xl font-bold text-green-600">
+                      <span>Net Salary</span>
+                      <span>৳{calculateSalary(selectedEmployee).netSalary.toFixed(0)}</span>
                     </div>
                   </div>
                 </div>
               </div>
 
-              {/* Overtime Details */}
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
-                <div>
-                  <label className="block text-sm font-medium text-gray-500">Overtime Hours</label>
-                  <p className="text-lg font-semibold">12 hours</p>
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-500">Rate per Hour</label>
-                  <p className="text-lg font-semibold">৳200</p>
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-500">Total Overtime</label>
-                  <p className="text-lg font-semibold text-green-600">৳2,400</p>
-                </div>
-              </div>
 
-              {/* Bank Information */}
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
-                <div>
-                  <label className="block text-sm font-medium text-gray-500">Bank Name</label>
-                  <p className="font-semibold">Sonali Bank</p>
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-500">Account Number</label>
-                  <p className="font-semibold">1234567890</p>
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-500">Branch</label>
-                  <p className="font-semibold">Dhaka Main Branch</p>
-                </div>
-              </div>
 
               {/* Action Buttons */}
               <div className="flex justify-center gap-4">

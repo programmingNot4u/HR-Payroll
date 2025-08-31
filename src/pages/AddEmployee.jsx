@@ -3,7 +3,6 @@ import { useState, useEffect } from 'react'
 const bloodGroups = ['A+', 'A-', 'B+', 'B-', 'AB+', 'AB-', 'O+', 'O-']
 const maritalStatuses = ['Single', 'Married', 'Divorced', 'Widowed']
 const educationLevels = ['Alphabetic Knowledge', 'JSC or Equivalent', 'SSC or Equivalent', 'HSC or Equivalent', 'Hon\'s', 'Master\'s', 'BSC', 'MSC', 'PHD']
-const shifts = ['Day', 'Night', 'Morning', 'Evening']
 const offDays = ['Friday', 'Saturday', 'Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday']
 const units = ['Unit 1', 'Unit 2', 'Unit 3', 'Unit 4', 'Unit 5']
 const sections = ['Cutting', 'Sewing', 'Finishing', 'Quality Control', 'Management']
@@ -79,7 +78,6 @@ export default function AddEmployee() {
     // Administration Section
     employeeId: '',
     levelOfWork: 'Worker', // Worker or Staff
-    shift: '',
     offDay: '',
     unit: '',
     designation: '',
@@ -134,19 +132,8 @@ export default function AddEmployee() {
     }))
   }
 
-  const addChild = () => {
-    setFormData(prev => ({
-      ...prev,
-      children: [...prev.children, { name: '', age: '', education: '', institute: '' }]
-    }))
-  }
-
-  const removeChild = (index) => {
-    setFormData(prev => ({
-      ...prev,
-      children: prev.children.filter((_, i) => i !== index)
-    }))
-  }
+  // Note: addChild and removeChild functions are available for future use
+  // when implementing dynamic child addition/removal functionality
 
   // Salary calculation functions
   const calculateWorkerSalary = (grossSalary) => {
@@ -888,19 +875,6 @@ export default function AddEmployee() {
               </select>
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">Shift</label>
-              <select
-                value={formData.shift}
-                onChange={(e) => updateFormData('shift', e.target.value)}
-                className="w-full h-10 rounded border border-gray-300 px-3 focus:outline-none focus:ring-2 focus:ring-orange-500"
-              >
-                <option value="">Select Shift</option>
-                {shifts.map(shift => (
-                  <option key={shift} value={shift}>{shift}</option>
-                ))}
-              </select>
-            </div>
-            <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">Off-Day</label>
               <select
                 value={formData.offDay}
@@ -913,19 +887,33 @@ export default function AddEmployee() {
                 ))}
               </select>
             </div>
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">Unit</label>
-              <select
-                value={formData.unit}
-                onChange={(e) => updateFormData('unit', e.target.value)}
-                className="w-full h-10 rounded border border-gray-300 px-3 focus:outline-none focus:ring-2 focus:ring-orange-500"
-              >
-                <option value="">Select Unit</option>
-                {units.map(unit => (
-                  <option key={unit} value={unit}>{unit}</option>
-                ))}
-              </select>
-            </div>
+            {employeeType === 'Worker' && (
+              <>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">Unit</label>
+                  <select
+                    value={formData.unit}
+                    onChange={(e) => updateFormData('unit', e.target.value)}
+                    className="w-full h-10 rounded border border-gray-300 px-3 focus:outline-none focus:ring-2 focus:ring-orange-500"
+                  >
+                    <option value="">Select Unit</option>
+                    {units.map(unit => (
+                      <option key={unit} value={unit}>{unit}</option>
+                    ))}
+                  </select>
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">Line</label>
+                  <input
+                    type="text"
+                    value={formData.line}
+                    onChange={(e) => updateFormData('line', e.target.value)}
+                    className="w-full h-10 rounded border border-gray-300 px-3 focus:outline-none focus:ring-2 focus:ring-orange-500"
+                    placeholder="Line 1, Line 2, etc."
+                  />
+                </div>
+              </>
+            )}
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">Designation</label>
               <select
@@ -952,27 +940,17 @@ export default function AddEmployee() {
                 ))}
               </select>
             </div>
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">Line</label>
-              <input
-                type="text"
-                value={formData.line}
-                onChange={(e) => updateFormData('line', e.target.value)}
-                className="w-full h-10 rounded border border-gray-300 px-3 focus:outline-none focus:ring-2 focus:ring-orange-500"
-                placeholder="Line 1, Line 2, etc."
-              />
-            </div>
-                         {employeeType === 'Worker' && (
-               <div>
-                 <label className="block text-sm font-medium text-gray-700 mb-2">Supervisor's Name</label>
-                 <input
-                   type="text"
-                   value={formData.supervisorName}
-                   onChange={(e) => updateFormData('supervisorName', e.target.value)}
-                   className="w-full h-10 rounded border border-gray-300 px-3 focus:outline-none focus:ring-2 focus:ring-orange-500"
-                 />
-               </div>
-             )}
+            {employeeType === 'Worker' && (
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">Supervisor's Name</label>
+                <input
+                  type="text"
+                  value={formData.supervisorName}
+                  onChange={(e) => updateFormData('supervisorName', e.target.value)}
+                  className="w-full h-10 rounded border border-gray-300 px-3 focus:outline-none focus:ring-2 focus:ring-orange-500"
+                />
+              </div>
+            )}
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">Gross Salary *</label>
               <input
@@ -1241,229 +1219,204 @@ export default function AddEmployee() {
 
       {/* Preview Modal */}
       {showPreview && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <div className="bg-white rounded-lg p-6 max-w-4xl max-h-[90vh] overflow-y-auto">
-            <div className="flex justify-between items-center mb-6">
-              <h2 className="text-2xl font-semibold text-gray-800">
-                Employee Preview - {employeeType}
-              </h2>
-              <button
-                onClick={() => setShowPreview(false)}
-                className="text-gray-500 hover:text-gray-700"
-              >
-                <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12" />
-                </svg>
-              </button>
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-lg shadow-2xl max-w-4xl w-full max-h-[90vh] overflow-y-auto">
+            {/* A4 Style Header */}
+            <div className="bg-gray-50 border-b border-gray-200 p-6">
+              <div className="flex justify-between items-start">
+                <div>
+                  <h1 className="text-3xl font-bold text-gray-800 mb-2">Employee Registration Form</h1>
+                  <p className="text-lg text-gray-600">Company Name: [Your Company Name]</p>
+                  <p className="text-gray-600">Form Date: {new Date().toLocaleDateString()}</p>
+                </div>
+                <div className="text-right">
+                  <div className="w-24 h-32 border-2 border-gray-300 bg-gray-100 flex items-center justify-center">
+                    {formData.picture ? (
+                      <img 
+                        src={URL.createObjectURL(formData.picture)} 
+                        alt="Employee" 
+                        className="w-20 h-28 object-cover"
+                      />
+                    ) : (
+                      <span className="text-xs text-gray-500 text-center">Photo</span>
+                    )}
+                  </div>
+                </div>
+              </div>
             </div>
 
-            {/* Preview Content */}
-            <div className="space-y-6">
+            {/* A4 Style Content */}
+            <div className="p-6 space-y-6">
               {/* Personal Information */}
-              <div className="border border-gray-200 rounded-lg p-4">
-                <h3 className="text-lg font-semibold mb-4 text-blue-600">Personal Information</h3>
+              <div className="border-2 border-gray-300 rounded-lg p-4">
+                <h3 className="text-xl font-bold mb-4 text-blue-800 border-b-2 border-blue-800 pb-2">Personal Information</h3>
                 <div className="grid grid-cols-2 gap-4 text-sm">
-                  <div>
-                    <span className="font-medium">Name (Bangla):</span> {formData.nameBangla || 'Not provided'}
+                  <div className="flex">
+                    <span className="font-bold w-32">Name (Bangla):</span>
+                    <span className="border-b border-gray-400 flex-1 px-2">{formData.nameBangla || '_________________'}</span>
                   </div>
-                  <div>
-                    <span className="font-medium">Name (English):</span> {formData.nameEnglish || 'Not provided'}
+                  <div className="flex">
+                    <span className="font-bold w-32">Name (English):</span>
+                    <span className="border-b border-gray-400 flex-1 px-2">{formData.nameEnglish || '_________________'}</span>
                   </div>
-                  <div>
-                    <span className="font-medium">Mobile:</span> {formData.mobileNumber || 'Not provided'}
+                  <div className="flex">
+                    <span className="font-bold w-32">Mobile:</span>
+                    <span className="border-b border-gray-400 flex-1 px-2">{formData.mobileNumber || '_________________'}</span>
                   </div>
-                  <div>
-                    <span className="font-medium">Nationality:</span> {formData.nationality || 'Not provided'}
+                  <div className="flex">
+                    <span className="font-bold w-32">Nationality:</span>
+                    <span className="border-b border-gray-400 flex-1 px-2">{formData.nationality || '_________________'}</span>
                   </div>
-                  <div>
-                    <span className="font-medium">Father's Name:</span> {formData.fathersName || 'Not provided'}
+                  <div className="flex">
+                    <span className="font-bold w-32">Father's Name:</span>
+                    <span className="border-b border-gray-400 flex-1 px-2">{formData.fathersName || '_________________'}</span>
                   </div>
-                  <div>
-                    <span className="font-medium">Mother's Name:</span> {formData.mothersName || 'Not provided'}
+                  <div className="flex">
+                    <span className="font-bold w-32">Mother's Name:</span>
+                    <span className="border-b border-gray-400 flex-1 px-2">{formData.mothersName || '_________________'}</span>
                   </div>
-                  <div>
-                    <span className="font-medium">Spouse Name:</span> {formData.spouseName || 'Not provided'}
+                  <div className="flex">
+                    <span className="font-bold w-32">Spouse Name:</span>
+                    <span className="border-b border-gray-400 flex-1 px-2">{formData.spouseName || '_________________'}</span>
                   </div>
-                  <div>
-                    <span className="font-medium">Date of Birth:</span> {formData.dateOfBirth || 'Not provided'}
+                  <div className="flex">
+                    <span className="font-bold w-32">Date of Birth:</span>
+                    <span className="border-b border-gray-400 flex-1 px-2">{formData.dateOfBirth || '_________________'}</span>
                   </div>
-                  <div>
-                    <span className="font-medium">NID Number:</span> {formData.nidNumber || 'Not provided'}
+                  <div className="flex">
+                    <span className="font-bold w-32">NID Number:</span>
+                    <span className="border-b border-gray-400 flex-1 px-2">{formData.nidNumber || '_________________'}</span>
                   </div>
-                  <div>
-                    <span className="font-medium">Birth Certificate:</span> {formData.birthCertificateNumber || 'Not provided'}
+                  <div className="flex">
+                    <span className="font-bold w-32">Blood Group:</span>
+                    <span className="border-b border-gray-400 flex-1 px-2">{formData.bloodGroup || '_________________'}</span>
                   </div>
-                  <div>
-                    <span className="font-medium">Blood Group:</span> {formData.bloodGroup || 'Not provided'}
+                  <div className="flex">
+                    <span className="font-bold w-32">Religion:</span>
+                    <span className="border-b border-gray-400 flex-1 px-2">{formData.religion || '_________________'}</span>
                   </div>
-                  <div>
-                    <span className="font-medium">Religion:</span> {formData.religion || 'Not provided'}
+                  <div className="flex">
+                    <span className="font-bold w-32">Marital Status:</span>
+                    <span className="border-b border-gray-400 flex-1 px-2">{formData.maritalStatus || '_________________'}</span>
                   </div>
-                  <div>
-                    <span className="font-medium">Marital Status:</span> {formData.maritalStatus || 'Not provided'}
-                  </div>
-                  <div>
-                    <span className="font-medium">Height:</span> {formData.height ? `${formData.height} cm` : 'Not provided'}
-                  </div>
-                  <div>
-                    <span className="font-medium">Weight:</span> {formData.weight ? `${formData.weight} kg` : 'Not provided'}
-                  </div>
-                  <div>
-                    <span className="font-medium">Education Level:</span> {formData.educationLevel || 'Not provided'}
-                  </div>
-                  <div>
-                    <span className="font-medium">Gender:</span> {formData.gender || 'Not provided'}
+                  <div className="flex">
+                    <span className="font-bold w-32">Gender:</span>
+                    <span className="border-b border-gray-400 flex-1 px-2">{formData.gender || '_________________'}</span>
                   </div>
                 </div>
               </div>
 
-              {/* Present Address */}
-              <div className="border border-gray-200 rounded-lg p-4">
-                <h3 className="text-lg font-semibold mb-4 text-indigo-600">Present Address</h3>
-                <div className="grid grid-cols-2 gap-4 text-sm">
+              {/* Address Information */}
+              <div className="border-2 border-gray-300 rounded-lg p-4">
+                <h3 className="text-xl font-bold mb-4 text-green-800 border-b-2 border-green-800 pb-2">Address Information</h3>
+                <div className="grid grid-cols-2 gap-6">
                   <div>
-                    <span className="font-medium">House Owner:</span> {formData.presentAddress.houseOwnerName || 'Not provided'}
-                  </div>
-                  <div>
-                    <span className="font-medium">Village:</span> {formData.presentAddress.village || 'Not provided'}
-                  </div>
-                  <div>
-                    <span className="font-medium">Post Office:</span> {formData.presentAddress.postOffice || 'Not provided'}
-                  </div>
-                  <div>
-                    <span className="font-medium">Upazilla:</span> {formData.presentAddress.upazilla || 'Not provided'}
-                  </div>
-                  <div>
-                    <span className="font-medium">District:</span> {formData.presentAddress.district || 'Not provided'}
-                  </div>
-                </div>
-              </div>
-
-              {/* Permanent Address */}
-              <div className="border border-gray-200 rounded-lg p-4">
-                <h3 className="text-lg font-semibold mb-4 text-purple-600">Permanent Address</h3>
-                <div className="grid grid-cols-2 gap-4 text-sm">
-                  <div>
-                    <span className="font-medium">Village:</span> {formData.permanentAddress.village || 'Not provided'}
-                  </div>
-                  <div>
-                    <span className="font-medium">Post Office:</span> {formData.permanentAddress.postOffice || 'Not provided'}
-                  </div>
-                  <div>
-                    <span className="font-medium">Upazilla:</span> {formData.permanentAddress.upazilla || 'Not provided'}
-                  </div>
-                  <div>
-                    <span className="font-medium">District:</span> {formData.permanentAddress.district || 'Not provided'}
-                  </div>
-                </div>
-              </div>
-
-              {/* Work Experience */}
-              {formData.hasWorkExperience === 'Yes' && formData.workExperience.some(exp => exp.companyName) && (
-                <div className="border border-gray-200 rounded-lg p-4">
-                  <h3 className="text-lg font-semibold mb-4 text-yellow-600">Work Experience</h3>
-                  <div className="space-y-3 text-sm">
-                    {formData.workExperience.filter(exp => exp.companyName).map((exp, index) => (
-                      <div key={index} className="border-l-4 border-yellow-400 pl-3">
-                        <div className="grid grid-cols-2 gap-4">
-                          <div>
-                            <span className="font-medium">Company:</span> {exp.companyName}
-                          </div>
-                          <div>
-                            <span className="font-medium">Department:</span> {exp.department}
-                          </div>
-                          <div>
-                            <span className="font-medium">Designation:</span> {exp.designation}
-                          </div>
-                          <div>
-                            <span className="font-medium">Salary:</span> {exp.salary}
-                          </div>
-                          <div>
-                            <span className="font-medium">Duration:</span> {exp.duration}
-                          </div>
-                        </div>
+                    <h4 className="font-bold text-green-700 mb-2">Present Address</h4>
+                    <div className="space-y-2 text-sm">
+                      <div className="flex">
+                        <span className="font-bold w-24">Village:</span>
+                        <span className="border-b border-gray-400 flex-1 px-2">{formData.presentAddress.village || '_________________'}</span>
                       </div>
-                    ))}
+                      <div className="flex">
+                        <span className="font-bold w-24">Post Office:</span>
+                        <span className="border-b border-gray-400 flex-1 px-2">{formData.presentAddress.postOffice || '_________________'}</span>
+                      </div>
+                      <div className="flex">
+                        <span className="font-bold w-24">Upazilla:</span>
+                        <span className="border-b border-gray-400 flex-1 px-2">{formData.presentAddress.upazilla || '_________________'}</span>
+                      </div>
+                      <div className="flex">
+                        <span className="font-bold w-24">District:</span>
+                        <span className="border-b border-gray-400 flex-1 px-2">{formData.presentAddress.district || '_________________'}</span>
+                      </div>
+                    </div>
                   </div>
-                </div>
-              )}
-
-              {/* Emergency Contact */}
-              <div className="border border-gray-200 rounded-lg p-4">
-                <h3 className="text-lg font-semibold mb-4 text-red-600">Emergency Contact</h3>
-                <div className="grid grid-cols-2 gap-4 text-sm">
                   <div>
-                    <span className="font-medium">Name:</span> {formData.emergencyContact.name || 'Not provided'}
-                  </div>
-                  <div>
-                    <span className="font-medium">Mobile:</span> {formData.emergencyContact.mobile || 'Not provided'}
-                  </div>
-                  <div>
-                    <span className="font-medium">Relation:</span> {formData.emergencyContact.relation || 'Not provided'}
+                    <h4 className="font-bold text-green-700 mb-2">Permanent Address</h4>
+                    <div className="space-y-2 text-sm">
+                      <div className="flex">
+                        <span className="font-bold w-24">Village:</span>
+                        <span className="border-b border-gray-400 flex-1 px-2">{formData.permanentAddress.village || '_________________'}</span>
+                      </div>
+                      <div className="flex">
+                        <span className="font-bold w-24">Post Office:</span>
+                        <span className="border-b border-gray-400 flex-1 px-2">{formData.permanentAddress.postOffice || '_________________'}</span>
+                      </div>
+                      <div className="flex">
+                        <span className="font-bold w-24">Upazilla:</span>
+                        <span className="border-b border-gray-400 flex-1 px-2">{formData.permanentAddress.upazilla || '_________________'}</span>
+                      </div>
+                      <div className="flex">
+                        <span className="font-bold w-24">District:</span>
+                        <span className="border-b border-gray-400 flex-1 px-2">{formData.permanentAddress.district || '_________________'}</span>
+                      </div>
+                    </div>
                   </div>
                 </div>
               </div>
 
-              {/* Administration Information */}
-              <div className="border border-gray-200 rounded-lg p-4">
-                <h3 className="text-lg font-semibold mb-4 text-orange-600">Administration Information</h3>
+              {/* Employment Information */}
+              <div className="border-2 border-gray-300 rounded-lg p-4">
+                <h3 className="text-xl font-bold mb-4 text-orange-800 border-b-2 border-orange-800 pb-2">Employment Information</h3>
                 <div className="grid grid-cols-2 gap-4 text-sm">
-                  <div>
-                    <span className="font-medium">Employee ID:</span> {formData.employeeId || 'Not provided'}
+                  <div className="flex">
+                    <span className="font-bold w-32">Employee ID:</span>
+                    <span className="border-b border-gray-400 flex-1 px-2">{formData.employeeId || '_________________'}</span>
                   </div>
-                  <div>
-                    <span className="font-medium">Level of Work:</span> {formData.levelOfWork || 'Not provided'}
+                  <div className="flex">
+                    <span className="font-bold w-32">Level of Work:</span>
+                    <span className="border-b border-gray-400 flex-1 px-2">{formData.levelOfWork || '_________________'}</span>
                   </div>
-                  <div>
-                    <span className="font-medium">Shift:</span> {formData.shift || 'Not provided'}
+                  <div className="flex">
+                    <span className="font-bold w-32">Designation:</span>
+                    <span className="border-b border-gray-400 flex-1 px-2">{formData.designation || '_________________'}</span>
                   </div>
-                  <div>
-                    <span className="font-medium">Off Day:</span> {formData.offDay || 'Not provided'}
-                  </div>
-                  <div>
-                    <span className="font-medium">Unit:</span> {formData.unit || 'Not provided'}
-                  </div>
-                  <div>
-                    <span className="font-medium">Designation:</span> {formData.designation || 'Not provided'}
-                  </div>
-                  <div>
-                    <span className="font-medium">Section:</span> {formData.section || 'Not provided'}
-                  </div>
-                  <div>
-                    <span className="font-medium">Line:</span> {formData.line || 'Not provided'}
+                  <div className="flex">
+                    <span className="font-bold w-32">Section:</span>
+                    <span className="border-b border-gray-400 flex-1 px-2">{formData.section || '_________________'}</span>
                   </div>
                   {employeeType === 'Worker' && (
-                    <div>
-                      <span className="font-medium">Supervisor:</span> {formData.supervisorName || 'Not provided'}
-                    </div>
+                    <>
+                      <div className="flex">
+                        <span className="font-bold w-32">Unit:</span>
+                        <span className="border-b border-gray-400 flex-1 px-2">{formData.unit || '_________________'}</span>
+                      </div>
+                      <div className="flex">
+                        <span className="font-bold w-32">Line:</span>
+                        <span className="border-b border-gray-400 flex-1 px-2">{formData.line || '_________________'}</span>
+                      </div>
+                      <div className="flex">
+                        <span className="font-bold w-32">Supervisor:</span>
+                        <span className="border-b border-gray-400 flex-1 px-2">{formData.supervisorName || '_________________'}</span>
+                      </div>
+                    </>
                   )}
-                  <div>
-                    <span className="font-medium">Date of Joining:</span> {formData.dateOfJoining || 'Not provided'}
+                  <div className="flex">
+                    <span className="font-bold w-32">Date of Joining:</span>
+                    <span className="border-b border-gray-400 flex-1 px-2">{formData.dateOfJoining || '_________________'}</span>
                   </div>
-                  <div>
-                    <span className="font-medium">Date of Issue:</span> {formData.dateOfIssue || 'Not provided'}
-                  </div>
-                  <div>
-                    <span className="font-medium">Gross Salary:</span> ৳{formData.grossSalary || '0'}
+                  <div className="flex">
+                    <span className="font-bold w-32">Gross Salary:</span>
+                    <span className="border-b border-gray-400 flex-1 px-2">৳{formData.grossSalary || '_________________'}</span>
                   </div>
                 </div>
               </div>
 
               {/* Salary Components */}
-              <div className="border border-gray-200 rounded-lg p-4">
-                <h3 className="text-lg font-semibold mb-4 text-green-600">Salary Components</h3>
+              <div className="border-2 border-gray-300 rounded-lg p-4">
+                <h3 className="text-xl font-bold mb-4 text-purple-800 border-b-2 border-purple-800 pb-2">Salary Breakdown</h3>
                 <div className="space-y-2 text-sm">
                   {Object.entries(formData.salaryComponents).map(([key, component]) => (
                     component.enabled && (
-                      <div key={key} className="flex justify-between">
-                        <span className="font-medium capitalize">{key.replace(/([A-Z])/g, ' $1').trim()}:</span>
-                        <span>৳{component.amount.toLocaleString()}</span>
+                      <div key={key} className="flex justify-between items-center border-b border-gray-200 pb-1">
+                        <span className="font-bold capitalize">{key.replace(/([A-Z])/g, ' $1').trim()}:</span>
+                        <span className="font-medium">৳{component.amount.toLocaleString()}</span>
                       </div>
                     )
                   ))}
-                  <div className="border-t pt-2 mt-2">
-                    <div className="flex justify-between font-semibold">
-                      <span>Total:</span>
+                  <div className="border-t-2 border-gray-400 pt-2 mt-2">
+                    <div className="flex justify-between font-bold text-lg">
+                      <span>Total Salary:</span>
                       <span>৳{Object.values(formData.salaryComponents)
                         .filter(comp => comp.enabled)
                         .reduce((sum, comp) => sum + comp.amount, 0)
@@ -1477,23 +1430,27 @@ export default function AddEmployee() {
               {employeeType === 'Worker' && (
                 <>
                   {formData.children.some(child => child.name) && (
-                    <div className="border border-gray-200 rounded-lg p-4">
-                      <h3 className="text-lg font-semibold mb-4 text-purple-600">Children Information</h3>
+                    <div className="border-2 border-gray-300 rounded-lg p-4">
+                      <h3 className="text-xl font-bold mb-4 text-indigo-800 border-b-2 border-indigo-800 pb-2">Children Information</h3>
                       <div className="space-y-3 text-sm">
                         {formData.children.filter(child => child.name).map((child, index) => (
-                          <div key={index} className="border-l-4 border-purple-400 pl-3">
+                          <div key={index} className="border-l-4 border-indigo-400 pl-3">
                             <div className="grid grid-cols-2 gap-4">
-                              <div>
-                                <span className="font-medium">Name:</span> {child.name}
+                              <div className="flex">
+                                <span className="font-bold w-20">Name:</span>
+                                <span className="border-b border-gray-400 flex-1 px-2">{child.name}</span>
                               </div>
-                              <div>
-                                <span className="font-medium">Age:</span> {child.age}
+                              <div className="flex">
+                                <span className="font-bold w-20">Age:</span>
+                                <span className="border-b border-gray-400 flex-1 px-2">{child.age}</span>
                               </div>
-                              <div>
-                                <span className="font-medium">Education:</span> {child.education}
+                              <div className="flex">
+                                <span className="font-bold w-20">Education:</span>
+                                <span className="border-b border-gray-400 flex-1 px-2">{child.education}</span>
                               </div>
-                              <div>
-                                <span className="font-medium">Institute:</span> {child.institute}
+                              <div className="flex">
+                                <span className="font-bold w-20">Institute:</span>
+                                <span className="border-b border-gray-400 flex-1 px-2">{child.institute}</span>
                               </div>
                             </div>
                           </div>
@@ -1503,17 +1460,19 @@ export default function AddEmployee() {
                   )}
 
                   {formData.references.some(ref => ref.name) && (
-                    <div className="border border-gray-200 rounded-lg p-4">
-                      <h3 className="text-lg font-semibold mb-4 text-indigo-600">References</h3>
+                    <div className="border-2 border-gray-300 rounded-lg p-4">
+                      <h3 className="text-xl font-bold mb-4 text-red-800 border-b-2 border-red-800 pb-2">References</h3>
                       <div className="space-y-3 text-sm">
                         {formData.references.filter(ref => ref.name).map((ref, index) => (
-                          <div key={index} className="border-l-4 border-indigo-400 pl-3">
+                          <div key={index} className="border-l-4 border-red-400 pl-3">
                             <div className="grid grid-cols-2 gap-4">
-                              <div>
-                                <span className="font-medium">Name:</span> {ref.name}
+                              <div className="flex">
+                                <span className="font-bold w-20">Name:</span>
+                                <span className="border-b border-gray-400 flex-1 px-2">{ref.name}</span>
                               </div>
-                              <div>
-                                <span className="font-medium">Mobile:</span> {ref.mobile}
+                              <div className="flex">
+                                <span className="font-bold w-20">Mobile:</span>
+                                <span className="border-b border-gray-400 flex-1 px-2">{ref.mobile}</span>
                               </div>
                             </div>
                           </div>
@@ -1523,47 +1482,84 @@ export default function AddEmployee() {
                   )}
                 </>
               )}
+
+              {/* Emergency Contact */}
+              <div className="border-2 border-gray-300 rounded-lg p-4">
+                <h3 className="text-xl font-bold mb-4 text-red-800 border-b-2 border-red-800 pb-2">Emergency Contact</h3>
+                <div className="grid grid-cols-2 gap-4 text-sm">
+                  <div className="flex">
+                    <span className="font-bold w-32">Name:</span>
+                    <span className="border-b border-gray-400 flex-1 px-2">{formData.emergencyContact.name || '_________________'}</span>
+                  </div>
+                  <div className="flex">
+                    <span className="font-bold w-32">Mobile:</span>
+                    <span className="border-b border-gray-400 flex-1 px-2">{formData.emergencyContact.mobile || '_________________'}</span>
+                  </div>
+                  <div className="flex">
+                    <span className="font-bold w-32">Relation:</span>
+                    <span className="border-b border-gray-400 flex-1 px-2">{formData.emergencyContact.relation || '_________________'}</span>
+                  </div>
+                </div>
+              </div>
+
+              {/* Signature Section */}
+              <div className="border-2 border-gray-300 rounded-lg p-4">
+                <div className="grid grid-cols-2 gap-8">
+                  <div className="text-center">
+                    <div className="border-b-2 border-gray-400 h-16 mb-2"></div>
+                    <p className="text-sm font-bold">Employee Signature</p>
+                    <p className="text-xs text-gray-600">Date: {new Date().toLocaleDateString()}</p>
+                  </div>
+                  <div className="text-center">
+                    <div className="border-b-2 border-gray-400 h-16 mb-2"></div>
+                    <p className="text-sm font-bold">HR Manager Signature</p>
+                    <p className="text-xs text-gray-600">Date: {new Date().toLocaleDateString()}</p>
+                  </div>
+                </div>
+              </div>
             </div>
 
             {/* Preview Actions */}
-            <div className="flex justify-between items-center mt-6 pt-4 border-t">
-              <div className="flex gap-3">
-                <button
-                  onClick={() => {
-                    // Generate and download PDF functionality would go here
-                    alert('PDF download functionality will be implemented here')
-                  }}
-                  className="px-4 py-2 bg-gray-600 text-white rounded hover:bg-gray-700"
-                >
-                  Download PDF
-                </button>
-                <button
-                  onClick={() => {
-                    // Share functionality would go here
-                    alert('Share functionality will be implemented here')
-                  }}
-                  className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700"
-                >
-                  Share
-                </button>
-              </div>
-              <div className="flex gap-3">
-                <button
-                  onClick={() => setShowPreview(false)}
-                  className="px-4 py-2 bg-gray-300 text-gray-700 rounded hover:bg-gray-400"
-                >
-                  Close
-                </button>
-                <button
-                  onClick={() => {
-                    setShowPreview(false)
-                    // Submit the form
-                    document.querySelector('form').requestSubmit()
-                  }}
-                  className="px-6 py-2 bg-green-600 text-white rounded hover:bg-green-700 font-medium"
-                >
-                  Submit & Add to Dashboard
-                </button>
+            <div className="bg-gray-50 border-t border-gray-200 p-6">
+              <div className="flex justify-between items-center">
+                <div className="flex gap-3">
+                  <button
+                    onClick={() => {
+                      // Generate and download PDF functionality would go here
+                      alert('PDF download functionality will be implemented here')
+                    }}
+                    className="px-4 py-2 bg-gray-600 text-white rounded hover:bg-gray-700"
+                  >
+                    Download PDF
+                  </button>
+                  <button
+                    onClick={() => {
+                      // Share functionality would go here
+                      alert('Share functionality will be implemented here')
+                    }}
+                    className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700"
+                  >
+                    Share
+                  </button>
+                </div>
+                <div className="flex gap-3">
+                  <button
+                    onClick={() => setShowPreview(false)}
+                    className="px-4 py-2 bg-gray-300 text-gray-700 rounded hover:bg-gray-400"
+                  >
+                    Close
+                  </button>
+                  <button
+                    onClick={() => {
+                      setShowPreview(false)
+                      // Submit the form
+                      document.querySelector('form').requestSubmit()
+                    }}
+                    className="px-6 py-2 bg-green-600 text-white rounded hover:bg-green-700 font-medium"
+                  >
+                    Submit & Add to Dashboard
+                  </button>
+                </div>
               </div>
             </div>
           </div>
