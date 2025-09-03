@@ -12,7 +12,6 @@ export default function EmployeeDetails() {
     searchTerm: ''
   })
   const [stats, setStats] = useState({})
-  const [isLoading, setIsLoading] = useState(true)
 
   useEffect(() => {
     loadEmployees()
@@ -26,10 +25,8 @@ export default function EmployeeDetails() {
       setEmployees(allEmployees)
       setFilteredEmployees(allEmployees)
       setStats(employeeStats)
-      setIsLoading(false)
     } catch (error) {
       console.error('Error loading employees:', error)
-      setIsLoading(false)
     }
   }
 
@@ -97,13 +94,7 @@ export default function EmployeeDetails() {
     setSelectedEmployee(null)
   }
 
-  if (isLoading) {
-    return (
-      <div className="flex items-center justify-center h-64">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
-      </div>
-    )
-  }
+
 
   return (
     <div className="space-y-6">

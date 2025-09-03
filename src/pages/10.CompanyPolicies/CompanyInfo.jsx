@@ -2,11 +2,11 @@ import { useState } from 'react'
 
 const CompanyInfo = () => {
   const [companyInfo, setCompanyInfo] = useState({
-    name: 'RPCAL Garments Ltd.',
+    name: 'RP Creations & Apparels Limited',
     address: '123 Industrial Area, Dhaka, Bangladesh',
     phone: '+880 1234-567890',
-    email: 'hr@rpcal.com',
-    website: 'www.rpcal.com',
+    email: 'hr@rpcreations.com',
+    website: 'www.rpcreations.com',
     taxId: 'TAX-123456789',
     registrationNumber: 'REG-987654321',
     foundedYear: '2010',

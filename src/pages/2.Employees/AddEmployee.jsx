@@ -11,11 +11,23 @@ const designations = ['Senior Tailor', 'Quality Inspector', 'Cutting Master', 'F
 export default function AddEmployee() {
   const [employeeType, setEmployeeType] = useState('Worker') // 'Worker' or 'Staff'
   const [showPreview, setShowPreview] = useState(false)
+  const [hasSeenPreview, setHasSeenPreview] = useState(false)
+
+  // Function to format date to DD/MM/YYYY
+  const formatDate = (dateString) => {
+    if (!dateString) return '_________________'
+    const date = new Date(dateString)
+    const day = String(date.getDate()).padStart(2, '0')
+    const month = String(date.getMonth() + 1).padStart(2, '0')
+    const year = date.getFullYear()
+    return `${day}/${month}/${year}`
+  }
   const [formData, setFormData] = useState({
     // Personal Information
     nameBangla: '',
     nameEnglish: '',
-    mobileNumber: '',
+    mobileNumber: '+880 ',
+    emailAddress: '',
     nationality: 'Bangladeshi',
     fathersName: '',
     mothersName: '',
@@ -62,16 +74,26 @@ export default function AddEmployee() {
       { companyName: '', department: '', designation: '', salary: '', duration: '' }
     ],
     
-    // References
-    references: [
-      { name: '', mobile: '' },
-      { name: '', mobile: '' }
+    // Process Expertise (for Workers only)
+    processExpertise: [
+      { operation: '', machine: '', duration: '' }
+    ],
+    
+    // Process Efficiency (for Workers only)
+    processEfficiency: [
+      { itemDescription: '', processDeliveryPerHour: '', remarks: '' }
+    ],
+    
+    // Nominee (renamed from References)
+    nominee: [
+      { name: '', mobile: '+880 ', nidBirthCertificate: '' },
+      { name: '', mobile: '+880 ', nidBirthCertificate: '' }
     ],
     
     // Emergency Contact
     emergencyContact: {
       name: '',
-      mobile: '',
+      mobile: '+880 ',
       relation: ''
     },
     
@@ -129,6 +151,34 @@ export default function AddEmployee() {
     setFormData(prev => ({
       ...prev,
       workExperience: prev.workExperience.filter((_, i) => i !== index)
+    }))
+  }
+
+  const addProcessExpertise = () => {
+    setFormData(prev => ({
+      ...prev,
+      processExpertise: [...prev.processExpertise, { operation: '', machine: '', duration: '' }]
+    }))
+  }
+
+  const removeProcessExpertise = (index) => {
+    setFormData(prev => ({
+      ...prev,
+      processExpertise: prev.processExpertise.filter((_, i) => i !== index)
+    }))
+  }
+
+  const addProcessEfficiency = () => {
+    setFormData(prev => ({
+      ...prev,
+      processEfficiency: [...prev.processEfficiency, { itemDescription: '', processDeliveryPerHour: '', remarks: '' }]
+    }))
+  }
+
+  const removeProcessEfficiency = (index) => {
+    setFormData(prev => ({
+      ...prev,
+      processEfficiency: prev.processEfficiency.filter((_, i) => i !== index)
     }))
   }
 
@@ -239,6 +289,7 @@ export default function AddEmployee() {
 
   const handlePreview = () => {
     setShowPreview(true)
+    setHasSeenPreview(true)
   }
 
   const handleSubmit = (e) => {
@@ -246,17 +297,17 @@ export default function AddEmployee() {
     
     // Validate required fields based on employee type
     if (employeeType === 'Worker') {
-      // For workers, validate children and references
+      // For workers, validate children and nominee
       const hasValidChildren = formData.children.some(child => child.name && child.age)
-      const hasValidReferences = formData.references.some(ref => ref.name && ref.mobile)
+      const hasValidNominee = formData.nominee.some(nominee => nominee.name && nominee.mobile)
       
       if (!hasValidChildren) {
         alert('Please provide at least one child\'s information for workers.')
         return
       }
       
-      if (!hasValidReferences) {
-        alert('Please provide at least one reference for workers.')
+      if (!hasValidNominee) {
+        alert('Please provide at least one nominee for workers.')
         return
       }
     }
@@ -393,8 +444,17 @@ export default function AddEmployee() {
                 value={formData.mobileNumber}
                 onChange={(e) => updateFormData('mobileNumber', e.target.value)}
                 className="w-full h-10 rounded border border-gray-300 px-3 focus:outline-none focus:ring-2 focus:ring-orange-500"
-                placeholder="+880 1712-345678"
                 required
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">Email Address</label>
+              <input
+                type="email"
+                value={formData.emailAddress}
+                onChange={(e) => updateFormData('emailAddress', e.target.value)}
+                className="w-full h-10 rounded border border-gray-300 px-3 focus:outline-none focus:ring-2 focus:ring-orange-500"
+                placeholder="example@email.com"
               />
             </div>
             <div>
@@ -603,7 +663,7 @@ export default function AddEmployee() {
           <h2 className="text-xl font-semibold mb-6">Present Address</h2>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">House Owner Name</label>
+              <label className="block text-sm font-medium text-gray-700 mb-2">House Number/ House Name</label>
               <input
                 type="text"
                 value={formData.presentAddress.houseOwnerName}
@@ -612,7 +672,7 @@ export default function AddEmployee() {
               />
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">Village</label>
+              <label className="block text-sm font-medium text-gray-700 mb-2">Village/Area</label>
               <input
                 type="text"
                 value={formData.presentAddress.village}
@@ -630,7 +690,7 @@ export default function AddEmployee() {
               />
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">Upazilla</label>
+              <label className="block text-sm font-medium text-gray-700 mb-2">Upazilla/City Corporation</label>
               <input
                 type="text"
                 value={formData.presentAddress.upazilla}
@@ -655,7 +715,7 @@ export default function AddEmployee() {
           <h2 className="text-xl font-semibold mb-6">Permanent Address</h2>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">Village</label>
+              <label className="block text-sm font-medium text-gray-700 mb-2">Village/Area</label>
               <input
                 type="text"
                 value={formData.permanentAddress.village}
@@ -673,7 +733,7 @@ export default function AddEmployee() {
               />
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">Upazilla</label>
+              <label className="block text-sm font-medium text-gray-700 mb-2">Upazilla/City Corporation</label>
               <input
                 type="text"
                 value={formData.permanentAddress.upazilla}
@@ -782,36 +842,169 @@ export default function AddEmployee() {
           )}
         </div>
 
-        {/* References - Only for Workers */}
+        {/* Process Expertise - Only for Workers */}
         {employeeType === 'Worker' && (
           <div className="rounded border border-gray-200 bg-white p-6">
-            <h2 className="text-xl font-semibold mb-6">References</h2>
+            <h2 className="text-xl font-semibold mb-6">Process Expertise</h2>
             <div className="space-y-4">
-              {formData.references.map((ref, index) => (
-                <div key={index} className="grid grid-cols-1 md:grid-cols-2 gap-4 p-4 border border-gray-200 rounded">
+              {formData.processExpertise.map((expertise, index) => (
+                <div key={index} className="grid grid-cols-1 md:grid-cols-3 gap-4 p-4 border border-gray-200 rounded">
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">Name</label>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">Operation</label>
                     <input
                       type="text"
-                      value={ref.name}
-                      onChange={(e) => updateArrayField('references', index, 'name', e.target.value)}
+                      value={expertise.operation}
+                      onChange={(e) => updateArrayField('processExpertise', index, 'operation', e.target.value)}
                       className="w-full h-10 rounded border border-gray-300 px-3 focus:outline-none focus:ring-2 focus:ring-orange-500"
+                      placeholder="Neck Joint"
                     />
                   </div>
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">Mobile</label>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">Machine</label>
                     <input
-                      type="tel"
-                      value={ref.mobile}
-                      onChange={(e) => updateArrayField('references', index, 'mobile', e.target.value)}
+                      type="text"
+                      value={expertise.machine}
+                      onChange={(e) => updateArrayField('processExpertise', index, 'machine', e.target.value)}
                       className="w-full h-10 rounded border border-gray-300 px-3 focus:outline-none focus:ring-2 focus:ring-orange-500"
+                      placeholder="Machine"
                     />
+                  </div>
+                  <div className="flex items-end gap-2">
+                    <div className="flex-1">
+                      <label className="block text-sm font-medium text-gray-700 mb-2">Duration</label>
+                      <input
+                        type="text"
+                        value={expertise.duration}
+                        onChange={(e) => updateArrayField('processExpertise', index, 'duration', e.target.value)}
+                        className="w-full h-10 rounded border border-gray-300 px-3 focus:outline-none focus:ring-2 focus:ring-orange-500"
+                        placeholder="2 YEARS"
+                      />
+                    </div>
+                    {formData.processExpertise.length > 1 && (
+                      <button
+                        type="button"
+                        onClick={() => removeProcessExpertise(index)}
+                        className="h-10 px-3 bg-red-500 text-white rounded hover:bg-red-600"
+                      >
+                        Remove
+                      </button>
+                    )}
                   </div>
                 </div>
               ))}
+              <button
+                type="button"
+                onClick={addProcessExpertise}
+                className="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600"
+              >
+                Add More Process Expertise
+              </button>
             </div>
           </div>
         )}
+
+        {/* Process Efficiency - Only for Workers */}
+        {employeeType === 'Worker' && (
+          <div className="rounded border border-gray-200 bg-white p-6">
+            <h2 className="text-xl font-semibold mb-6">Process Efficiency</h2>
+            <div className="space-y-4">
+              {formData.processEfficiency.map((efficiency, index) => (
+                <div key={index} className="grid grid-cols-1 md:grid-cols-3 gap-4 p-4 border border-gray-200 rounded">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">Item Description</label>
+                    <input
+                      type="text"
+                      value={efficiency.itemDescription}
+                      onChange={(e) => updateArrayField('processEfficiency', index, 'itemDescription', e.target.value)}
+                      className="w-full h-10 rounded border border-gray-300 px-3 focus:outline-none focus:ring-2 focus:ring-orange-500"
+                      placeholder="T-SHIRT"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">Process Delivery Per Hour</label>
+                    <input
+                      type="text"
+                      value={efficiency.processDeliveryPerHour}
+                      onChange={(e) => updateArrayField('processEfficiency', index, 'processDeliveryPerHour', e.target.value)}
+                      className="w-full h-10 rounded border border-gray-300 px-3 focus:outline-none focus:ring-2 focus:ring-orange-500"
+                      placeholder="50 PIECES"
+                    />
+                  </div>
+                  <div className="flex items-end gap-2">
+                    <div className="flex-1">
+                      <label className="block text-sm font-medium text-gray-700 mb-2">Remarks</label>
+                      <input
+                        type="text"
+                        value={efficiency.remarks}
+                        onChange={(e) => updateArrayField('processEfficiency', index, 'remarks', e.target.value)}
+                        className="w-full h-10 rounded border border-gray-300 px-3 focus:outline-none focus:ring-2 focus:ring-orange-500"
+                        placeholder="EXCELLENT QUALITY"
+                      />
+                    </div>
+                    {formData.processEfficiency.length > 1 && (
+                      <button
+                        type="button"
+                        onClick={() => removeProcessEfficiency(index)}
+                        className="h-10 px-3 bg-red-500 text-white rounded hover:bg-red-600"
+                      >
+                        Remove
+                      </button>
+                    )}
+                  </div>
+                </div>
+              ))}
+              <button
+                type="button"
+                onClick={addProcessEfficiency}
+                className="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600"
+              >
+                Add More Process Efficiency
+              </button>
+            </div>
+          </div>
+        )}
+
+        {/* Nominee - For both Workers and Staff */}
+        <div className="rounded border border-gray-200 bg-white p-6">
+          <h2 className="text-xl font-semibold mb-6">Nominee</h2>
+          <div className="space-y-4">
+            {formData.nominee.map((nominee, index) => (
+              <div key={index} className="grid grid-cols-1 md:grid-cols-3 gap-4 p-4 border border-gray-200 rounded">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">Name</label>
+                  <input
+                    type="text"
+                    value={nominee.name}
+                    onChange={(e) => updateArrayField('nominee', index, 'name', e.target.value)}
+                    className="w-full h-10 rounded border border-gray-300 px-3 focus:outline-none focus:ring-2 focus:ring-orange-500"
+                    placeholder="Hassan"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">Mobile</label>
+                  <input
+                    type="tel"
+                    value={nominee.mobile}
+                    onChange={(e) => updateArrayField('nominee', index, 'mobile', e.target.value)}
+                    className="w-full h-10 rounded border border-gray-300 px-3 focus:outline-none focus:ring-2 focus:ring-orange-500"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">NID/Birth Certificate Number</label>
+                  <input
+                    type="text"
+                    value={nominee.nidBirthCertificate}
+                    onChange={(e) => updateArrayField('nominee', index, 'nidBirthCertificate', e.target.value)}
+                    className="w-full h-10 rounded border border-gray-300 px-3 focus:outline-none focus:ring-2 focus:ring-orange-500"
+                    placeholder="1234567890123"
+                  />
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+
+
 
         {/* Emergency Contact */}
         <div className="rounded border border-gray-200 bg-white p-6">
@@ -1209,7 +1402,15 @@ export default function AddEmployee() {
             See Preview
           </button>
           <button
-            type="submit"
+            type="button"
+            onClick={() => {
+              if (!hasSeenPreview) {
+                alert('Please review the form by clicking "See Preview" before submitting.')
+                return
+              }
+              // If preview has been shown, allow direct submission
+              document.querySelector('form').requestSubmit()
+            }}
             className="px-8 py-3 bg-green-600 text-white rounded hover:bg-green-700 font-medium"
           >
             Add {employeeType}
@@ -1221,21 +1422,29 @@ export default function AddEmployee() {
       {showPreview && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
           <div className="bg-white rounded-lg shadow-2xl max-w-4xl w-full max-h-[90vh] overflow-y-auto">
-            {/* A4 Style Header */}
-            <div className="bg-gray-50 border-b border-gray-200 p-6">
+            {/* Interactive Header */}
+            <div className="bg-gradient-to-r from-blue-50 to-indigo-50 border-b border-gray-200 p-6">
               <div className="flex justify-between items-start">
                 <div>
                   <h1 className="text-3xl font-bold text-gray-800 mb-2">Employee Registration Form</h1>
-                  <p className="text-lg text-gray-600">Company Name: [Your Company Name]</p>
-                  <p className="text-gray-600">Form Date: {new Date().toLocaleDateString()}</p>
+                  <p className="text-lg text-gray-600">Company Name: RP Creations & Apparels Limited</p>
+                  <p className="text-gray-600">Form Date: {formatDate(new Date().toISOString().split('T')[0])}</p>
+                  <div className="mt-3 flex gap-2">
+                    <span className="px-3 py-1 bg-blue-100 text-blue-800 rounded-full text-sm font-medium">
+                      {employeeType} Registration
+                    </span>
+                    <span className="px-3 py-1 bg-green-100 text-green-800 rounded-full text-sm font-medium">
+                      ID: {formData.employeeId || 'TBD'}
+                    </span>
+                  </div>
                 </div>
                 <div className="text-right">
-                  <div className="w-24 h-32 border-2 border-gray-300 bg-gray-100 flex items-center justify-center">
+                  <div className="w-24 h-32 border-2 border-gray-300 bg-gray-100 flex items-center justify-center rounded-lg shadow-sm">
                     {formData.picture ? (
                       <img 
                         src={URL.createObjectURL(formData.picture)} 
                         alt="Employee" 
-                        className="w-20 h-28 object-cover"
+                        className="w-20 h-28 object-cover rounded"
                       />
                     ) : (
                       <span className="text-xs text-gray-500 text-center">Photo</span>
@@ -1244,6 +1453,8 @@ export default function AddEmployee() {
                 </div>
               </div>
             </div>
+
+
 
             {/* A4 Style Content */}
             <div className="p-6 space-y-6">
@@ -1264,6 +1475,10 @@ export default function AddEmployee() {
                     <span className="border-b border-gray-400 flex-1 px-2">{formData.mobileNumber || '_________________'}</span>
                   </div>
                   <div className="flex">
+                    <span className="font-bold w-32">Email:</span>
+                    <span className="border-b border-gray-400 flex-1 px-2">{formData.emailAddress || '_________________'}</span>
+                  </div>
+                  <div className="flex">
                     <span className="font-bold w-32">Nationality:</span>
                     <span className="border-b border-gray-400 flex-1 px-2">{formData.nationality || '_________________'}</span>
                   </div>
@@ -1281,7 +1496,7 @@ export default function AddEmployee() {
                   </div>
                   <div className="flex">
                     <span className="font-bold w-32">Date of Birth:</span>
-                    <span className="border-b border-gray-400 flex-1 px-2">{formData.dateOfBirth || '_________________'}</span>
+                    <span className="border-b border-gray-400 flex-1 px-2">{formatDate(formData.dateOfBirth)}</span>
                   </div>
                   <div className="flex">
                     <span className="font-bold w-32">NID Number:</span>
@@ -1393,7 +1608,7 @@ export default function AddEmployee() {
                   )}
                   <div className="flex">
                     <span className="font-bold w-32">Date of Joining:</span>
-                    <span className="border-b border-gray-400 flex-1 px-2">{formData.dateOfJoining || '_________________'}</span>
+                    <span className="border-b border-gray-400 flex-1 px-2">{formatDate(formData.dateOfJoining)}</span>
                   </div>
                   <div className="flex">
                     <span className="font-bold w-32">Gross Salary:</span>
@@ -1425,6 +1640,37 @@ export default function AddEmployee() {
                   </div>
                 </div>
               </div>
+
+              {/* Working Experience */}
+              {formData.workExperience.some(exp => exp.company) && (
+                <div className="border-2 border-gray-300 rounded-lg p-4">
+                  <h3 className="text-xl font-bold mb-4 text-cyan-800 border-b-2 border-cyan-800 pb-2">Working Experience</h3>
+                  <div className="space-y-3 text-sm">
+                    {formData.workExperience.filter(exp => exp.company).map((exp, index) => (
+                      <div key={index} className="border-l-4 border-cyan-400 pl-3">
+                        <div className="grid grid-cols-2 gap-4">
+                          <div className="flex">
+                            <span className="font-bold w-20">Company:</span>
+                            <span className="border-b border-gray-400 flex-1 px-2">{exp.company}</span>
+                          </div>
+                          <div className="flex">
+                            <span className="font-bold w-20">Position:</span>
+                            <span className="border-b border-gray-400 flex-1 px-2">{exp.position}</span>
+                          </div>
+                          <div className="flex">
+                            <span className="font-bold w-20">Duration:</span>
+                            <span className="border-b border-gray-400 flex-1 px-2">{exp.duration}</span>
+                          </div>
+                          <div className="flex">
+                            <span className="font-bold w-20">Salary:</span>
+                            <span className="border-b border-gray-400 flex-1 px-2">৳{exp.salary}</span>
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
 
               {/* Conditional Sections for Workers */}
               {employeeType === 'Worker' && (
@@ -1459,20 +1705,76 @@ export default function AddEmployee() {
                     </div>
                   )}
 
-                  {formData.references.some(ref => ref.name) && (
+                  {formData.processExpertise.some(expertise => expertise.operation) && (
                     <div className="border-2 border-gray-300 rounded-lg p-4">
-                      <h3 className="text-xl font-bold mb-4 text-red-800 border-b-2 border-red-800 pb-2">References</h3>
+                      <h3 className="text-xl font-bold mb-4 text-yellow-800 border-b-2 border-yellow-800 pb-2">Process Expertise</h3>
                       <div className="space-y-3 text-sm">
-                        {formData.references.filter(ref => ref.name).map((ref, index) => (
+                        {formData.processExpertise.filter(expertise => expertise.operation).map((expertise, index) => (
+                          <div key={index} className="border-l-4 border-yellow-400 pl-3">
+                            <div className="grid grid-cols-3 gap-4">
+                              <div className="flex">
+                                <span className="font-bold w-20">Operation:</span>
+                                <span className="border-b border-gray-400 flex-1 px-2">{expertise.operation}</span>
+                              </div>
+                              <div className="flex">
+                                <span className="font-bold w-20">Machine:</span>
+                                <span className="border-b border-gray-400 flex-1 px-2">{expertise.machine}</span>
+                              </div>
+                              <div className="flex">
+                                <span className="font-bold w-20">Duration:</span>
+                                <span className="border-b border-gray-400 flex-1 px-2">{expertise.duration}</span>
+                              </div>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+
+                  {formData.processEfficiency.some(efficiency => efficiency.itemDescription) && (
+                    <div className="border-2 border-gray-300 rounded-lg p-4">
+                      <h3 className="text-xl font-bold mb-4 text-teal-800 border-b-2 border-teal-800 pb-2">Process Efficiency</h3>
+                      <div className="space-y-3 text-sm">
+                        {formData.processEfficiency.filter(efficiency => efficiency.itemDescription).map((efficiency, index) => (
+                          <div key={index} className="border-l-4 border-teal-400 pl-3">
+                            <div className="grid grid-cols-3 gap-4">
+                              <div className="flex">
+                                <span className="font-bold w-20">Item Description:</span>
+                                <span className="border-b border-gray-400 flex-1 px-2">{efficiency.itemDescription}</span>
+                              </div>
+                              <div className="flex">
+                                <span className="font-bold w-20">Delivery Per Hour:</span>
+                                <span className="border-b border-gray-400 flex-1 px-2">{efficiency.processDeliveryPerHour}</span>
+                              </div>
+                              <div className="flex">
+                                <span className="font-bold w-20">Remarks:</span>
+                                <span className="border-b border-gray-400 flex-1 px-2">{efficiency.remarks}</span>
+                              </div>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+
+                  {formData.nominee.some(nominee => nominee.name) && (
+                    <div className="border-2 border-gray-300 rounded-lg p-4">
+                      <h3 className="text-xl font-bold mb-4 text-red-800 border-b-2 border-red-800 pb-2">Nominee</h3>
+                      <div className="space-y-3 text-sm">
+                        {formData.nominee.filter(nominee => nominee.name).map((nominee, index) => (
                           <div key={index} className="border-l-4 border-red-400 pl-3">
                             <div className="grid grid-cols-2 gap-4">
                               <div className="flex">
                                 <span className="font-bold w-20">Name:</span>
-                                <span className="border-b border-gray-400 flex-1 px-2">{ref.name}</span>
+                                <span className="border-b border-gray-400 flex-1 px-2">{nominee.name}</span>
                               </div>
                               <div className="flex">
                                 <span className="font-bold w-20">Mobile:</span>
-                                <span className="border-b border-gray-400 flex-1 px-2">{ref.mobile}</span>
+                                <span className="border-b border-gray-400 flex-1 px-2">{nominee.mobile}</span>
+                              </div>
+                              <div className="flex">
+                                <span className="font-bold w-20">NID/Birth Certificate:</span>
+                                <span className="border-b border-gray-400 flex-1 px-2">{nominee.nidBirthCertificate}</span>
                               </div>
                             </div>
                           </div>
@@ -1485,7 +1787,7 @@ export default function AddEmployee() {
 
               {/* Emergency Contact */}
               <div className="border-2 border-gray-300 rounded-lg p-4">
-                <h3 className="text-xl font-bold mb-4 text-red-800 border-b-2 border-red-800 pb-2">Emergency Contact</h3>
+                <h3 className="text-xl font-bold mb-4 text-red-800 border-b-2 border-red-800 pb-2">Emergency Contact Person</h3>
                 <div className="grid grid-cols-2 gap-4 text-sm">
                   <div className="flex">
                     <span className="font-bold w-32">Name:</span>
@@ -1502,52 +1804,370 @@ export default function AddEmployee() {
                 </div>
               </div>
 
+              {/* Nominee Section for Staff */}
+              {employeeType === 'Staff' && formData.nominee.some(nominee => nominee.name) && (
+                <div className="border-2 border-gray-300 rounded-lg p-4">
+                  <h3 className="text-xl font-bold mb-4 text-red-800 border-b-2 border-red-800 pb-2">Nominee</h3>
+                  <div className="space-y-3 text-sm">
+                    {formData.nominee.filter(nominee => nominee.name).map((nominee, index) => (
+                      <div key={index} className="border-l-4 border-red-400 pl-3">
+                        <div className="grid grid-cols-2 gap-4">
+                          <div className="flex">
+                            <span className="font-bold w-20">Name:</span>
+                            <span className="border-b border-gray-400 flex-1 px-2">{nominee.name}</span>
+                          </div>
+                          <div className="flex">
+                            <span className="font-bold w-20">Mobile:</span>
+                            <span className="border-b border-gray-400 flex-1 px-2">{nominee.mobile}</span>
+                          </div>
+                          <div className="flex">
+                            <span className="font-bold w-20">NID/Birth Certificate:</span>
+                            <span className="border-b border-gray-400 flex-1 px-2">{nominee.nidBirthCertificate}</span>
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+
               {/* Signature Section */}
               <div className="border-2 border-gray-300 rounded-lg p-4">
                 <div className="grid grid-cols-2 gap-8">
                   <div className="text-center">
                     <div className="border-b-2 border-gray-400 h-16 mb-2"></div>
                     <p className="text-sm font-bold">Employee Signature</p>
-                    <p className="text-xs text-gray-600">Date: {new Date().toLocaleDateString()}</p>
+                    <p className="text-xs text-gray-600">Date: {formatDate(new Date().toISOString().split('T')[0])}</p>
                   </div>
                   <div className="text-center">
                     <div className="border-b-2 border-gray-400 h-16 mb-2"></div>
                     <p className="text-sm font-bold">HR Manager Signature</p>
-                    <p className="text-xs text-gray-600">Date: {new Date().toLocaleDateString()}</p>
+                    <p className="text-xs text-gray-600">Date: {formatDate(new Date().toISOString().split('T')[0])}</p>
                   </div>
                 </div>
               </div>
             </div>
 
-            {/* Preview Actions */}
-            <div className="bg-gray-50 border-t border-gray-200 p-6">
-              <div className="flex justify-between items-center">
-                <div className="flex gap-3">
+            {/* Interactive Preview Actions */}
+            <div className="bg-gradient-to-r from-gray-50 to-gray-100 border-t border-gray-200 p-6">
+              <div className="flex flex-col md:flex-row justify-between items-center gap-4">
+                <div className="flex flex-wrap gap-3">
                   <button
                     onClick={() => {
-                      // Generate and download PDF functionality would go here
-                      alert('PDF download functionality will be implemented here')
+                      // Print functionality
+                      const printWindow = window.open('', '_blank')
+                      // Get only the content without action buttons
+                      const previewContent = document.querySelector('.bg-white.rounded-lg.shadow-2xl')
+                      
+                      // Create a clean copy for printing
+                      const cleanContent = previewContent.cloneNode(true)
+                      const cleanActionButtons = cleanContent.querySelector('.bg-gradient-to-r.from-gray-50.to-gray-100')
+                      if (cleanActionButtons) {
+                        cleanActionButtons.remove()
+                      }
+                      const printContent = cleanContent.innerHTML
+                      printWindow.document.write(`
+                        <html>
+                          <head>
+                            <title>Employee Registration Form - ${formData.nameEnglish}</title>
+                            <style>
+                              body { 
+                                font-family: Arial, sans-serif; 
+                                margin: 0; 
+                                padding: 20px; 
+                                background: white;
+                                color: #1f2937;
+                              }
+                              .bg-gradient-to-r { 
+                                background: linear-gradient(to right, #eff6ff, #eef2ff) !important; 
+                              }
+                              .bg-gray-50 { background-color: #f9fafb !important; }
+                              .bg-gray-100 { background-color: #f3f4f6 !important; }
+                              .border-b, .border-t, .border-gray-200 { border: 1px solid #e5e7eb !important; }
+                              .rounded-lg { border-radius: 8px !important; }
+                              .rounded-full { border-radius: 50% !important; }
+                              .shadow-2xl { box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25) !important; }
+                              .shadow-sm { box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05) !important; }
+                              .flex { display: flex !important; }
+                              .grid { display: grid !important; }
+                              .hidden { display: none !important; }
+                              .text-center { text-align: center !important; }
+                              .font-bold { font-weight: bold !important; }
+                              .font-semibold { font-weight: 600 !important; }
+                              .font-medium { font-weight: 500 !important; }
+                              .text-sm { font-size: 14px !important; }
+                              .text-lg { font-size: 18px !important; }
+                              .text-xl { font-size: 20px !important; }
+                              .text-3xl { font-size: 30px !important; }
+                              .mb-2 { margin-bottom: 8px !important; }
+                              .mb-3 { margin-bottom: 12px !important; }
+                              .mb-4 { margin-bottom: 16px !important; }
+                              .mb-6 { margin-bottom: 24px !important; }
+                              .p-4 { padding: 16px !important; }
+                              .p-6 { padding: 24px !important; }
+                              .px-2 { padding-left: 8px !important; padding-right: 8px !important; }
+                              .py-1 { padding-top: 4px !important; padding-bottom: 4px !important; }
+                              .py-2 { padding-top: 8px !important; padding-bottom: 8px !important; }
+                              .gap-2 { gap: 8px !important; }
+                              .gap-3 { gap: 12px !important; }
+                              .gap-4 { gap: 16px !important; }
+                              .gap-6 { gap: 24px !important; }
+                              .w-20 { width: 80px !important; }
+                              .w-24 { width: 96px !important; }
+                              .w-32 { width: 128px !important; }
+                              .h-16 { height: 64px !important; }
+                              .h-28 { height: 112px !important; }
+                              .h-32 { height: 128px !important; }
+                              .border-2 { border-width: 2px !important; }
+                              .border-b-2 { border-bottom-width: 2px !important; }
+                              .border-l-4 { border-left-width: 4px !important; }
+                              .border-gray-300 { border-color: #d1d5db !important; }
+                              .border-gray-400 { border-color: #9ca3af !important; }
+                              .border-blue-800 { border-color: #1e40af !important; }
+                              .border-green-800 { border-color: #166534 !important; }
+                              .border-orange-800 { border-color: #9a3412 !important; }
+                              .border-purple-800 { border-color: #6b21a8 !important; }
+                              .border-cyan-800 { border-color: #155e75 !important; }
+                              .border-indigo-800 { border-color: #3730a3 !important; }
+                              .border-yellow-800 { border-color: #854d0e !important; }
+                              .border-teal-800 { border-color: #115e59 !important; }
+                              .border-red-800 { border-color: #991b1b !important; }
+                              .text-blue-800 { color: #1e40af !important; }
+                              .text-green-800 { color: #166534 !important; }
+                              .text-orange-800 { color: #9a3412 !important; }
+                              .text-purple-800 { color: #6b21a8 !important; }
+                              .text-cyan-800 { color: #155e75 !important; }
+                              .text-indigo-800 { color: #3730a3 !important; }
+                              .text-yellow-800 { color: #854d0e !important; }
+                              .text-teal-800 { color: #115e59 !important; }
+                              .text-red-800 { color: #991b1b !important; }
+                              .text-gray-600 { color: #4b5563 !important; }
+                              .text-gray-700 { color: #374151 !important; }
+                              .text-gray-800 { color: #1f2937 !important; }
+                              .bg-blue-100 { background-color: #dbeafe !important; }
+                              .bg-green-100 { background-color: #dcfce7 !important; }
+                              .bg-blue-50 { background-color: #eff6ff !important; }
+                              .bg-indigo-50 { background-color: #eef2ff !important; }
+                              .bg-cyan-400 { background-color: #22d3ee !important; }
+                              .bg-indigo-400 { background-color: #818cf8 !important; }
+                              .bg-yellow-400 { background-color: #facc15 !important; }
+                              .bg-teal-400 { background-color: #2dd4bf !important; }
+                              .bg-red-400 { background-color: #f87171 !important; }
+                              .pb-2 { padding-bottom: 8px !important; }
+                              .pl-3 { padding-left: 12px !important; }
+                              .space-y-2 > * + * { margin-top: 8px !important; }
+                              .space-y-3 > * + * { margin-top: 12px !important; }
+                              .space-y-6 > * + * { margin-top: 24px !important; }
+                              .grid-cols-2 { grid-template-columns: repeat(2, 1fr) !important; }
+                              .grid-cols-3 { grid-template-columns: repeat(3, 1fr) !important; }
+                              .grid-cols-4 { grid-template-columns: repeat(4, 1fr) !important; }
+                              .md\\:grid-cols-2 { grid-template-columns: repeat(2, 1fr) !important; }
+                              .md\\:grid-cols-3 { grid-template-columns: repeat(3, 1fr) !important; }
+                              .md\\:grid-cols-4 { grid-template-columns: repeat(4, 1fr) !important; }
+                              .md\\:grid-cols-5 { grid-template-columns: repeat(5, 1fr) !important; }
+                              .md\\:col-span-2 { grid-column: span 2 / span 2 !important; }
+                              .justify-between { justify-content: space-between !important; }
+                              .items-center { align-items: center !important; }
+                              .items-start { align-items: flex-start !important; }
+                              .text-right { text-align: right !important; }
+                              .flex-1 { flex: 1 1 0% !important; }
+                              .object-cover { object-fit: cover !important; }
+                              .toLocaleString { font-variant-numeric: tabular-nums !important; }
+                              @media print {
+                                body { margin: 0; padding: 10px; }
+                                .bg-gradient-to-r { background: linear-gradient(to right, #eff6ff, #eef2ff) !important; }
+                                .shadow-2xl, .shadow-sm { box-shadow: none !important; }
+                              }
+                            </style>
+                          </head>
+                          <body>
+                            ${printContent}
+                          </body>
+                        </html>
+                      `)
+                      printWindow.document.close()
+                      printWindow.print()
                     }}
-                    className="px-4 py-2 bg-gray-600 text-white rounded hover:bg-gray-700"
+                    className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 flex items-center gap-2 transition-colors"
                   >
+                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z" />
+                    </svg>
+                    Print Form
+                  </button>
+                  <button
+                    onClick={() => {
+                      // Download as PDF functionality
+                      // Create clean content without action buttons
+                      const previewContent = document.querySelector('.bg-white.rounded-lg.shadow-2xl')
+                      const cleanContent = previewContent.cloneNode(true)
+                      const cleanActionButtons = cleanContent.querySelector('.bg-gradient-to-r.from-gray-50.to-gray-100')
+                      if (cleanActionButtons) {
+                        cleanActionButtons.remove()
+                      }
+                      
+                      // For now, open print dialog with clean content
+                      const printWindow = window.open('', '_blank')
+                      printWindow.document.write(`
+                        <html>
+                          <head>
+                            <title>Employee Registration Form - ${formData.nameEnglish}</title>
+                            <style>
+                              body { 
+                                font-family: Arial, sans-serif; 
+                                margin: 0; 
+                                padding: 20px; 
+                                background: white;
+                                color: #1f2937;
+                              }
+                              .bg-gradient-to-r { 
+                                background: linear-gradient(to right, #eff6ff, #eef2ff) !important; 
+                              }
+                              .bg-gray-50 { background-color: #f9fafb !important; }
+                              .bg-gray-100 { background-color: #f3f4f6 !important; }
+                              .border-b, .border-t, .border-gray-200 { border: 1px solid #e5e7eb !important; }
+                              .rounded-lg { border-radius: 8px !important; }
+                              .rounded-full { border-radius: 50% !important; }
+                              .shadow-2xl { box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25) !important; }
+                              .shadow-sm { box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05) !important; }
+                              .flex { display: flex !important; }
+                              .grid { display: grid !important; }
+                              .hidden { display: none !important; }
+                              .text-center { text-align: center !important; }
+                              .font-bold { font-weight: bold !important; }
+                              .font-semibold { font-weight: 600 !important; }
+                              .font-medium { font-weight: 500 !important; }
+                              .text-sm { font-size: 14px !important; }
+                              .text-lg { font-size: 18px !important; }
+                              .text-xl { font-size: 20px !important; }
+                              .text-3xl { font-size: 30px !important; }
+                              .mb-2 { margin-bottom: 8px !important; }
+                              .mb-3 { margin-bottom: 12px !important; }
+                              .mb-4 { margin-bottom: 16px !important; }
+                              .mb-6 { margin-bottom: 24px !important; }
+                              .p-4 { padding: 16px !important; }
+                              .p-6 { padding: 24px !important; }
+                              .px-2 { padding-left: 8px !important; padding-right: 8px !important; }
+                              .py-1 { padding-top: 4px !important; padding-bottom: 4px !important; }
+                              .py-2 { padding-top: 8px !important; padding-bottom: 8px !important; }
+                              .gap-2 { gap: 8px !important; }
+                              .gap-3 { gap: 12px !important; }
+                              .gap-4 { gap: 16px !important; }
+                              .gap-6 { gap: 24px !important; }
+                              .w-20 { width: 80px !important; }
+                              .w-24 { width: 96px !important; }
+                              .w-32 { width: 128px !important; }
+                              .h-16 { height: 64px !important; }
+                              .h-28 { height: 112px !important; }
+                              .h-32 { height: 128px !important; }
+                              .border-2 { border-width: 2px !important; }
+                              .border-b-2 { border-bottom-width: 2px !important; }
+                              .border-l-4 { border-left-width: 4px !important; }
+                              .border-gray-300 { border-color: #d1d5db !important; }
+                              .border-gray-400 { border-color: #9ca3af !important; }
+                              .border-blue-800 { border-color: #1e40af !important; }
+                              .border-green-800 { border-color: #166534 !important; }
+                              .border-orange-800 { border-color: #9a3412 !important; }
+                              .border-purple-800 { border-color: #6b21a8 !important; }
+                              .border-cyan-800 { border-color: #155e75 !important; }
+                              .border-indigo-800 { border-color: #3730a3 !important; }
+                              .border-yellow-800 { border-color: #854d0e !important; }
+                              .border-teal-800 { border-color: #115e59 !important; }
+                              .border-red-800 { border-color: #991b1b !important; }
+                              .text-blue-800 { color: #1e40af !important; }
+                              .text-green-800 { color: #166534 !important; }
+                              .text-orange-800 { color: #9a3412 !important; }
+                              .text-purple-800 { color: #6b21a8 !important; }
+                              .text-cyan-800 { color: #155e75 !important; }
+                              .text-indigo-800 { color: #3730a3 !important; }
+                              .text-yellow-800 { color: #854d0e !important; }
+                              .text-teal-800 { color: #115e59 !important; }
+                              .text-red-800 { color: #991b1b !important; }
+                              .text-gray-600 { color: #4b5563 !important; }
+                              .text-gray-700 { color: #374151 !important; }
+                              .text-gray-800 { color: #1f2937 !important; }
+                              .bg-blue-100 { background-color: #dbeafe !important; }
+                              .bg-green-100 { background-color: #dcfce7 !important; }
+                              .bg-blue-50 { background-color: #eff6ff !important; }
+                              .bg-indigo-50 { background-color: #eef2ff !important; }
+                              .bg-cyan-400 { background-color: #22d3ee !important; }
+                              .bg-indigo-400 { background-color: #818cf8 !important; }
+                              .bg-yellow-400 { background-color: #facc15 !important; }
+                              .bg-teal-400 { background-color: #2dd4bf !important; }
+                              .bg-red-400 { background-color: #f87171 !important; }
+                              .pb-2 { padding-bottom: 8px !important; }
+                              .pl-3 { padding-left: 12px !important; }
+                              .space-y-2 > * + * { margin-top: 8px !important; }
+                              .space-y-3 > * + * { margin-top: 12px !important; }
+                              .space-y-6 > * + * { margin-top: 24px !important; }
+                              .grid-cols-2 { grid-template-columns: repeat(2, 1fr) !important; }
+                              .grid-cols-3 { grid-template-columns: repeat(3, 1fr) !important; }
+                              .grid-cols-4 { grid-template-columns: repeat(4, 1fr) !important; }
+                              .md\\:grid-cols-2 { grid-template-columns: repeat(2, 1fr) !important; }
+                              .md\\:grid-cols-3 { grid-template-columns: repeat(3, 1fr) !important; }
+                              .md\\:grid-cols-4 { grid-template-columns: repeat(4, 1fr) !important; }
+                              .md\\:grid-cols-5 { grid-template-columns: repeat(5, 1fr) !important; }
+                              .md\\:col-span-2 { grid-column: span 2 / span 2 !important; }
+                              .justify-between { justify-content: space-between !important; }
+                              .items-center { align-items: center !important; }
+                              .items-start { align-items: flex-start !important; }
+                              .text-right { text-align: right !important; }
+                              .flex-1 { flex: 1 1 0% !important; }
+                              .object-cover { object-fit: cover !important; }
+                              .toLocaleString { font-variant-numeric: tabular-nums !important; }
+                              @media print {
+                                body { margin: 0; padding: 10px; }
+                                .bg-gradient-to-r { background: linear-gradient(to right, #eff6ff, #eef2ff) !important; }
+                                .shadow-2xl, .shadow-sm { box-shadow: none !important; }
+                              }
+                            </style>
+                          </head>
+                          <body>
+                            ${cleanContent.innerHTML}
+                          </body>
+                        </html>
+                      `)
+                      printWindow.document.close()
+                      printWindow.print()
+                    }}
+                    className="px-4 py-2 bg-purple-600 text-white rounded hover:bg-purple-700 flex items-center gap-2 transition-colors"
+                  >
+                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                    </svg>
                     Download PDF
                   </button>
                   <button
                     onClick={() => {
-                      // Share functionality would go here
-                      alert('Share functionality will be implemented here')
+                      // Share functionality
+                      const shareData = {
+                        title: 'Employee Registration Form',
+                        text: `Employee: ${formData.nameEnglish || 'Draft'}\nID: ${formData.employeeId || 'TBD'}\nType: ${employeeType}`,
+                        url: window.location.href
+                      }
+                      
+                      if (navigator.share && navigator.canShare && navigator.canShare(shareData)) {
+                        navigator.share(shareData)
+                      } else {
+                        // Fallback: copy to clipboard
+                        navigator.clipboard.writeText(shareData.text)
+                        alert('Employee info copied to clipboard!')
+                      }
                     }}
-                    className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700"
+                    className="px-4 py-2 bg-green-600 text-white rounded hover:bg-green-700 flex items-center gap-2 transition-colors"
                   >
+                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.367 2.684 3 3 0 00-5.367-2.684z" />
+                    </svg>
                     Share
                   </button>
                 </div>
                 <div className="flex gap-3">
                   <button
                     onClick={() => setShowPreview(false)}
-                    className="px-4 py-2 bg-gray-300 text-gray-700 rounded hover:bg-gray-400"
+                    className="px-4 py-2 bg-gray-300 text-gray-700 rounded hover:bg-gray-400 transition-colors"
                   >
-                    Close
+                    Close Preview
                   </button>
                   <button
                     onClick={() => {
@@ -1555,7 +2175,7 @@ export default function AddEmployee() {
                       // Submit the form
                       document.querySelector('form').requestSubmit()
                     }}
-                    className="px-6 py-2 bg-green-600 text-white rounded hover:bg-green-700 font-medium"
+                    className="px-6 py-2 bg-green-600 text-white rounded hover:bg-green-700 font-medium transition-colors"
                   >
                     Submit & Add to Dashboard
                   </button>
