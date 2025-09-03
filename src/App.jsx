@@ -3,44 +3,42 @@
 import { useState, useMemo } from 'react'
 import Sidebar from './components/Sidebar'
 import Navbar from './components/Navbar'
-import Overview from './pages/Overview'
-import Reports from './pages/Reports'
-import EmployeeDashboard from './pages/EmployeeDashboard'
-import AddEmployee from './pages/AddEmployee'
-import EmployeeDetails from './pages/EmployeeDetails'
-import LeaveRequest from './pages/LeaveRequest'
-import SalaryPayslips from './pages/SalaryPayslips'
-import DailyAttendance from './pages/DailyAttendance'
-import Timesheet from './pages/Timesheet'
-import CompanyInfo from './pages/settings/CompanyInfo'
-import PayrollPolicies from './pages/settings/PayrollPolicies'
-import LeavePolicies from './pages/settings/LeavePolicies'
-import NotificationSettings from './pages/settings/NotificationSettings'
-import AssetInventory from './pages/AssetInventory'
-import AssignAsset from './pages/AssignAsset'
-import AssetReturn from './pages/AssetReturn'
-import AssetMaintenance from './pages/AssetMaintenance'
-import AuditLog from './pages/AuditLog'
-import UserRoles from './pages/UserRoles'
-import Permissions from './pages/Permissions'
-import AccessControl from './pages/AccessControl'
-import Policies from './pages/Policies'
-import Contracts from './pages/Contracts'
-import EmployeeDocuments from './pages/EmployeeDocuments'
-import Templates from './pages/Templates'
-import NoticesAnnouncements from './pages/NoticesAnnouncements'
-import Events from './pages/Events'
-import Holidays from './pages/Holidays'
-import TrainingSessions from './pages/TrainingSessions'
-import GoalsKPIs from './pages/GoalsKPIs'
-import Appraisals from './pages/Appraisals'
-import Feedback from './pages/Feedback'
-import Promotions from './pages/Promotions'
-import JobOpenings from './pages/JobOpenings'
-import Candidates from './pages/Candidates'
-import InterviewSchedule from './pages/InterviewSchedule'
-import Onboarding from './pages/Onboarding'
-import BonusesPenalties from './pages/DeductionsBenefits'
+import Overview from './pages/1.Dashborad/Overview'
+import Reports from './pages/1.Dashborad/Reports'
+import EmployeeDashboard from './pages/2.Employees/EmployeeDashboard'
+import AddEmployee from './pages/2.Employees/AddEmployee'
+import EmployeeDetails from './pages/2.Employees/EmployeeDetails'
+import EmployeePortal from './pages/2.Employees/EmployeePortal'
+
+import SalaryPayslips from './pages/3.Payroll/SalaryPayslips'
+import Payslip from './pages/3.Payroll/Payslip'
+import DeductionsBenefits from './pages/3.Payroll/DeductionsBenefits'
+import DailyAttendance from './pages/4.Attendance/DailyAttendance'
+import Timesheet from './pages/4.Attendance/Timesheet'
+import LeaveRequest from './pages/4.Attendance/LeaveRequest'
+import Holidays from './pages/4.Attendance/Holidays'
+import LeavePolicies from './pages/4.Attendance/LeavePolicies'
+import JobOpenings from './pages/5.Recruitment/JobOpenings'
+import Candidates from './pages/5.Recruitment/Candidates'
+import InterviewSchedule from './pages/5.Recruitment/InterviewSchedule'
+import Onboarding from './pages/5.Recruitment/Onboarding'
+import Appraisals from './pages/5.Recruitment/Appraisals'
+import GoalsKPIs from './pages/6.Performance/GoalsKPIs'
+import Feedback from './pages/6.Performance/Feedback'
+import Promotions from './pages/6.Performance/Promotions'
+import AssetInventory from './pages/7.Assets/AssetInventory'
+import AssignAsset from './pages/7.Assets/AssignAsset'
+import AssetReturn from './pages/7.Assets/AssetReturn'
+import AssetMaintenance from './pages/7.Assets/AssetMaintenance'
+import CompanyInfo from './pages/10.CompanyPolicies/CompanyInfo'
+import Events from './pages/10.CompanyPolicies/Events'
+import NoticesAnnouncements from './pages/10.CompanyPolicies/NoticesAnnouncements'
+import PayrollPolicies from './pages/10.CompanyPolicies/PayrollPolicies'
+import Policies from './pages/10.CompanyPolicies/Policies'
+import TrainingSessions from './pages/10.CompanyPolicies/TrainingSessions'
+import AuditLog from './pages/9.AuditLog/AuditLog'
+import NotificationSettings from './pages/11.Settings/NotificationSettings'
+import Templates from './pages/11.Settings/Templates'
 
 function App() {
   const [selectedItem, setSelectedItem] = useState('Overview')
@@ -55,65 +53,26 @@ function App() {
       case 'Employee Dashboard':
         return <EmployeeDashboard />
                   case 'Employee Details':
-              return <EmployeeDetails />
-            case 'Add Employee':
-              return <AddEmployee />
-            case 'Leave Requests':
-              return <LeaveRequest />
+        return <EmployeeDetails />
+      case 'Add Employee':
+        return <AddEmployee />
+      case 'Employee Portal':
+        return <EmployeePortal />
+
       case 'Salary & Payslips':
         return <SalaryPayslips />
+      case 'Bonuses & Penalties':
+        return <DeductionsBenefits />
       case 'Daily Attendance':
         return <DailyAttendance />
       case 'Timesheets':
         return <Timesheet />
-      case 'Company Info':
-        return <CompanyInfo />
-      case 'Payroll Policies':
-        return <PayrollPolicies />
-      case 'Leave Policies':
-        return <LeavePolicies />
-      case 'Notification Settings':
-        return <NotificationSettings />
-      case 'Asset Inventory':
-        return <AssetInventory />
-      case 'Assign Asset':
-        return <AssignAsset />
-      case 'Asset Return':
-        return <AssetReturn />
-      case 'Maintenance':
-        return <AssetMaintenance />
-      case 'Audit Log':
-        return <AuditLog />
-      case 'User Roles':
-        return <UserRoles />
-      case 'Permissions':
-        return <Permissions />
-      case 'Access Control':
-        return <AccessControl />
-      case 'Policies':
-        return <Policies />
-      case 'Contracts':
-        return <Contracts />
-      case 'Employee Documents':
-        return <EmployeeDocuments />
-      case 'Templates':
-        return <Templates />
-      case 'Notices & Announcements':
-        return <NoticesAnnouncements />
-      case 'Events':
-        return <Events />
+      case 'Leave Requests':
+        return <LeaveRequest />
       case 'Holidays':
         return <Holidays />
-      case 'Training Sessions':
-        return <TrainingSessions />
-      case 'Goals & KPIs':
-        return <GoalsKPIs />
-      case 'Appraisals':
-        return <Appraisals />
-      case 'Feedback':
-        return <Feedback />
-      case 'Promotions':
-        return <Promotions />
+      case 'Leave Policies':
+        return <LeavePolicies />
       case 'Job Openings':
         return <JobOpenings />
       case 'Candidates':
@@ -122,8 +81,41 @@ function App() {
         return <InterviewSchedule />
       case 'Onboarding':
         return <Onboarding />
-      case 'Bonuses & Penalties':
-        return <BonusesPenalties />
+      case 'Appraisals':
+        return <Appraisals />
+      case 'Goals & KPIs':
+        return <GoalsKPIs />
+      case 'Feedback':
+        return <Feedback />
+      case 'Promotions':
+        return <Promotions />
+      case 'Asset Inventory':
+        return <AssetInventory />
+      case 'Assign Asset':
+        return <AssignAsset />
+      case 'Asset Return':
+        return <AssetReturn />
+      case 'Maintenance':
+        return <AssetMaintenance />
+      case 'Notices & Announcements':
+        return <NoticesAnnouncements />
+      case 'Events':
+        return <Events />
+      case 'Training Sessions':
+        return <TrainingSessions />
+      case 'Company Info':
+        return <CompanyInfo />
+      case 'Payroll Policies':
+        return <PayrollPolicies />
+      case 'Policies':
+        return <Policies />
+      case 'Audit Log':
+        return <AuditLog />
+
+      case 'Notification Settings':
+        return <NotificationSettings />
+      case 'Templates':
+        return <Templates />
       default:
         return (
           <div>

@@ -39,10 +39,10 @@ const SectionIcon = ({ name, selected = false, highlighted = false }) => {
           <path d="M3 13h4v8H3v-8zm7-6h4v14h-4V7zm7 3h4v11h-4V10z" />
         </svg>
       )
-    case 'Company Activities':
+    case 'Company Details':
       return (
         <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" className={common}>
-          <path d="M3 3h8v8H3V3zm10 0h8v8h-8V3zM3 13h8v8H3v-8zm10 0h8v8h-8v-8z" />
+          <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z" />
         </svg>
       )
     case 'Assets':
@@ -70,7 +70,7 @@ const SectionIcon = ({ name, selected = false, highlighted = false }) => {
           <path d="M19.14 12.936a7.963 7.963 0 000-1.872l2.036-1.58-1.5-2.598-2.41.97a7.994 7.994 0 00-1.62-.94l-.36-2.56h-3l-.36 2.56c-.57.22-1.11.52-1.62.94l-2.41-.97-1.5 2.598 2.04 1.58c-.05.31-.08.62-.08.936s.03.626.08.936l-2.04 1.58 1.5 2.598 2.41-.97c.51.42 1.05.72 1.62.94l.36 2.56h3l.36-2.56c.57-.22 1.11-.52 1.62-.94l2.41.97 1.5-2.598-2.04-1.58zM12 15.5a3.5 3.5 0 110-7 3.5 3.5 0 010 7z" />
         </svg>
       )
-    case 'Company Documents':
+    case 'Company Policies':
       return (
         <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" className={common}>
           <path d="M6 2h7l5 5v15H6V2zm7 1.5V8h4.5L13 3.5z" />
@@ -92,7 +92,7 @@ const sections = [
   },
   {
     title: 'Employees',
-    items: ['Employee Dashboard', 'Employee Details', 'Add Employee'],
+    items: ['Employee Dashboard', 'Employee Details', 'Add Employee', 'Employee Portal'],
   },
   {
     title: 'Payroll',
@@ -100,19 +100,19 @@ const sections = [
   },
   {
     title: 'Attendance',
-    items: ['Daily Attendance', 'Timesheets', 'Leave Requests'],
+    items: ['Daily Attendance', 'Timesheets', 'Leave Requests', 'Holidays', 'Leave Policies'],
   },
   {
     title: 'Recruitment',
-    items: ['Job Openings', 'Candidates', 'Interview Schedule', 'Onboarding'],
+    items: ['Job Openings', 'Candidates', 'Interview Schedule', 'Onboarding', 'Appraisals'],
   },
   {
     title: 'Performance',
-    items: ['Goals & KPIs', 'Appraisals', 'Feedback', 'Promotions'],
+    items: ['Goals & KPIs', 'Feedback', 'Promotions'],
   },
   {
-    title: 'Company Activities',
-    items: ['Notices & Announcements', 'Events', 'Holidays', 'Training Sessions'],
+    title: 'Company Details',
+    items: ['Company Info'],
   },
   {
     title: 'Assets',
@@ -123,17 +123,14 @@ const sections = [
     items: ['Audit Log'],
   },
 
+
   {
-    title: 'User Management',
-    items: ['User Roles', 'Permissions', 'Access Control'],
+    title: 'Company Policies',
+    items: ['Policies', 'Payroll Policies', 'Notices & Announcements', 'Events', 'Training Sessions'],
   },
   {
     title: 'Settings',
-    items: ['Company Info', 'Payroll Policies', 'Leave Policies', 'Notification Settings'],
-  },
-  {
-    title: 'Company Documents',
-    items: ['Policies', 'Contracts', 'Employee Documents', 'Templates'],
+    items: ['Notification Settings', 'Templates'],
   },
 ]
 

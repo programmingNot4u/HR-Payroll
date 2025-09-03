@@ -1,5 +1,5 @@
 import { useState, useMemo, useEffect } from 'react'
-import employeeService from '../services/employeeService'
+import employeeService from '../../services/employeeService'
 
 // Sample employee data with more details
 const sampleEmployees = [
@@ -158,7 +158,7 @@ export default function EmployeeDashboard() {
   useEffect(() => {
     const loadEmployees = async () => {
       try {
-        const allEmployees = employeeService.getAllEmployees()
+        const allEmployees = await employeeService.getAllEmployees()
         setEmployees(allEmployees)
       } catch (error) {
         console.error('Error loading employees:', error)
@@ -172,6 +172,8 @@ export default function EmployeeDashboard() {
 
   // Calculate comprehensive statistics
   const stats = useMemo(() => {
+    if (!Array.isArray(employees)) return {}
+    
     const total = employees.length
     const active = employees.filter(emp => emp.status === 'Active').length
     const inactive = employees.filter(emp => emp.status === 'InActive').length

@@ -11,6 +11,7 @@ import {
   Tooltip,
   Legend,
   RadialLinearScale,
+  Filler,
 } from 'chart.js'
 import { Line, Doughnut, Bar, Radar, PolarArea } from 'react-chartjs-2'
 
@@ -25,6 +26,7 @@ ChartJS.register(
   Tooltip,
   Legend,
   RadialLinearScale,
+  Filler,
 )
 
 // Sample data for comprehensive overview

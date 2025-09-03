@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react'
-import employeeService from '../services/employeeService'
+import employeeService from '../../services/employeeService'
 
 export default function EmployeeDetails() {
   const [employees, setEmployees] = useState([])
@@ -18,10 +18,10 @@ export default function EmployeeDetails() {
     loadEmployees()
   }, [])
 
-  const loadEmployees = () => {
+  const loadEmployees = async () => {
     try {
-      const allEmployees = employeeService.getAllEmployees()
-      const employeeStats = employeeService.getEmployeeStats()
+      const allEmployees = await employeeService.getAllEmployees()
+      const employeeStats = await employeeService.getEmployeeStats()
       
       setEmployees(allEmployees)
       setFilteredEmployees(allEmployees)
