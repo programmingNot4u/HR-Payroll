@@ -297,7 +297,7 @@ export default function EmployeeDetails() {
                     </span>
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                    {new Date(employee.joiningDate).toLocaleDateString()}
+                    {new Date(employee.joiningDate).toLocaleDateString('en-GB')}
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
                     <button
@@ -354,7 +354,7 @@ export default function EmployeeDetails() {
                     <div><span className="font-medium">Department:</span> {selectedEmployee.department}</div>
                     <div><span className="font-medium">Level:</span> {selectedEmployee.levelOfWork}</div>
                     <div><span className="font-medium">Status:</span> {selectedEmployee.status}</div>
-                    <div><span className="font-medium">Joining Date:</span> {new Date(selectedEmployee.joiningDate).toLocaleDateString()}</div>
+                    <div><span className="font-medium">Joining Date:</span> {new Date(selectedEmployee.joiningDate).toLocaleDateString('en-GB')}</div>
                   </div>
                 </div>
 

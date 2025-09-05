@@ -276,10 +276,10 @@ export default function Holidays() {
                   <td className="px-6 py-4 whitespace-nowrap">
                     <div className="flex items-center gap-2">
                       <span className={`px-2 py-1 rounded-full text-xs font-medium ${getMonthColor(holiday.date)}`}>
-                        {new Date(holiday.date).toLocaleDateString('en-US', { month: 'short' })}
+                        {new Date(holiday.date).toLocaleDateString('en-GB', { month: 'short' })}
                       </span>
                       <span className="text-sm text-gray-900">
-                        {new Date(holiday.date).toLocaleDateString('en-US', { 
+                        {new Date(holiday.date).toLocaleDateString('en-GB', { 
                           day: 'numeric', 
                           year: 'numeric' 
                         })}

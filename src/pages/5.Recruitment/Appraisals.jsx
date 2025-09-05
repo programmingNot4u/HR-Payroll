@@ -406,7 +406,7 @@ export default function Appraisals() {
                   </div>
                   <div>
                     <p className="text-sm text-gray-500">Review Date</p>
-                    <p className="text-sm font-medium text-gray-900">{new Date(appraisal.reviewDate).toLocaleDateString()}</p>
+                    <p className="text-sm font-medium text-gray-900">{new Date(appraisal.reviewDate).toLocaleDateString('en-GB')}</p>
                   </div>
                 </div>
 

@@ -1,6 +1,6 @@
 
 
-import { useState, useMemo } from 'react'
+import { useState, useMemo, useEffect } from 'react'
 import Sidebar from './components/Sidebar'
 import Navbar from './components/Navbar'
 import Overview from './pages/1.Dashborad/Overview'
@@ -39,9 +39,19 @@ import TrainingSessions from './pages/10.CompanyPolicies/TrainingSessions'
 import AuditLog from './pages/9.AuditLog/AuditLog'
 import NotificationSettings from './pages/11.Settings/NotificationSettings'
 import Templates from './pages/11.Settings/Templates'
+import OrganizationalMetrics from './pages/11.Settings/OrganizationalMetrics'
 
 function App() {
-  const [selectedItem, setSelectedItem] = useState('Overview')
+  // Initialize selectedItem from localStorage or default to 'Overview'
+  const [selectedItem, setSelectedItem] = useState(() => {
+    const savedItem = localStorage.getItem('selectedPage')
+    return savedItem || 'Overview'
+  })
+
+  // Save selectedItem to localStorage whenever it changes
+  useEffect(() => {
+    localStorage.setItem('selectedPage', selectedItem)
+  }, [selectedItem])
 
   // HR Admin Dashboard
   const Content = useMemo(() => {
@@ -116,6 +126,8 @@ function App() {
         return <NotificationSettings />
       case 'Templates':
         return <Templates />
+      case 'Organizational Metrics':
+        return <OrganizationalMetrics />
       default:
         return (
           <div>

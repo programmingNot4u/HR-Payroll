@@ -213,7 +213,7 @@ export default function DailyAttendance() {
       <div className="grid grid-cols-1 md:grid-cols-7 gap-6">
         <div className="rounded border border-gray-200 bg-white p-6">
           <div className="text-sm text-gray-500">Date</div>
-          <div className="mt-1 text-lg font-semibold">{new Date(selectedDate).toLocaleDateString()}</div>
+          <div className="mt-1 text-lg font-semibold">{new Date(selectedDate).toLocaleDateString('en-GB')}</div>
         </div>
         <div className="rounded border border-gray-200 bg-white p-6">
           <div className="text-sm text-gray-500">Total Employees</div>
@@ -412,7 +412,7 @@ export default function DailyAttendance() {
 
              {/* Summary */}
        <div className="rounded border border-gray-200 bg-white p-6">
-         <h3 className="text-lg font-medium mb-4">Summary for {new Date(selectedDate).toLocaleDateString()}</h3>
+         <h3 className="text-lg font-medium mb-4">Summary for {new Date(selectedDate).toLocaleDateString('en-GB')}</h3>
          <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
            <div className="text-center">
              <div className="text-2xl font-semibold text-green-600">{presentEmployees}</div>

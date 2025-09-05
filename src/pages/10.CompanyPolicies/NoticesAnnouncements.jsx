@@ -128,7 +128,7 @@ export default function NoticesAnnouncements() {
                 <p className="text-gray-600 mb-3">{notice.content}</p>
                 <div className="flex items-center gap-4 text-sm text-gray-500">
                   <span>By: {notice.author}</span>
-                  <span>Date: {new Date(notice.date).toLocaleDateString()}</span>
+                  <span>Date: {new Date(notice.date).toLocaleDateString('en-GB')}</span>
                   <span className={`px-2 py-1 rounded-full text-xs font-medium ${priorities[notice.priority]}`}>
                     {notice.priority}
                   </span>

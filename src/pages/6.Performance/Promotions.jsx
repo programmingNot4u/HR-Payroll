@@ -436,7 +436,7 @@ export default function Promotions() {
                   </div>
                   <div>
                     <p className="text-sm text-gray-500">Request Date</p>
-                    <p className="text-sm font-medium text-gray-900">{new Date(promotion.requestDate).toLocaleDateString()}</p>
+                    <p className="text-sm font-medium text-gray-900">{new Date(promotion.requestDate).toLocaleDateString('en-GB')}</p>
                   </div>
                 </div>
 
@@ -456,7 +456,7 @@ export default function Promotions() {
                   </div>
                   <div>
                     <p className="text-sm text-gray-500">Effective Date</p>
-                    <p className="text-sm font-medium text-gray-900">{new Date(promotion.effectiveDate).toLocaleDateString()}</p>
+                    <p className="text-sm font-medium text-gray-900">{new Date(promotion.effectiveDate).toLocaleDateString('en-GB')}</p>
                   </div>
                 </div>
 

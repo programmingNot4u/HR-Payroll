@@ -128,7 +128,7 @@ export default function Payslip() {
             </div>
             <div>
               <label className="block text-sm font-medium text-gray-500">Payment Date</label>
-              <p className="text-lg font-semibold">{new Date().toLocaleDateString()}</p>
+              <p className="text-lg font-semibold">{new Date().toLocaleDateString('en-GB')}</p>
             </div>
           </div>
         </div>

@@ -22,16 +22,85 @@ export default function AddEmployee() {
     const year = date.getFullYear()
     return `${day}/${month}/${year}`
   }
-  const [formData, setFormData] = useState({
-    // Personal Information
-    nameBangla: '',
-    nameEnglish: '',
-    mobileNumber: '+880 ',
-    emailAddress: '',
-    nationality: 'Bangladeshi',
-    fathersName: '',
-    mothersName: '',
-    spouseName: '',
+
+  // Custom Date Input Component
+  const CustomDateInput = ({ value, onChange, required, className, ...props }) => {
+    const [displayValue, setDisplayValue] = useState('')
+    
+    useEffect(() => {
+      if (value) {
+        // Convert YYYY-MM-DD to DD/MM/YYYY for display
+        const date = new Date(value)
+        const day = String(date.getDate()).padStart(2, '0')
+        const month = String(date.getMonth() + 1).padStart(2, '0')
+        const year = date.getFullYear()
+        setDisplayValue(`${day}/${month}/${year}`)
+      } else {
+        setDisplayValue('')
+      }
+    }, [value])
+
+    return (
+      <div className="relative">
+        <input
+          type="text"
+          value={displayValue}
+          placeholder="DD/MM/YYYY"
+          className={className}
+          required={required}
+          readOnly
+          onClick={() => {
+            // Create a temporary date input for date selection
+            const tempInput = document.createElement('input')
+            tempInput.type = 'date'
+            tempInput.value = value || ''
+            tempInput.style.position = 'absolute'
+            tempInput.style.left = '-9999px'
+            tempInput.style.opacity = '0'
+            document.body.appendChild(tempInput)
+            
+            tempInput.showPicker?.() || tempInput.click()
+            
+            tempInput.addEventListener('change', (e) => {
+              onChange(e)
+              document.body.removeChild(tempInput)
+            })
+            
+            tempInput.addEventListener('blur', () => {
+              document.body.removeChild(tempInput)
+            })
+          }}
+          {...props}
+        />
+        <div className="absolute right-3 top-1/2 transform -translate-y-1/2 pointer-events-none">
+          <svg className="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+          </svg>
+        </div>
+      </div>
+    )
+  }
+
+  // Initialize formData from localStorage or default values
+  const [formData, setFormData] = useState(() => {
+    const savedFormData = localStorage.getItem('addEmployeeFormData')
+    if (savedFormData) {
+      try {
+        return JSON.parse(savedFormData)
+      } catch (error) {
+        console.error('Error parsing saved form data:', error)
+      }
+    }
+    return {
+      // Personal Information
+      nameBangla: '',
+      nameEnglish: '',
+      mobileNumber: '+880 ',
+      emailAddress: '',
+      nationality: 'Bangladeshi',
+      fathersName: '',
+      mothersName: '',
+      spouseName: '',
     dateOfBirth: '',
     nidNumber: '',
     birthCertificateNumber: '',
@@ -118,7 +187,40 @@ export default function AddEmployee() {
       food: { enabled: true, amount: 0, custom: false },
       conveyance: { enabled: true, amount: 0, custom: false }
     }
+    }
   })
+
+  // Save form data to localStorage whenever it changes
+  useEffect(() => {
+    localStorage.setItem('addEmployeeFormData', JSON.stringify(formData))
+  }, [formData])
+
+  // Set locale for date inputs
+  useEffect(() => {
+    // Set the document language to en-GB for DD/MM/YYYY format
+    document.documentElement.lang = 'en-GB'
+    
+    // Force date inputs to use DD/MM/YYYY format
+    const dateInputs = document.querySelectorAll('input[type="date"]')
+    dateInputs.forEach(input => {
+      // Set the input's locale
+      input.setAttribute('lang', 'en-GB')
+      // Add custom styling
+      input.style.direction = 'ltr'
+      input.style.textAlign = 'left'
+      
+      // Add event listener to ensure proper formatting
+      input.addEventListener('focus', () => {
+        input.style.color = '#374151'
+      })
+      
+      input.addEventListener('blur', () => {
+        if (input.value) {
+          input.style.color = '#374151'
+        }
+      })
+    })
+  }, [formData.dateOfBirth, formData.dateOfJoining, formData.dateOfIssue]) // Re-run when date values change
 
   const updateFormData = (field, value) => {
     setFormData(prev => ({ ...prev, [field]: value }))
@@ -285,7 +387,7 @@ export default function AddEmployee() {
         calculateStaffSalary(parseFloat(formData.grossSalary))
       }
     }
-  }, []) // Empty dependency array means this runs once on mount
+  }, [employeeType, formData.grossSalary]) // Dependencies for salary calculation
 
   const handlePreview = () => {
     setShowPreview(true)
@@ -323,6 +425,52 @@ export default function AddEmployee() {
       console.log('Picture:', formData.picture ? formData.picture.name : 'No picture uploaded')
       // Here you would typically send the data to your backend
       alert(`${employeeType} added successfully!`)
+      
+      // Clear form data and localStorage after successful submission
+      setFormData({
+        // Personal Information
+        nameBangla: '',
+        nameEnglish: '',
+        mobileNumber: '+880 ',
+        emailAddress: '',
+        nationality: 'Bangladeshi',
+        fathersName: '',
+        mothersName: '',
+        spouseName: '',
+        dateOfBirth: '',
+        nidNumber: '',
+        birthCertificateNumber: '',
+        bloodGroup: '',
+        religion: 'Islam',
+        maritalStatus: '',
+        educationLevel: '',
+        hasWorkExperience: 'No',
+        workExperience: [{ companyName: '', department: '', designation: '', salary: '', duration: '' }],
+        processExpertise: [{ operation: '', machine: '', duration: '' }],
+        processEfficiency: [{ itemDescription: '', processDeliveryPerHour: '', remarks: '' }],
+        children: [{ name: '', age: '', gender: '', education: '' }],
+        nominee: [{ name: '', relation: '', mobile: '', nid: '' }],
+        // Work Information
+        employeeId: '',
+        dateOfJoining: '',
+        dateOfIssue: '',
+        offDay: '',
+        unit: '',
+        designation: '',
+        section: '',
+        levelOfWork: '',
+        grossSalary: '',
+        picture: null,
+        // Salary Components
+        salaryComponents: {
+          basicSalary: { enabled: true, amount: 0, custom: false },
+          houseRent: { enabled: true, amount: 0, custom: false },
+          medical: { enabled: true, amount: 0, custom: false },
+          food: { enabled: true, amount: 0, custom: false },
+          conveyance: { enabled: true, amount: 0, custom: false }
+        }
+      })
+      localStorage.removeItem('addEmployeeFormData')
     }
   }
 
@@ -497,8 +645,7 @@ export default function AddEmployee() {
             </div>
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">Date of Birth *</label>
-              <input
-                type="date"
+              <CustomDateInput
                 value={formData.dateOfBirth}
                 onChange={(e) => updateFormData('dateOfBirth', e.target.value)}
                 className="w-full h-10 rounded border border-gray-300 px-3 focus:outline-none focus:ring-2 focus:ring-orange-500"
@@ -513,7 +660,7 @@ export default function AddEmployee() {
                 onChange={(e) => updateFormData('nidNumber', e.target.value)}
                 className="w-full h-10 rounded border border-gray-300 px-3 focus:outline-none focus:ring-2 focus:ring-orange-500"
                 placeholder="1234567890123"
-                required
+                
               />
             </div>
             <div>
@@ -1157,8 +1304,7 @@ export default function AddEmployee() {
             </div>
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">Date of Joining *</label>
-              <input
-                type="date"
+              <CustomDateInput
                 value={formData.dateOfJoining}
                 onChange={(e) => updateFormData('dateOfJoining', e.target.value)}
                 className="w-full h-10 rounded border border-gray-300 px-3 focus:outline-none focus:ring-2 focus:ring-orange-500"
@@ -1167,8 +1313,7 @@ export default function AddEmployee() {
             </div>
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">Date of Issue</label>
-              <input
-                type="date"
+              <CustomDateInput
                 value={formData.dateOfIssue}
                 onChange={(e) => updateFormData('dateOfIssue', e.target.value)}
                 className="w-full h-10 rounded border border-gray-300 px-3 focus:outline-none focus:ring-2 focus:ring-orange-500"

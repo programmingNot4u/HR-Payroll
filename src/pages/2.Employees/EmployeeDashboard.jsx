@@ -443,7 +443,7 @@ export default function EmployeeDashboard() {
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{employee.levelOfWork}</td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{employee.phone}</td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                    {new Date(employee.joiningDate).toLocaleDateString('en-BD')}
+                    {new Date(employee.joiningDate).toLocaleDateString('en-GB')}
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap">
                     <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${getStatusColor(employee.status)}`}>
@@ -549,7 +549,7 @@ export default function EmployeeDashboard() {
                   <div className="space-y-3">
                     <div className="flex justify-between">
                       <span className="font-medium text-gray-700">Joining Date:</span>
-                      <span className="text-gray-900">{new Date(selectedEmployee.joiningDate).toLocaleDateString('en-BD')}</span>
+                      <span className="text-gray-900">{new Date(selectedEmployee.joiningDate).toLocaleDateString('en-GB')}</span>
                     </div>
                     <div className="flex justify-between">
                       <span className="font-medium text-gray-700">Unit:</span>

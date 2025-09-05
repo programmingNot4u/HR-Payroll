@@ -4,3 +4,93 @@
 .bg-gray-750 {
   background-color: #374151;
 }
+
+/* Date input formatting for DD/MM/YYYY */
+input[type="date"] {
+  position: relative;
+  color-scheme: light;
+}
+
+/* Webkit browsers (Chrome, Safari, Edge) */
+input[type="date"]::-webkit-calendar-picker-indicator {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  width: auto;
+  height: auto;
+  color: transparent;
+  background: transparent;
+  cursor: pointer;
+}
+
+input[type="date"]::-webkit-datetime-edit-text {
+  color: #374151;
+  padding: 0 1px;
+}
+
+input[type="date"]::-webkit-datetime-edit-month-field {
+  color: #374151;
+}
+
+input[type="date"]::-webkit-datetime-edit-day-field {
+  color: #374151;
+}
+
+input[type="date"]::-webkit-datetime-edit-year-field {
+  color: #374151;
+}
+
+/* Firefox */
+input[type="date"]::-moz-datetime-edit-text {
+  color: #374151;
+}
+
+input[type="date"]::-moz-datetime-edit-month-field {
+  color: #374151;
+}
+
+input[type="date"]::-moz-datetime-edit-day-field {
+  color: #374151;
+}
+
+input[type="date"]::-moz-datetime-edit-year-field {
+  color: #374151;
+}
+
+/* Ensure proper spacing and alignment */
+input[type="date"] {
+  text-align: left;
+  direction: ltr;
+}
+
+/* Custom date input wrapper */
+.relative input[type="date"] {
+  background-color: white;
+}
+
+.relative input[type="date"]:focus {
+  background-color: white;
+}
+
+/* Hide the native placeholder when custom placeholder is shown */
+.relative input[type="date"]:placeholder-shown {
+  color: transparent;
+}
+
+.relative input[type="date"]:not(:placeholder-shown) {
+  color: #374151;
+}
+
+/* Custom date input styling */
+.relative input[type="text"] {
+  cursor: pointer;
+}
+
+.relative input[type="text"]:focus {
+  outline: none;
+  ring: 2px;
+  ring-color: #f97316;
+  border-color: #f97316;
+}

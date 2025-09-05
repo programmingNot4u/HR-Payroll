@@ -427,7 +427,7 @@ export default function Feedback() {
                   </div>
                   <div>
                     <p className="text-sm text-gray-500">Submitted Date</p>
-                    <p className="text-sm font-medium text-gray-900">{new Date(feedback.submittedDate).toLocaleDateString()}</p>
+                    <p className="text-sm font-medium text-gray-900">{new Date(feedback.submittedDate).toLocaleDateString('en-GB')}</p>
                   </div>
                 </div>
 
@@ -477,7 +477,7 @@ export default function Feedback() {
                 </div>
 
                 <div className="flex items-center gap-4 text-sm text-gray-500">
-                  <span>Follow-up Date: {new Date(feedback.followUpDate).toLocaleDateString()}</span>
+                  <span>Follow-up Date: {new Date(feedback.followUpDate).toLocaleDateString('en-GB')}</span>
                   <span>Department: {feedback.department}</span>
                 </div>
               </div>

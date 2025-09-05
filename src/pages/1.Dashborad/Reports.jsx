@@ -95,7 +95,7 @@ export default function Reports() {
     setGeneratedReport({
       type: selectedReport,
       filters,
-      generatedAt: new Date().toLocaleString()
+      generatedAt: new Date().toLocaleString('en-GB')
     })
   }
 

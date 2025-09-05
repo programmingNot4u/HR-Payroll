@@ -130,7 +130,7 @@ const sections = [
   },
   {
     title: 'Settings',
-    items: ['Notification Settings', 'Templates'],
+    items: ['Notification Settings', 'Templates', 'Organizational Metrics'],
   },
 ]
 

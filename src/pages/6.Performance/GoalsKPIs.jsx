@@ -360,8 +360,8 @@ export default function GoalsKPIs() {
                 </div>
 
                 <div className="flex items-center gap-4 text-sm text-gray-500">
-                  <span>Start: {new Date(goal.startDate).toLocaleDateString()}</span>
-                  <span>End: {new Date(goal.endDate).toLocaleDateString()}</span>
+                  <span>Start: {new Date(goal.startDate).toLocaleDateString('en-GB')}</span>
+                  <span>End: {new Date(goal.endDate).toLocaleDateString('en-GB')}</span>
                 </div>
               </div>
               

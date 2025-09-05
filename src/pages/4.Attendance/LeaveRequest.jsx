@@ -479,7 +479,7 @@ export default function LeaveRequest() {
                       </span>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                      {new Date(request.startDate).toLocaleDateString()} - {new Date(request.endDate).toLocaleDateString()}
+                      {new Date(request.startDate).toLocaleDateString('en-GB')} - {new Date(request.endDate).toLocaleDateString('en-GB')}
                       <br />
                       <span className="text-xs text-gray-400">{request.totalDays} days</span>
                     </td>
@@ -490,7 +490,7 @@ export default function LeaveRequest() {
                       </span>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                      {new Date(request.submittedDate).toLocaleDateString()}
+                      {new Date(request.submittedDate).toLocaleDateString('en-GB')}
                     </td>
                   </tr>
                 ))}
