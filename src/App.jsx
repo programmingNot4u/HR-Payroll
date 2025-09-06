@@ -6,8 +6,8 @@ import Navbar from './components/Navbar'
 import Overview from './pages/1.Dashborad/Overview'
 import Reports from './pages/1.Dashborad/Reports'
 import EmployeeDashboard from './pages/2.Employees/EmployeeDashboard'
-import AddEmployee from './pages/2.Employees/AddEmployee'
 import EmployeeDetails from './pages/2.Employees/EmployeeDetails'
+import AddEmployee from './pages/2.Employees/AddEmployee'
 import EmployeePortal from './pages/2.Employees/EmployeePortal'
 
 import SalaryPayslips from './pages/3.Payroll/SalaryPayslips'
@@ -62,7 +62,7 @@ function App() {
         return <Reports />
       case 'Employee Dashboard':
         return <EmployeeDashboard />
-                  case 'Employee Details':
+      case 'Employee Details':
         return <EmployeeDetails />
       case 'Add Employee':
         return <AddEmployee />

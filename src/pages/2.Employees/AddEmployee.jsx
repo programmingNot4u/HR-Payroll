@@ -1,17 +1,100 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback } from 'react'
+import organizationalDataService from '../../services/organizationalDataService'
+import employeeService from '../../services/employeeService'
+import employeeLogService from '../../services/employeeLogService'
 
 const bloodGroups = ['A+', 'A-', 'B+', 'B-', 'AB+', 'AB-', 'O+', 'O-']
 const maritalStatuses = ['Single', 'Married', 'Divorced', 'Widowed']
-const educationLevels = ['Alphabetic Knowledge', 'JSC or Equivalent', 'SSC or Equivalent', 'HSC or Equivalent', 'Hon\'s', 'Master\'s', 'BSC', 'MSC', 'PHD']
+const educationLevels = ['Alphabetic Knowledge', 'JSC or Equivalent', 'SSC or Equivalent', 'HSC or Equivalent', 'Hon\'s', 'Master\'s', 'BSc', 'MSc', 'PhD']
+const subjects = [
+  'Textile Engineering',
+  'Computer Science & Engineering',
+  'English',
+  'Bangla',
+  'Mathematics',
+  'Physics',
+  'Chemistry',
+  'Biology',
+  'Economics',
+  'Business Administration',
+  'Accounting',
+  'Marketing',
+  'Human Resource Management',
+  'Mechanical Engineering',
+  'Electrical Engineering',
+  'Civil Engineering',
+  'Architecture',
+  'Medicine',
+  'Law',
+  'Education',
+  'Psychology',
+  'Sociology',
+  'Political Science',
+  'History',
+  'Geography',
+  'Fine Arts',
+  'Music',
+  'Drama',
+  'Journalism',
+  'Mass Communication',
+  'Agriculture',
+  'Veterinary Science',
+  'Pharmacy',
+  'Nursing',
+  'Public Health',
+  'Environmental Science',
+  'Information Technology',
+  'Software Engineering',
+  'Data Science',
+  'Cybersecurity',
+  'Graphic Design',
+  'Fashion Design',
+  'Interior Design',
+  'Other'
+]
 const offDays = ['Friday', 'Saturday', 'Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday']
 const units = ['Unit 1', 'Unit 2', 'Unit 3', 'Unit 4', 'Unit 5']
-const sections = ['Cutting', 'Sewing', 'Finishing', 'Quality Control', 'Management']
-const designations = ['Senior Tailor', 'Quality Inspector', 'Cutting Master', 'Finishing Supervisor', 'Production Manager', 'Junior Tailor', 'Machine Operator', 'Quality Assistant']
 
 export default function AddEmployee() {
   const [employeeType, setEmployeeType] = useState('Worker') // 'Worker' or 'Staff'
   const [showPreview, setShowPreview] = useState(false)
   const [hasSeenPreview, setHasSeenPreview] = useState(false)
+  const [departments, setDepartments] = useState([])
+  const [designations, setDesignations] = useState([])
+  const [operations, setOperations] = useState([])
+  const [allMachines, setAllMachines] = useState([])
+  const [salaryGrades, setSalaryGrades] = useState([])
+  
+  // Bulk document upload states
+  const [bulkDocuments, setBulkDocuments] = useState([])
+  const [excelFile, setExcelFile] = useState(null)
+  const [showBulkUpload, setShowBulkUpload] = useState(false)
+  const [uploadProgress, setUploadProgress] = useState(0)
+  const [uploadErrors, setUploadErrors] = useState([])
+
+  // Load organizational data on component mount
+  useEffect(() => {
+    const loadOrganizationalData = () => {
+      setDepartments(organizationalDataService.getDepartmentNames())
+      setDesignations(organizationalDataService.getDesignationNames())
+      setOperations(organizationalDataService.getUniqueProcessExpertiseOperations())
+      setAllMachines(organizationalDataService.getUniqueProcessExpertiseMachines())
+      setSalaryGrades(organizationalDataService.getAllSalaryGrades())
+    }
+    
+    loadOrganizationalData()
+    
+    // Listen for storage changes to update data
+    const handleStorageChange = () => {
+      loadOrganizationalData()
+    }
+    
+    window.addEventListener('storage', handleStorageChange)
+    
+    return () => {
+      window.removeEventListener('storage', handleStorageChange)
+    }
+  }, [])
 
   // Function to format date to DD/MM/YYYY
   const formatDate = (dateString) => {
@@ -26,19 +109,115 @@ export default function AddEmployee() {
   // Custom Date Input Component
   const CustomDateInput = ({ value, onChange, required, className, ...props }) => {
     const [displayValue, setDisplayValue] = useState('')
+    const [isTyping, setIsTyping] = useState(false)
     
     useEffect(() => {
-      if (value) {
+      if (value && !isTyping) {
         // Convert YYYY-MM-DD to DD/MM/YYYY for display
         const date = new Date(value)
         const day = String(date.getDate()).padStart(2, '0')
         const month = String(date.getMonth() + 1).padStart(2, '0')
         const year = date.getFullYear()
         setDisplayValue(`${day}/${month}/${year}`)
-      } else {
+      } else if (!value && !isTyping) {
         setDisplayValue('')
       }
-    }, [value])
+    }, [value, isTyping])
+
+    const handleInputChange = (e) => {
+      const inputValue = e.target.value
+      setDisplayValue(inputValue)
+      setIsTyping(true)
+      
+      // Auto-format as user types (DD/MM/YYYY)
+      if (inputValue.length === 2 && !inputValue.includes('/')) {
+        setDisplayValue(inputValue + '/')
+      } else if (inputValue.length === 5 && inputValue.charAt(2) === '/' && !inputValue.substring(3).includes('/')) {
+        setDisplayValue(inputValue + '/')
+      }
+    }
+
+    const handleBlur = () => {
+      setIsTyping(false)
+      
+      // Validate and convert DD/MM/YYYY to YYYY-MM-DD
+      const dateRegex = /^(\d{2})\/(\d{2})\/(\d{4})$/
+      const match = displayValue.match(dateRegex)
+      
+      if (match) {
+        const [, day, month, year] = match
+        const date = new Date(year, month - 1, day)
+        
+        // Check if date is valid
+        if (date.getFullYear() == year && date.getMonth() == month - 1 && date.getDate() == day) {
+          const isoDate = `${year}-${month}-${day}`
+          console.log('Saving date:', isoDate) // Debug log
+          onChange({ target: { value: isoDate } })
+          // Update display value to ensure consistency
+          setDisplayValue(`${day}/${month}/${year}`)
+        } else {
+          // Invalid date, reset to previous value
+          if (value) {
+            const date = new Date(value)
+            const day = String(date.getDate()).padStart(2, '0')
+            const month = String(date.getMonth() + 1).padStart(2, '0')
+            const year = date.getFullYear()
+            setDisplayValue(`${day}/${month}/${year}`)
+          } else {
+            setDisplayValue('')
+          }
+        }
+      } else if (displayValue === '') {
+        onChange({ target: { value: '' } })
+      } else {
+        // Invalid format, reset to previous value
+        if (value) {
+          const date = new Date(value)
+          const day = String(date.getDate()).padStart(2, '0')
+          const month = String(date.getMonth() + 1).padStart(2, '0')
+          const year = date.getFullYear()
+          setDisplayValue(`${day}/${month}/${year}`)
+        } else {
+          setDisplayValue('')
+        }
+      }
+    }
+
+    const handleCalendarClick = () => {
+      // Create a temporary date input for date selection
+      const tempInput = document.createElement('input')
+      tempInput.type = 'date'
+      tempInput.value = value || ''
+      tempInput.style.position = 'fixed'
+      tempInput.style.top = '50%'
+      tempInput.style.left = '50%'
+      tempInput.style.transform = 'translate(-50%, -50%)'
+      tempInput.style.zIndex = '9999'
+      tempInput.style.opacity = '0'
+      tempInput.style.pointerEvents = 'none'
+      document.body.appendChild(tempInput)
+      
+      // Focus and show picker
+      tempInput.focus()
+      tempInput.showPicker?.() || tempInput.click()
+      
+      tempInput.addEventListener('change', (e) => {
+        console.log('Calendar selected date:', e.target.value) // Debug log
+        onChange(e)
+        document.body.removeChild(tempInput)
+      })
+      
+      tempInput.addEventListener('blur', () => {
+        document.body.removeChild(tempInput)
+      })
+      
+      // Remove after 5 seconds if no interaction
+      setTimeout(() => {
+        if (document.body.contains(tempInput)) {
+          document.body.removeChild(tempInput)
+        }
+      }, 5000)
+    }
 
     return (
       <div className="relative">
@@ -48,32 +227,16 @@ export default function AddEmployee() {
           placeholder="DD/MM/YYYY"
           className={className}
           required={required}
-          readOnly
-          onClick={() => {
-            // Create a temporary date input for date selection
-            const tempInput = document.createElement('input')
-            tempInput.type = 'date'
-            tempInput.value = value || ''
-            tempInput.style.position = 'absolute'
-            tempInput.style.left = '-9999px'
-            tempInput.style.opacity = '0'
-            document.body.appendChild(tempInput)
-            
-            tempInput.showPicker?.() || tempInput.click()
-            
-            tempInput.addEventListener('change', (e) => {
-              onChange(e)
-              document.body.removeChild(tempInput)
-            })
-            
-            tempInput.addEventListener('blur', () => {
-              document.body.removeChild(tempInput)
-            })
-          }}
+          onChange={handleInputChange}
+          onBlur={handleBlur}
+          maxLength={10}
           {...props}
         />
-        <div className="absolute right-3 top-1/2 transform -translate-y-1/2 pointer-events-none">
-          <svg className="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <div 
+          className="absolute right-3 top-1/2 transform -translate-y-1/2 cursor-pointer"
+          onClick={handleCalendarClick}
+        >
+          <svg className="w-5 h-5 text-gray-400 hover:text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
           </svg>
         </div>
@@ -109,6 +272,7 @@ export default function AddEmployee() {
     maritalStatus: '',
     height: '',
     educationLevel: '',
+    subject: '',
     gender: '',
     weight: '',
     picture: null, // Picture file
@@ -172,10 +336,11 @@ export default function AddEmployee() {
     offDay: '',
     unit: '',
     designation: '',
-    section: '',
+    department: '',
     line: '',
     supervisorName: '',
     grossSalary: '',
+    salaryGrade: '',
     dateOfJoining: '',
     dateOfIssue: '',
     
@@ -183,16 +348,46 @@ export default function AddEmployee() {
     salaryComponents: {
       basicSalary: { enabled: true, amount: 0, custom: false },
       houseRent: { enabled: true, amount: 0, custom: false },
-      medical: { enabled: true, amount: 0, custom: false },
-      food: { enabled: true, amount: 0, custom: false },
-      conveyance: { enabled: true, amount: 0, custom: false }
+      medicalAllowance: { enabled: true, amount: 0, custom: false },
+      foodAllowance: { enabled: true, amount: 0, custom: false },
+      conveyance: { enabled: true, amount: 0, custom: false },
+      mobileBill: { enabled: false, amount: 0, custom: false }
     }
     }
   })
 
-  // Save form data to localStorage whenever it changes
+  // Ensure salaryComponents is always initialized and level of work matches employee type
   useEffect(() => {
-    localStorage.setItem('addEmployeeFormData', JSON.stringify(formData))
+    if (!formData.salaryComponents) {
+      setFormData(prev => ({
+        ...prev,
+        salaryComponents: {
+          basicSalary: { enabled: true, amount: 0, custom: false },
+          houseRent: { enabled: true, amount: 0, custom: false },
+          medicalAllowance: { enabled: true, amount: 0, custom: false },
+          foodAllowance: { enabled: true, amount: 0, custom: false },
+          conveyance: { enabled: true, amount: 0, custom: false },
+          mobileBill: { enabled: false, amount: 0, custom: false }
+        }
+      }))
+    }
+    
+    // Ensure level of work matches employee type
+    if (formData.levelOfWork !== employeeType) {
+      setFormData(prev => ({
+        ...prev,
+        levelOfWork: employeeType
+      }))
+    }
+  }, [formData.salaryComponents, employeeType, formData.levelOfWork])
+
+  // Save form data to localStorage whenever it changes (debounced)
+  useEffect(() => {
+    const timeoutId = setTimeout(() => {
+      localStorage.setItem('addEmployeeFormData', JSON.stringify(formData))
+    }, 300) // Debounce by 300ms
+    
+    return () => clearTimeout(timeoutId)
   }, [formData])
 
   // Set locale for date inputs
@@ -220,11 +415,24 @@ export default function AddEmployee() {
         }
       })
     })
-  }, [formData.dateOfBirth, formData.dateOfJoining, formData.dateOfIssue]) // Re-run when date values change
+  }, []) // Only run once on mount
 
   const updateFormData = (field, value) => {
     setFormData(prev => ({ ...prev, [field]: value }))
   }
+
+  // Memoized callbacks for date fields to prevent unnecessary re-renders
+  const handleDateOfBirthChange = useCallback((e) => {
+    updateFormData('dateOfBirth', e.target.value)
+  }, [])
+
+  const handleDateOfJoiningChange = useCallback((e) => {
+    updateFormData('dateOfJoining', e.target.value)
+  }, [])
+
+  const handleDateOfIssueChange = useCallback((e) => {
+    updateFormData('dateOfIssue', e.target.value)
+  }, [])
 
   const updateNestedField = (parentField, childField, value) => {
     setFormData(prev => ({
@@ -240,6 +448,52 @@ export default function AddEmployee() {
         i === index ? { ...item, [childField]: value } : item
       )
     }))
+  }
+
+  // Function to update operation and clear machine when operation changes
+  const updateOperationAndMachines = (index, operation) => {
+    updateArrayField('processExpertise', index, 'operation', operation)
+    updateArrayField('processExpertise', index, 'machine', '')
+  }
+
+  // Function to handle salary grade selection
+  const handleSalaryGradeChange = (gradeName) => {
+    updateFormData('salaryGrade', gradeName)
+    
+    if (gradeName) {
+      const selectedGrade = organizationalDataService.getSalaryGradeByName(gradeName)
+      if (selectedGrade) {
+        // Update gross salary
+        updateFormData('grossSalary', selectedGrade.grossSalary.toString())
+        
+        // Update salary components based on the grade
+        setFormData(prev => ({
+          ...prev,
+          salaryComponents: {
+            basicSalary: { enabled: true, amount: selectedGrade.basicSalary, custom: false },
+            houseRent: { enabled: true, amount: selectedGrade.houseRent, custom: false },
+            medicalAllowance: { enabled: true, amount: selectedGrade.medicalAllowance, custom: false },
+            conveyance: { enabled: true, amount: selectedGrade.conveyance, custom: false },
+            foodAllowance: { enabled: selectedGrade.type === 'Worker', amount: selectedGrade.foodAllowance || 0, custom: false },
+            mobileBill: { enabled: selectedGrade.type === 'Staff', amount: selectedGrade.mobileBill || 0, custom: false }
+          }
+        }))
+      }
+    } else {
+      // Clear salary components when no grade is selected
+      setFormData(prev => ({
+        ...prev,
+        grossSalary: '',
+        salaryComponents: {
+          basicSalary: { enabled: true, amount: 0, custom: false },
+          houseRent: { enabled: true, amount: 0, custom: false },
+          medicalAllowance: { enabled: true, amount: 0, custom: false },
+          foodAllowance: { enabled: true, amount: 0, custom: false },
+          conveyance: { enabled: true, amount: 0, custom: false },
+          mobileBill: { enabled: false, amount: 0, custom: false }
+        }
+      }))
+    }
   }
 
   const addWorkExperience = () => {
@@ -288,73 +542,68 @@ export default function AddEmployee() {
   // when implementing dynamic child addition/removal functionality
 
   // Salary calculation functions
-  const calculateWorkerSalary = (grossSalary) => {
+  const calculateWorkerSalary = useCallback((grossSalary) => {
     if (!grossSalary || grossSalary <= 0) return
     
-    const basicSalary = (grossSalary - 2450) / 1.5
-    const houseRent = basicSalary * 0.5
-    const medical = 750
-    const food = 1250
-    const conveyance = 450
+    // Find the selected salary grade to get the actual component amounts
+    const selectedGrade = salaryGrades.find(grade => grade.name === formData.salaryGrade)
     
-    setFormData(prev => ({
-      ...prev,
-      salaryComponents: {
-        basicSalary: { ...prev.salaryComponents.basicSalary, amount: Math.round(basicSalary), custom: false },
-        houseRent: { ...prev.salaryComponents.houseRent, amount: Math.round(houseRent), custom: false },
-        medical: { ...prev.salaryComponents.medical, amount: medical, custom: false },
-        food: { ...prev.salaryComponents.food, amount: food, custom: false },
-        conveyance: { ...prev.salaryComponents.conveyance, amount: conveyance, custom: false }
-      }
-    }))
-  }
+    if (selectedGrade && selectedGrade.type === 'Worker') {
+      setFormData(prev => ({
+        ...prev,
+        salaryComponents: {
+          basicSalary: { ...prev.salaryComponents.basicSalary, amount: selectedGrade.basicSalary, custom: false },
+          houseRent: { ...prev.salaryComponents.houseRent, amount: selectedGrade.houseRent, custom: false },
+          medicalAllowance: { ...prev.salaryComponents.medicalAllowance, amount: selectedGrade.medicalAllowance, custom: false },
+          foodAllowance: { ...prev.salaryComponents.foodAllowance, amount: selectedGrade.foodAllowance || 0, custom: false },
+          conveyance: { ...prev.salaryComponents.conveyance, amount: selectedGrade.conveyance, custom: false },
+          mobileBill: { ...prev.salaryComponents.mobileBill, amount: 0, custom: false } // Mobile bill not for workers
+        }
+      }))
+    }
+  }, [salaryGrades, formData.salaryGrade])
 
-  const calculateStaffSalary = (grossSalary) => {
+  const calculateStaffSalary = useCallback((grossSalary) => {
     if (!grossSalary || grossSalary <= 0) return
     
-    const basicSalary = grossSalary * 0.45
-    const houseRent = grossSalary * 0.35
-    const medical = grossSalary * 0.15
-    const conveyance = grossSalary * 0.05
+    // Find the selected salary grade to get the actual component amounts
+    const selectedGrade = salaryGrades.find(grade => grade.name === formData.salaryGrade)
     
-    setFormData(prev => ({
-      ...prev,
-      salaryComponents: {
-        basicSalary: { ...prev.salaryComponents.basicSalary, amount: Math.round(basicSalary), custom: false },
-        houseRent: { ...prev.salaryComponents.houseRent, amount: Math.round(houseRent), custom: false },
-        medical: { ...prev.salaryComponents.medical, amount: Math.round(medical), custom: false },
-        food: { ...prev.salaryComponents.food, amount: 0, custom: false }, // Food not included for staff
-        conveyance: { ...prev.salaryComponents.conveyance, amount: Math.round(conveyance), custom: false }
-      }
-    }))
-  }
+    if (selectedGrade && selectedGrade.type === 'Staff') {
+      setFormData(prev => ({
+        ...prev,
+        salaryComponents: {
+          basicSalary: { ...prev.salaryComponents.basicSalary, amount: selectedGrade.basicSalary, custom: false },
+          houseRent: { ...prev.salaryComponents.houseRent, amount: selectedGrade.houseRent, custom: false },
+          medicalAllowance: { ...prev.salaryComponents.medicalAllowance, amount: selectedGrade.medicalAllowance, custom: false },
+          foodAllowance: { ...prev.salaryComponents.foodAllowance, amount: 0, custom: false }, // Food not included for staff
+          conveyance: { ...prev.salaryComponents.conveyance, amount: selectedGrade.conveyance, custom: false },
+          mobileBill: { ...prev.salaryComponents.mobileBill, amount: selectedGrade.mobileBill || 0, custom: false }
+        }
+      }))
+    }
+  }, [salaryGrades, formData.salaryGrade])
 
   const handleGrossSalaryChange = (value) => {
     updateFormData('grossSalary', value)
     
-    if (employeeType === 'Worker') {
-      calculateWorkerSalary(parseFloat(value))
-    } else {
-      calculateStaffSalary(parseFloat(value))
+    // Only calculate if a salary grade is selected
+    if (formData.salaryGrade) {
+      if (employeeType === 'Worker') {
+        calculateWorkerSalary(parseFloat(value))
+      } else {
+        calculateStaffSalary(parseFloat(value))
+      }
     }
   }
 
-  const toggleSalaryComponent = (component, enabled) => {
-    setFormData(prev => ({
-      ...prev,
-      salaryComponents: {
-        ...prev.salaryComponents,
-        [component]: { ...prev.salaryComponents[component], enabled }
-      }
-    }))
-  }
 
-  const updateSalaryComponent = (component, amount, custom = false) => {
+  const updateSalaryComponent = (component, amount) => {
     setFormData(prev => ({
       ...prev,
       salaryComponents: {
         ...prev.salaryComponents,
-        [component]: { ...prev.salaryComponents[component], amount: parseFloat(amount) || 0, custom }
+        [component]: { enabled: true, amount: parseFloat(amount) || 0, custom: true }
       }
     }))
   }
@@ -368,45 +617,310 @@ export default function AddEmployee() {
 
   const handleEmployeeTypeChange = (newType) => {
     setEmployeeType(newType)
-    // Recalculate salary if gross salary is already set
-    if (formData.grossSalary && formData.grossSalary > 0) {
-      if (newType === 'Worker') {
-        calculateWorkerSalary(parseFloat(formData.grossSalary))
-      } else {
-        calculateStaffSalary(parseFloat(formData.grossSalary))
+    
+    // Clear salary grade and set level of work to match employee type
+    setFormData(prev => ({
+      ...prev,
+      salaryGrade: '',
+      levelOfWork: newType, // Auto-set level of work to match employee type
+      grossSalary: '',
+      salaryComponents: {
+        basicSalary: { enabled: true, amount: 0, custom: false },
+        houseRent: { enabled: true, amount: 0, custom: false },
+        medicalAllowance: { enabled: true, amount: 0, custom: false },
+        foodAllowance: { enabled: true, amount: 0, custom: false },
+        conveyance: { enabled: true, amount: 0, custom: false },
+        mobileBill: { enabled: false, amount: 0, custom: false }
       }
-    }
+    }))
   }
 
-  // Initialize salary components when component mounts
+  // Initialize salary components when component mounts or salary grade changes
   useEffect(() => {
-    if (formData.grossSalary && formData.grossSalary > 0) {
+    if (formData.grossSalary && formData.grossSalary > 0 && formData.salaryGrade) {
       if (employeeType === 'Worker') {
         calculateWorkerSalary(parseFloat(formData.grossSalary))
       } else {
         calculateStaffSalary(parseFloat(formData.grossSalary))
       }
     }
-  }, [employeeType, formData.grossSalary]) // Dependencies for salary calculation
+  }, [employeeType, formData.grossSalary, formData.salaryGrade, calculateWorkerSalary, calculateStaffSalary]) // Dependencies for salary calculation
 
   const handlePreview = () => {
     setShowPreview(true)
     setHasSeenPreview(true)
   }
 
-  const handleSubmit = (e) => {
+  // Bulk document upload functions
+  const handleExcelFileChange = (e) => {
+    const file = e.target.files[0]
+    if (file) {
+      setExcelFile(file)
+      parseExcelFile(file)
+    }
+  }
+
+  const parseExcelFile = async (file) => {
+    const reader = new FileReader()
+    reader.onload = async (e) => {
+      try {
+        // Dynamic import of xlsx library
+        const XLSX = await import('xlsx')
+        
+        const data = new Uint8Array(e.target.result)
+        const workbook = XLSX.read(data, { type: 'array' })
+        const sheetName = workbook.SheetNames[0]
+        const worksheet = workbook.Sheets[sheetName]
+        const jsonData = XLSX.utils.sheet_to_json(worksheet, { header: 1 })
+        
+        // Skip header row and process data
+        const employees = jsonData.slice(1).map((row, index) => {
+          return {
+            id: index + 1,
+            employeeType: row[0] || '',
+            employeeId: row[1] || '',
+            nameEnglish: row[2] || '',
+            nameBangla: row[3] || '',
+            fatherNameEnglish: row[4] || '',
+            fatherNameBangla: row[5] || '',
+            motherNameEnglish: row[6] || '',
+            motherNameBangla: row[7] || '',
+            dateOfBirth: row[8] || '',
+            gender: row[9] || '',
+            bloodGroup: row[10] || '',
+            maritalStatus: row[11] || '',
+            educationLevel: row[12] || '',
+            subject: row[13] || '',
+            religion: row[14] || '',
+            nationality: row[15] || '',
+            nidNumber: row[16] || '',
+            passportNumber: row[17] || '',
+            height: row[18] || '',
+            weight: row[19] || '',
+            presentAddress: row[20] || '',
+            permanentAddress: row[21] || '',
+            phoneNumber: row[22] || '',
+            email: row[23] || '',
+            emergencyContactName: row[24] || '',
+            emergencyContactPhone: row[25] || '',
+            emergencyContactRelation: row[26] || '',
+            department: row[27] || '',
+            designation: row[28] || '',
+            unit: row[29] || '',
+            supervisorName: row[30] || '',
+            levelOfWork: row[31] || '',
+            grossSalary: row[32] || '',
+            salaryGrade: row[33] || '',
+            basicSalary: row[34] || '',
+            houseRent: row[35] || '',
+            medicalAllowance: row[36] || '',
+            foodAllowance: row[37] || '',
+            conveyance: row[38] || '',
+            mobileBill: row[39] || '',
+            joinDate: row[40] || '',
+            offDay: row[41] || '',
+            picturePath: row[42] || '',
+            // Children Information
+            child1Name: row[43] || '',
+            child1Age: row[44] || '',
+            child1Gender: row[45] || '',
+            child2Name: row[46] || '',
+            child2Age: row[47] || '',
+            child2Gender: row[48] || '',
+            child3Name: row[49] || '',
+            child3Age: row[50] || '',
+            child3Gender: row[51] || '',
+            // Nominee Information
+            nominee1Name: row[52] || '',
+            nominee1Mobile: row[53] || '',
+            nominee1Relation: row[54] || '',
+            nominee2Name: row[55] || '',
+            nominee2Mobile: row[56] || '',
+            nominee2Relation: row[57] || '',
+            // Process Expertise
+            process1Operation: row[58] || '',
+            process1Machine: row[59] || '',
+            process2Operation: row[60] || '',
+            process2Machine: row[61] || '',
+            process3Operation: row[62] || '',
+            process3Machine: row[63] || '',
+            // Process Efficiency
+            efficiency1Process: row[64] || '',
+            efficiency1Delivery: row[65] || '',
+            efficiency2Process: row[66] || '',
+            efficiency2Delivery: row[67] || '',
+            status: 'Pending',
+            errors: []
+          }
+        }).filter(emp => emp.employeeId && emp.nameEnglish) // Filter out empty rows
+        
+        setBulkDocuments(employees)
+        setUploadErrors([])
+      } catch (error) {
+        console.error('Error parsing Excel file:', error)
+        setUploadErrors([{ message: 'Error parsing Excel file. Please check the format.', type: 'error' }])
+      }
+    }
+    reader.readAsArrayBuffer(file)
+  }
+
+  const validateBulkDocuments = () => {
+    const errors = []
+    
+    bulkDocuments.forEach((emp, index) => {
+      const empErrors = []
+      
+      // Required fields validation
+      if (!emp.employeeId) {
+        empErrors.push('Employee ID is required')
+      }
+      if (!emp.nameEnglish) {
+        empErrors.push('Name (English) is required')
+      }
+      if (!emp.nameBangla) {
+        empErrors.push('Name (Bangla) is required')
+      }
+      if (!emp.department) {
+        empErrors.push('Department is required')
+      }
+      if (!emp.designation) {
+        empErrors.push('Designation is required')
+      }
+      if (!emp.dateOfBirth) {
+        empErrors.push('Date of Birth is required')
+      }
+      if (!emp.gender) {
+        empErrors.push('Gender is required')
+      }
+      if (!emp.phoneNumber) {
+        empErrors.push('Phone Number is required')
+      }
+      
+      // Employee type specific validation
+      if (emp.employeeType === 'Worker') {
+        if (!emp.unit) {
+          empErrors.push('Unit is required for Workers')
+        }
+        if (!emp.supervisorName) {
+          empErrors.push('Supervisor Name is required for Workers')
+        }
+        // At least one child should be provided for workers
+        if (!emp.child1Name && !emp.child2Name && !emp.child3Name) {
+          empErrors.push('At least one child information is required for Workers')
+        }
+        // At least one nominee should be provided for workers
+        if (!emp.nominee1Name && !emp.nominee2Name) {
+          empErrors.push('At least one nominee information is required for Workers')
+        }
+      }
+      
+      if (empErrors.length > 0) {
+        errors.push({
+          row: index + 2, // +2 because we skip header and arrays are 0-indexed
+          employeeId: emp.employeeId,
+          errors: empErrors
+        })
+      }
+    })
+    
+    setUploadErrors(errors)
+    return errors.length === 0
+  }
+
+  const handleBulkUpload = () => {
+    if (validateBulkDocuments()) {
+      setUploadProgress(0)
+      
+      // Simulate upload progress
+      const interval = setInterval(() => {
+        setUploadProgress(prev => {
+          if (prev >= 100) {
+            clearInterval(interval)
+            alert(`Successfully uploaded ${bulkDocuments.length} documents!`)
+            setBulkDocuments([])
+            setExcelFile(null)
+            setShowBulkUpload(false)
+            return 100
+          }
+          return prev + 10
+        })
+      }, 200)
+    } else {
+      alert('Please fix the validation errors before uploading.')
+    }
+  }
+
+  const downloadTemplate = async () => {
+    try {
+      // Dynamic import of xlsx library
+      const XLSX = await import('xlsx')
+      
+      const templateData = [
+        // Header row with all form fields
+        [
+          'Employee Type', 'Employee ID', 'Name (English)', 'Name (Bangla)', 'Father Name (English)',
+          'Mother Name (English)', 'Date of Birth', 'Gender', 'Blood Group', 'Marital Status',
+          'Education Level', 'Subject', 'Religion', 'Nationality', 'NID Number', 'Passport Number', 'Height', 'Weight',
+          'Present Address', 'Permanent Address', 'Phone Number', 'Email', 'Emergency Contact Name', 'Emergency Contact Phone',
+          'Emergency Contact Relation', 'Department', 'Designation', 'Unit', 'Supervisor Name',
+          'Level of Work', 'Gross Salary', 'Salary Grade', 'Basic Salary', 'House Rent', 'Medical Allowance',
+          'Food Allowance', 'Conveyance', 'Mobile Bill', 'Join Date', 'Off Day', 'Picture Path',
+          // Children Information (for Workers)
+          'Child 1 Name', 'Child 1 Age', 'Child 1 Gender', 'Child 2 Name', 'Child 2 Age', 'Child 2 Gender',
+          'Child 3 Name', 'Child 3 Age', 'Child 3 Gender',
+          // Nominee Information (for Workers)
+          'Nominee 1 Name', 'Nominee 1 Mobile', 'Nominee 1 Relation', 'Nominee 2 Name', 'Nominee 2 Mobile', 'Nominee 2 Relation',
+          // Process Expertise (for Workers)
+          'Process 1 Operation', 'Process 1 Machine', 'Process 2 Operation', 'Process 2 Machine',
+          'Process 3 Operation', 'Process 3 Machine',
+          // Process Efficiency (for Workers)
+          'Efficiency 1 Process', 'Efficiency 1 Delivery', 'Efficiency 2 Process', 'Efficiency 2 Delivery'
+        ],
+        // Sample data row
+        [
+          'Worker', 'EMP001', 'Ahmed Khan', 'আহমেদ খান', 'Rashid Khan', 'Fatima Begum',
+          '1990-05-15', 'Male', 'A+', 'Married', 'HSC or Equivalent', 'Islam', 'Bangladeshi', '1234567890123',
+          'A1234567', '5\'8"', '70 kg', '123 Main St, Dhaka', '456 Village Rd, Chittagong', '+880-1234-567890',
+          'ahmed@email.com', 'Rashid Khan', '+880-1234-567891', 'Father', 'IT', 'Software Developer', 'Development',
+          'Unit 1', 'John Smith', 'Worker', '50000', 'Worker Grade-1', '30000', '15000', '2000', '3000', '0', '0',
+          '2023-01-15', 'Friday', '/pictures/emp001.jpg',
+          'Ali Khan', '8', 'Male', 'Sara Khan', '6', 'Female', 'Hassan Khan', '4', 'Male',
+          'Rashid Khan', '+880-1234-567891', 'Father', 'Fatima Begum', '+880-1234-567892', 'Mother',
+          'Cutting', 'Machine A', 'Sewing', 'Machine B', 'Finishing', 'Machine C',
+          'Cutting Process', '50 per hour', 'Sewing Process', '40 per hour'
+        ],
+        // Another sample for Staff
+        [
+          'Staff', 'EMP002', 'Sarah Ahmed', 'সারা আহমেদ', 'Mohammed Ahmed', 'Ayesha Begum',
+          '1988-03-20', 'Female', 'B+', 'Single', 'Master\'s', 'Islam', 'Bangladeshi', '9876543210987',
+          'B9876543', '5\'6"', '60 kg', '789 Office St, Dhaka', '321 Home Rd, Sylhet', '+880-9876-543210',
+          'sarah@email.com', 'Mohammed Ahmed', '+880-9876-543211', 'Father', 'HR', 'HR Manager', 'Management',
+          '', 'Jane Doe', 'Staff', '75000', 'Staff Grade-2', '45000', '22500', '3000', '0', '2500', '1500',
+          '2022-06-01', 'Saturday', '/pictures/emp002.jpg',
+          '', '', '', '', '', '', '', '', '',
+          '', '', '', '', '', '',
+          '', '', '', '', '', '',
+          '', '', '', ''
+        ]
+      ]
+      
+      const ws = XLSX.utils.aoa_to_sheet(templateData)
+      const wb = XLSX.utils.book_new()
+      XLSX.utils.book_append_sheet(wb, ws, 'Employee Template')
+      XLSX.writeFile(wb, 'employee_template.xlsx')
+    } catch (error) {
+      console.error('Error downloading template:', error)
+      alert('Error downloading template. Please try again.')
+    }
+  }
+
+  const handleSubmit = async (e) => {
     e.preventDefault()
     
     // Validate required fields based on employee type
     if (employeeType === 'Worker') {
-      // For workers, validate children and nominee
-      const hasValidChildren = formData.children.some(child => child.name && child.age)
+      // For workers, only nominee is required, children is optional
       const hasValidNominee = formData.nominee.some(nominee => nominee.name && nominee.mobile)
-      
-      if (!hasValidChildren) {
-        alert('Please provide at least one child\'s information for workers.')
-        return
-      }
       
       if (!hasValidNominee) {
         alert('Please provide at least one nominee for workers.')
@@ -415,16 +929,101 @@ export default function AddEmployee() {
     }
     
     // Show confirmation dialog
-    const confirmMessage = `Are you sure you want to add this ${employeeType.toLowerCase()}?\n\nEmployee ID: ${formData.employeeId}\nName: ${formData.nameEnglish}\nGross Salary: ৳${formData.grossSalary}`
+    const confirmMessage = `Are you sure you want to add this ${employeeType.toLowerCase()}?\n\nEmployee ID: ${formData.employeeId}\nName: ${formData.nameEnglish}\n${employeeType} Salary Grade: ${formData.salaryGrade || 'Not selected'}\nGross Salary: ৳${formData.grossSalary}`
     
     if (window.confirm(confirmMessage)) {
-      console.log('Employee Data:', formData)
-      console.log('Employee Type:', employeeType)
-      console.log('Level of Work:', formData.levelOfWork)
-      console.log('Salary Components:', formData.salaryComponents)
-      console.log('Picture:', formData.picture ? formData.picture.name : 'No picture uploaded')
-      // Here you would typically send the data to your backend
-      alert(`${employeeType} added successfully!`)
+      try {
+        // Convert picture file to data URL if present
+        let pictureDataUrl = null
+        if (formData.picture) {
+          pictureDataUrl = await new Promise((resolve) => {
+            const reader = new FileReader()
+            reader.onload = (e) => resolve(e.target.result)
+            reader.readAsDataURL(formData.picture)
+          })
+        }
+        // Prepare employee data for storage
+        const employeeData = {
+          // Basic Information
+          name: formData.nameEnglish,
+          nameBangla: formData.nameBangla,
+          designation: formData.designation,
+          department: formData.department,
+          levelOfWork: formData.levelOfWork,
+          employeeType: employeeType,
+          
+          // Contact Information
+          phone: formData.mobileNumber,
+          email: formData.emailAddress,
+          
+          // Personal Details
+          dateOfBirth: formData.dateOfBirth,
+          gender: formData.gender,
+          bloodGroup: formData.bloodGroup,
+          maritalStatus: formData.maritalStatus,
+          nationality: formData.nationality,
+          religion: formData.religion,
+          educationLevel: formData.educationLevel,
+          subject: formData.subject,
+          nidNumber: formData.nidNumber,
+          height: formData.height,
+          weight: formData.weight,
+          
+          // Work Information
+          employeeId: formData.employeeId,
+          dateOfJoining: formData.dateOfJoining,
+          dateOfIssue: formData.dateOfIssue,
+          offDay: formData.offDay,
+          unit: formData.unit,
+          supervisorName: formData.supervisorName,
+          grossSalary: formData.grossSalary,
+          salaryGrade: formData.salaryGrade,
+          
+          // Process Expertise (for Workers)
+          processExpertise: formData.processExpertise?.[0]?.operation || 'N/A',
+          machine: formData.processExpertise?.[0]?.machine || 'N/A',
+          
+          // Address Information
+          presentAddress: formData.presentAddress,
+          permanentAddress: formData.permanentAddress,
+          
+          // Emergency Contact
+          emergencyContact: formData.emergencyContact,
+          
+          // Additional Data
+          children: formData.children,
+          nominee: formData.nominee,
+          processEfficiency: formData.processEfficiency,
+          workExperience: formData.workExperience,
+          salaryComponents: formData.salaryComponents,
+          picture: pictureDataUrl
+        }
+        
+        // Save employee using the service
+        const newEmployee = await employeeService.addEmployee(employeeData)
+        
+        // Log employee creation
+        employeeLogService.logEmployeeCreated(newEmployee.id, employeeData)
+        
+        console.log('Employee Data:', employeeData)
+        console.log('Employee Type:', employeeType)
+        console.log('Level of Work:', formData.levelOfWork)
+        console.log('Salary Components:', formData.salaryComponents)
+        console.log('Picture:', formData.picture ? formData.picture.name : 'No picture uploaded')
+        
+        alert(`${employeeType} added successfully!`)
+        
+        // Navigate to Employee Dashboard after successful submission
+        setTimeout(() => {
+          window.location.href = '#Employee Dashboard'
+          window.location.reload()
+        }, 1000)
+        
+      } catch (error) {
+        console.error('Error saving employee:', error)
+        alert('Error saving employee. Please try again.')
+        return
+      }
       
       // Clear form data and localStorage after successful submission
       setFormData({
@@ -444,6 +1043,7 @@ export default function AddEmployee() {
         religion: 'Islam',
         maritalStatus: '',
         educationLevel: '',
+        subject: '',
         hasWorkExperience: 'No',
         workExperience: [{ companyName: '', department: '', designation: '', salary: '', duration: '' }],
         processExpertise: [{ operation: '', machine: '', duration: '' }],
@@ -457,7 +1057,7 @@ export default function AddEmployee() {
         offDay: '',
         unit: '',
         designation: '',
-        section: '',
+        department: '',
         levelOfWork: '',
         grossSalary: '',
         picture: null,
@@ -465,9 +1065,10 @@ export default function AddEmployee() {
         salaryComponents: {
           basicSalary: { enabled: true, amount: 0, custom: false },
           houseRent: { enabled: true, amount: 0, custom: false },
-          medical: { enabled: true, amount: 0, custom: false },
-          food: { enabled: true, amount: 0, custom: false },
-          conveyance: { enabled: true, amount: 0, custom: false }
+          medicalAllowance: { enabled: true, amount: 0, custom: false },
+          foodAllowance: { enabled: true, amount: 0, custom: false },
+          conveyance: { enabled: true, amount: 0, custom: false },
+          mobileBill: { enabled: false, amount: 0, custom: false }
         }
       })
       localStorage.removeItem('addEmployeeFormData')
@@ -476,23 +1077,53 @@ export default function AddEmployee() {
 
   return (
     <div className="space-y-6">
-      <div>
-        <h1 className="text-2xl font-semibold">Add New Employee</h1>
-        <p className="text-sm text-gray-500">Complete all required information to add a new employee</p>
-      </div>
-
       {/* Employee Type Selection */}
       <div className="rounded border border-gray-200 bg-white p-6">
-        <h2 className="text-lg font-medium mb-4">Select Employee Type</h2>
+        <div className="flex items-center justify-between mb-4">
+          <h2 className="text-lg font-medium">Select Employee Type</h2>
+          <div className="flex items-center space-x-3">
+            <button
+              type="button"
+              onClick={downloadTemplate}
+              className="px-4 py-2 bg-orange-300 text-white rounded hover:bg-orange-400 transition-colors flex items-center"
+            >
+              <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+              </svg>
+              Download Template
+            </button>
+            <button
+              type="button"
+              onClick={() => setShowBulkUpload(!showBulkUpload)}
+              className="px-4 py-2 bg-orange-300 text-white rounded hover:bg-orange-400 transition-colors flex items-center"
+            >
+              <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
+              </svg>
+              {showBulkUpload ? 'Hide Upload' : 'Bulk Upload'}
+            </button>
+          </div>
+        </div>
         <div className="flex gap-4">
           <button
             type="button"
             onClick={() => handleEmployeeTypeChange('Worker')}
             className={`px-6 py-3 rounded-lg font-medium transition-colors ${
               employeeType === 'Worker'
-                ? 'bg-blue-600 text-white'
+                ? 'text-white'
                 : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
             }`}
+            style={employeeType === 'Worker' ? { backgroundColor: 'rgb(255,200,150)' } : {}}
+            onMouseEnter={(e) => {
+              if (employeeType === 'Worker') {
+                e.target.style.backgroundColor = 'rgb(255,185,125)'
+              }
+            }}
+            onMouseLeave={(e) => {
+              if (employeeType === 'Worker') {
+                e.target.style.backgroundColor = 'rgb(255,200,150)'
+              }
+            }}
           >
             Add Worker
           </button>
@@ -501,13 +1132,199 @@ export default function AddEmployee() {
             onClick={() => handleEmployeeTypeChange('Staff')}
             className={`px-6 py-3 rounded-lg font-medium transition-colors ${
               employeeType === 'Staff'
-                ? 'bg-green-600 text-white'
+                ? 'text-white'
                 : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
             }`}
+            style={employeeType === 'Staff' ? { backgroundColor: 'rgb(255,185,125)' } : {}}
+            onMouseEnter={(e) => {
+              if (employeeType === 'Staff') {
+                e.target.style.backgroundColor = 'rgb(255,170,100)'
+              }
+            }}
+            onMouseLeave={(e) => {
+              if (employeeType === 'Staff') {
+                e.target.style.backgroundColor = 'rgb(255,185,125)'
+              }
+            }}
           >
             Add Staff
           </button>
         </div>
+        
+        {/* Bulk Upload Content */}
+        {showBulkUpload && (
+          <div className="mt-6 space-y-6">
+            {/* File Upload */}
+            <div className="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center hover:border-orange-400 transition-colors">
+              <input
+                type="file"
+                accept=".xlsx,.xls"
+                onChange={handleExcelFileChange}
+                className="hidden"
+                id="excel-upload"
+              />
+              <label
+                htmlFor="excel-upload"
+                className="cursor-pointer flex flex-col items-center"
+              >
+                <svg className="w-12 h-12 text-gray-400 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                </svg>
+                <p className="text-lg font-medium text-gray-700 mb-2">
+                  {excelFile ? excelFile.name : 'Click to upload Excel file'}
+                </p>
+                <p className="text-sm text-gray-500">
+                  Upload .xlsx or .xls file with employee data
+                </p>
+              </label>
+            </div>
+
+            {/* Picture Upload Instructions */}
+            <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+              <div className="flex items-start">
+                <div className="flex-shrink-0">
+                  <svg className="h-5 w-5 text-blue-400" fill="currentColor" viewBox="0 0 20 20">
+                    <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clipRule="evenodd" />
+                  </svg>
+                </div>
+                <div className="ml-3">
+                  <h3 className="text-sm font-medium text-blue-800">Picture Upload Information</h3>
+                  <div className="mt-2 text-sm text-blue-700">
+                    <p>• The Excel template includes a "Picture Path" column for employee photos</p>
+                    <p>• Enter the file path or URL of the employee's picture in this column</p>
+                    <p>• Example: <code className="bg-blue-100 px-1 rounded">/pictures/emp001.jpg</code> or <code className="bg-blue-100 px-1 rounded">https://example.com/photo.jpg</code></p>
+                    <p>• Leave empty if no picture is available</p>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Upload Progress */}
+            {uploadProgress > 0 && uploadProgress < 100 && (
+              <div className="bg-gray-100 rounded-lg p-4">
+                <div className="flex items-center justify-between mb-2">
+                  <span className="text-sm font-medium text-gray-700">Uploading employees...</span>
+                  <span className="text-sm text-gray-500">{uploadProgress}%</span>
+                </div>
+                <div className="w-full bg-gray-200 rounded-full h-2">
+                  <div
+                    className="bg-orange-500 h-2 rounded-full transition-all duration-300"
+                    style={{ width: `${uploadProgress}%` }}
+                  ></div>
+                </div>
+              </div>
+            )}
+
+            {/* Validation Errors */}
+            {uploadErrors.length > 0 && (
+              <div className="bg-red-50 border border-red-200 rounded-lg p-4">
+                <div className="flex items-center mb-2">
+                  <svg className="w-5 h-5 text-red-500 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                  </svg>
+                  <h3 className="text-sm font-medium text-red-800">Validation Errors</h3>
+                </div>
+                <div className="space-y-2">
+                  {uploadErrors.map((error, index) => (
+                    <div key={index} className="text-sm text-red-700">
+                      {error.message && (
+                        <p>{error.message}</p>
+                      )}
+                      {error.employeeId && (
+                        <p>Row {error.row}: Employee ID "{error.employeeId}" - {error.errors.join(', ')}</p>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* Employee Preview */}
+            {bulkDocuments.length > 0 && (
+              <div className="bg-gray-50 rounded-lg p-4">
+                <h3 className="text-lg font-medium text-gray-900 mb-4">
+                  Employee Preview ({bulkDocuments.length} employees)
+                </h3>
+                <div className="overflow-x-auto">
+                  <table className="min-w-full divide-y divide-gray-200">
+                    <thead className="bg-gray-100">
+                      <tr>
+                        <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Employee ID</th>
+                        <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Name (English)</th>
+                        <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Name (Bangla)</th>
+                        <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Department</th>
+                        <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Designation</th>
+                        <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Picture Path</th>
+                        <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Status</th>
+                      </tr>
+                    </thead>
+                    <tbody className="bg-white divide-y divide-gray-200">
+                      {bulkDocuments.slice(0, 10).map((employee) => (
+                        <tr key={employee.id}>
+                          <td className="px-4 py-2 text-sm text-gray-900">{employee.employeeId}</td>
+                          <td className="px-4 py-2 text-sm text-gray-900">{employee.nameEnglish}</td>
+                          <td className="px-4 py-2 text-sm text-gray-900">{employee.nameBangla}</td>
+                          <td className="px-4 py-2 text-sm text-gray-900">{employee.department}</td>
+                          <td className="px-4 py-2 text-sm text-gray-900">{employee.designation}</td>
+                          <td className="px-4 py-2 text-sm text-gray-900">
+                            {employee.picturePath ? (
+                              <span className="text-green-600 text-xs">✓ {employee.picturePath}</span>
+                            ) : (
+                              <span className="text-gray-400 text-xs">No picture</span>
+                            )}
+                          </td>
+                          <td className="px-4 py-2">
+                            <span className="px-2 py-1 text-xs font-medium rounded-full bg-yellow-100 text-yellow-800">
+                              {employee.status}
+                            </span>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                  {bulkDocuments.length > 10 && (
+                    <p className="text-sm text-gray-500 mt-2 text-center">
+                      Showing first 10 employees. Total: {bulkDocuments.length}
+                    </p>
+                  )}
+                </div>
+                
+                <div className="mt-4 flex justify-end space-x-3">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setBulkDocuments([])
+                      setExcelFile(null)
+                      setUploadErrors([])
+                    }}
+                    className="px-4 py-2 text-gray-700 bg-gray-200 rounded hover:bg-gray-300 transition-colors"
+                  >
+                    Clear
+                  </button>
+                  <button
+                    type="button"
+                    onClick={handleBulkUpload}
+                    className="px-4 py-2 bg-green-500 text-white rounded hover:bg-green-600 transition-colors"
+                  >
+                    Upload Employees
+                  </button>
+                </div>
+              </div>
+            )}
+
+            {/* Instructions */}
+            <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+              <h4 className="text-sm font-medium text-blue-800 mb-2">Instructions:</h4>
+              <ul className="text-sm text-blue-700 space-y-1">
+                <li>• Download the template and fill in the employee information</li>
+                <li>• Required fields: Employee ID, Name (English), Name (Bangla), Department, Designation, etc.</li>
+                <li>• Make sure Employee IDs are unique and not already in the system</li>
+                <li>• Supported file formats: .xlsx, .xls</li>
+                <li>• All form fields are included in the template for complete employee data</li>
+              </ul>
+            </div>
+          </div>
+        )}
         
       </div>
 
@@ -515,18 +1332,16 @@ export default function AddEmployee() {
         {/* Form Type Indicator */}
         <div className="rounded border border-gray-200 bg-white p-4">
           <div className="flex items-center gap-3">
-            <div className={`w-4 h-4 rounded-full ${employeeType === 'Worker' ? 'bg-blue-500' : 'bg-green-500'}`}></div>
+            <div 
+              className="w-4 h-4 rounded-full" 
+              style={{ backgroundColor: employeeType === 'Worker' ? 'rgb(255,200,150)' : 'rgb(255,185,125)' }}
+            ></div>
             <span className="font-medium text-gray-700">
-              {employeeType === 'Worker' ? 'Worker Registration Form' : 'Staff Registration Form'}
-            </span>
-            <span className="text-sm text-gray-500">
-              {employeeType === 'Worker' 
-                ? '(Complete information required)' 
-                : '(Basic information only)'
-              }
+              {employeeType === 'Worker' ? 'Worker' : 'Staff'}
             </span>
           </div>
         </div>
+
 
         {/* Personal Information */}
         <div className="rounded border border-gray-200 bg-white p-6">
@@ -557,7 +1372,12 @@ export default function AddEmployee() {
                   type="file"
                   accept="image/*"
                   onChange={handlePictureChange}
-                  className="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100"
+                  className="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold"
+                  style={{
+                    '--tw-file-bg': 'rgb(255,250,245)',
+                    '--tw-file-text': 'rgb(200,100,50)',
+                    '--tw-file-hover-bg': 'rgb(255,240,220)'
+                  }}
                 />
                 <p className="text-xs text-gray-500 mt-1">JPG, PNG or GIF up to 5MB</p>
               </div>
@@ -571,7 +1391,7 @@ export default function AddEmployee() {
                 type="text"
                 value={formData.nameBangla}
                 onChange={(e) => updateFormData('nameBangla', e.target.value)}
-                className="w-full h-10 rounded border border-gray-300 px-3 focus:outline-none focus:ring-2 focus:ring-orange-500"
+                className="w-full h-10 rounded border border-gray-300 px-3 focus:outline-none focus:ring-2"
                 required
               />
             </div>
@@ -581,7 +1401,7 @@ export default function AddEmployee() {
                 type="text"
                 value={formData.nameEnglish}
                 onChange={(e) => updateFormData('nameEnglish', e.target.value)}
-                className="w-full h-10 rounded border border-gray-300 px-3 focus:outline-none focus:ring-2 focus:ring-orange-500"
+                className="w-full h-10 rounded border border-gray-300 px-3 focus:outline-none focus:ring-2"
                 required
               />
             </div>
@@ -591,7 +1411,7 @@ export default function AddEmployee() {
                 type="tel"
                 value={formData.mobileNumber}
                 onChange={(e) => updateFormData('mobileNumber', e.target.value)}
-                className="w-full h-10 rounded border border-gray-300 px-3 focus:outline-none focus:ring-2 focus:ring-orange-500"
+                className="w-full h-10 rounded border border-gray-300 px-3 focus:outline-none focus:ring-2"
                 required
               />
             </div>
@@ -601,7 +1421,7 @@ export default function AddEmployee() {
                 type="email"
                 value={formData.emailAddress}
                 onChange={(e) => updateFormData('emailAddress', e.target.value)}
-                className="w-full h-10 rounded border border-gray-300 px-3 focus:outline-none focus:ring-2 focus:ring-orange-500"
+                className="w-full h-10 rounded border border-gray-300 px-3 focus:outline-none focus:ring-2"
                 placeholder="example@email.com"
               />
             </div>
@@ -611,7 +1431,7 @@ export default function AddEmployee() {
                 type="text"
                 value={formData.nationality}
                 onChange={(e) => updateFormData('nationality', e.target.value)}
-                className="w-full h-10 rounded border border-gray-300 px-3 focus:outline-none focus:ring-2 focus:ring-orange-500"
+                className="w-full h-10 rounded border border-gray-300 px-3 focus:outline-none focus:ring-2"
               />
             </div>
             <div>
@@ -620,7 +1440,7 @@ export default function AddEmployee() {
                 type="text"
                 value={formData.fathersName}
                 onChange={(e) => updateFormData('fathersName', e.target.value)}
-                className="w-full h-10 rounded border border-gray-300 px-3 focus:outline-none focus:ring-2 focus:ring-orange-500"
+                className="w-full h-10 rounded border border-gray-300 px-3 focus:outline-none focus:ring-2"
                 required
               />
             </div>
@@ -630,7 +1450,7 @@ export default function AddEmployee() {
                 type="text"
                 value={formData.mothersName}
                 onChange={(e) => updateFormData('mothersName', e.target.value)}
-                className="w-full h-10 rounded border border-gray-300 px-3 focus:outline-none focus:ring-2 focus:ring-orange-500"
+                className="w-full h-10 rounded border border-gray-300 px-3 focus:outline-none focus:ring-2"
                 required
               />
             </div>
@@ -640,15 +1460,15 @@ export default function AddEmployee() {
                 type="text"
                 value={formData.spouseName}
                 onChange={(e) => updateFormData('spouseName', e.target.value)}
-                className="w-full h-10 rounded border border-gray-300 px-3 focus:outline-none focus:ring-2 focus:ring-orange-500"
+                className="w-full h-10 rounded border border-gray-300 px-3 focus:outline-none focus:ring-2"
               />
             </div>
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">Date of Birth *</label>
               <CustomDateInput
                 value={formData.dateOfBirth}
-                onChange={(e) => updateFormData('dateOfBirth', e.target.value)}
-                className="w-full h-10 rounded border border-gray-300 px-3 focus:outline-none focus:ring-2 focus:ring-orange-500"
+                onChange={handleDateOfBirthChange}
+                className="w-full h-10 rounded border border-gray-300 px-3 focus:outline-none focus:ring-2"
                 required
               />
             </div>
@@ -658,7 +1478,7 @@ export default function AddEmployee() {
                 type="text"
                 value={formData.nidNumber}
                 onChange={(e) => updateFormData('nidNumber', e.target.value)}
-                className="w-full h-10 rounded border border-gray-300 px-3 focus:outline-none focus:ring-2 focus:ring-orange-500"
+                className="w-full h-10 rounded border border-gray-300 px-3 focus:outline-none focus:ring-2"
                 placeholder="1234567890123"
                 
               />
@@ -669,7 +1489,7 @@ export default function AddEmployee() {
                 type="text"
                 value={formData.birthCertificateNumber}
                 onChange={(e) => updateFormData('birthCertificateNumber', e.target.value)}
-                className="w-full h-10 rounded border border-gray-300 px-3 focus:outline-none focus:ring-2 focus:ring-orange-500"
+                className="w-full h-10 rounded border border-gray-300 px-3 focus:outline-none focus:ring-2"
               />
             </div>
             <div>
@@ -677,7 +1497,7 @@ export default function AddEmployee() {
               <select
                 value={formData.bloodGroup}
                 onChange={(e) => updateFormData('bloodGroup', e.target.value)}
-                className="w-full h-10 rounded border border-gray-300 px-3 focus:outline-none focus:ring-2 focus:ring-orange-500"
+                className="w-full h-10 rounded border border-gray-300 px-3 focus:outline-none focus:ring-2"
               >
                 <option value="">Select Blood Group</option>
                 {bloodGroups.map(bg => (
@@ -691,7 +1511,7 @@ export default function AddEmployee() {
                 type="text"
                 value={formData.religion}
                 onChange={(e) => updateFormData('religion', e.target.value)}
-                className="w-full h-10 rounded border border-gray-300 px-3 focus:outline-none focus:ring-2 focus:ring-orange-500"
+                className="w-full h-10 rounded border border-gray-300 px-3 focus:outline-none focus:ring-2"
               />
             </div>
             <div>
@@ -699,7 +1519,7 @@ export default function AddEmployee() {
               <select
                 value={formData.maritalStatus}
                 onChange={(e) => updateFormData('maritalStatus', e.target.value)}
-                className="w-full h-10 rounded border border-gray-300 px-3 focus:outline-none focus:ring-2 focus:ring-orange-500"
+                className="w-full h-10 rounded border border-gray-300 px-3 focus:outline-none focus:ring-2"
               >
                 <option value="">Select Marital Status</option>
                 {maritalStatuses.map(status => (
@@ -713,7 +1533,7 @@ export default function AddEmployee() {
                 type="number"
                 value={formData.height}
                 onChange={(e) => updateFormData('height', e.target.value)}
-                className="w-full h-10 rounded border border-gray-300 px-3 focus:outline-none focus:ring-2 focus:ring-orange-500"
+                className="w-full h-10 rounded border border-gray-300 px-3 focus:outline-none focus:ring-2"
                 placeholder="165"
               />
             </div>
@@ -721,8 +1541,16 @@ export default function AddEmployee() {
               <label className="block text-sm font-medium text-gray-700 mb-2">Last Educational Status</label>
               <select
                 value={formData.educationLevel}
-                onChange={(e) => updateFormData('educationLevel', e.target.value)}
-                className="w-full h-10 rounded border border-gray-300 px-3 focus:outline-none focus:ring-2 focus:ring-orange-500"
+                onChange={(e) => {
+                  const selectedLevel = e.target.value
+                  updateFormData('educationLevel', selectedLevel)
+                  
+                  // Clear subject field if educational level doesn't require it
+                  if (!["Hon's", "Master's", "BSc", "MSc", "PhD"].includes(selectedLevel)) {
+                    updateFormData('subject', '')
+                  }
+                }}
+                className="w-full h-10 rounded border border-gray-300 px-3 focus:outline-none focus:ring-2"
               >
                 <option value="">Select Education Level</option>
                 {educationLevels.map(level => (
@@ -730,12 +1558,32 @@ export default function AddEmployee() {
                 ))}
               </select>
             </div>
+            {/* Show Subject field only for higher education levels */}
+            {(formData.educationLevel === "Hon's" || 
+              formData.educationLevel === "Master's" || 
+              formData.educationLevel === "BSc" || 
+              formData.educationLevel === "MSc" || 
+              formData.educationLevel === "PhD") && (
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">Subject</label>
+                <select
+                  value={formData.subject}
+                  onChange={(e) => updateFormData('subject', e.target.value)}
+                  className="w-full h-10 rounded border border-gray-300 px-3 focus:outline-none focus:ring-2"
+                >
+                  <option value="">Select Subject</option>
+                  {subjects.map(subject => (
+                    <option key={subject} value={subject}>{subject}</option>
+                  ))}
+                </select>
+              </div>
+            )}
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">Gender *</label>
               <select
                 value={formData.gender}
                 onChange={(e) => updateFormData('gender', e.target.value)}
-                className="w-full h-10 rounded border border-gray-300 px-3 focus:outline-none focus:ring-2 focus:ring-orange-500"
+                className="w-full h-10 rounded border border-gray-300 px-3 focus:outline-none focus:ring-2"
                 required
               >
                 <option value="">Select Gender</option>
@@ -749,7 +1597,7 @@ export default function AddEmployee() {
                 type="number"
                 value={formData.weight}
                 onChange={(e) => updateFormData('weight', e.target.value)}
-                className="w-full h-10 rounded border border-gray-300 px-3 focus:outline-none focus:ring-2 focus:ring-orange-500"
+                className="w-full h-10 rounded border border-gray-300 px-3 focus:outline-none focus:ring-2"
                 placeholder="60"
               />
             </div>
@@ -759,7 +1607,8 @@ export default function AddEmployee() {
         {/* Children Information - Only for Workers */}
         {employeeType === 'Worker' && (
           <div className="rounded border border-gray-200 bg-white p-6">
-            <h2 className="text-xl font-semibold mb-6">Children Information</h2>
+            <h2 className="text-xl font-semibold mb-6">Children Information <span className="text-sm font-normal text-gray-500">(Optional)</span></h2>
+            <p className="text-sm text-gray-600 mb-4">You can add children information if available. This section is completely optional.</p>
             <div className="space-y-4">
               {formData.children.map((child, index) => (
                 <div key={index} className="grid grid-cols-1 md:grid-cols-4 gap-4 p-4 border border-gray-200 rounded">
@@ -769,7 +1618,7 @@ export default function AddEmployee() {
                       type="text"
                       value={child.name}
                       onChange={(e) => updateArrayField('children', index, 'name', e.target.value)}
-                      className="w-full h-10 rounded border border-gray-300 px-3 focus:outline-none focus:ring-2 focus:ring-orange-500"
+                      className="w-full h-10 rounded border border-gray-300 px-3 focus:outline-none focus:ring-2"
                     />
                   </div>
                   <div>
@@ -778,7 +1627,7 @@ export default function AddEmployee() {
                       type="number"
                       value={child.age}
                       onChange={(e) => updateArrayField('children', index, 'age', e.target.value)}
-                      className="w-full h-10 rounded border border-gray-300 px-3 focus:outline-none focus:ring-2 focus:ring-orange-500"
+                      className="w-full h-10 rounded border border-gray-300 px-3 focus:outline-none focus:ring-2"
                     />
                   </div>
                   <div>
@@ -787,7 +1636,7 @@ export default function AddEmployee() {
                       type="text"
                       value={child.education}
                       onChange={(e) => updateArrayField('children', index, 'education', e.target.value)}
-                      className="w-full h-10 rounded border border-gray-300 px-3 focus:outline-none focus:ring-2 focus:ring-orange-500"
+                      className="w-full h-10 rounded border border-gray-300 px-3 focus:outline-none focus:ring-2"
                     />
                   </div>
                   <div>
@@ -796,7 +1645,7 @@ export default function AddEmployee() {
                       type="text"
                       value={child.institute}
                       onChange={(e) => updateArrayField('children', index, 'institute', e.target.value)}
-                      className="w-full h-10 rounded border border-gray-300 px-3 focus:outline-none focus:ring-2 focus:ring-orange-500"
+                      className="w-full h-10 rounded border border-gray-300 px-3 focus:outline-none focus:ring-2"
                     />
                   </div>
                 </div>
@@ -815,7 +1664,7 @@ export default function AddEmployee() {
                 type="text"
                 value={formData.presentAddress.houseOwnerName}
                 onChange={(e) => updateNestedField('presentAddress', 'houseOwnerName', e.target.value)}
-                className="w-full h-10 rounded border border-gray-300 px-3 focus:outline-none focus:ring-2 focus:ring-orange-500"
+                className="w-full h-10 rounded border border-gray-300 px-3 focus:outline-none focus:ring-2"
               />
             </div>
             <div>
@@ -824,7 +1673,7 @@ export default function AddEmployee() {
                 type="text"
                 value={formData.presentAddress.village}
                 onChange={(e) => updateNestedField('presentAddress', 'village', e.target.value)}
-                className="w-full h-10 rounded border border-gray-300 px-3 focus:outline-none focus:ring-2 focus:ring-orange-500"
+                className="w-full h-10 rounded border border-gray-300 px-3 focus:outline-none focus:ring-2"
               />
             </div>
             <div>
@@ -833,7 +1682,7 @@ export default function AddEmployee() {
                 type="text"
                 value={formData.presentAddress.postOffice}
                 onChange={(e) => updateNestedField('presentAddress', 'postOffice', e.target.value)}
-                className="w-full h-10 rounded border border-gray-300 px-3 focus:outline-none focus:ring-2 focus:ring-orange-500"
+                className="w-full h-10 rounded border border-gray-300 px-3 focus:outline-none focus:ring-2"
               />
             </div>
             <div>
@@ -842,7 +1691,7 @@ export default function AddEmployee() {
                 type="text"
                 value={formData.presentAddress.upazilla}
                 onChange={(e) => updateNestedField('presentAddress', 'upazilla', e.target.value)}
-                className="w-full h-10 rounded border border-gray-300 px-3 focus:outline-none focus:ring-2 focus:ring-orange-500"
+                className="w-full h-10 rounded border border-gray-300 px-3 focus:outline-none focus:ring-2"
               />
             </div>
             <div>
@@ -851,7 +1700,7 @@ export default function AddEmployee() {
                 type="text"
                 value={formData.presentAddress.district}
                 onChange={(e) => updateNestedField('presentAddress', 'district', e.target.value)}
-                className="w-full h-10 rounded border border-gray-300 px-3 focus:outline-none focus:ring-2 focus:ring-orange-500"
+                className="w-full h-10 rounded border border-gray-300 px-3 focus:outline-none focus:ring-2"
               />
             </div>
           </div>
@@ -867,7 +1716,7 @@ export default function AddEmployee() {
                 type="text"
                 value={formData.permanentAddress.village}
                 onChange={(e) => updateNestedField('permanentAddress', 'village', e.target.value)}
-                className="w-full h-10 rounded border border-gray-300 px-3 focus:outline-none focus:ring-2 focus:ring-orange-500"
+                className="w-full h-10 rounded border border-gray-300 px-3 focus:outline-none focus:ring-2"
               />
             </div>
             <div>
@@ -876,7 +1725,7 @@ export default function AddEmployee() {
                 type="text"
                 value={formData.permanentAddress.postOffice}
                 onChange={(e) => updateNestedField('permanentAddress', 'postOffice', e.target.value)}
-                className="w-full h-10 rounded border border-gray-300 px-3 focus:outline-none focus:ring-2 focus:ring-orange-500"
+                className="w-full h-10 rounded border border-gray-300 px-3 focus:outline-none focus:ring-2"
               />
             </div>
             <div>
@@ -885,7 +1734,7 @@ export default function AddEmployee() {
                 type="text"
                 value={formData.permanentAddress.upazilla}
                 onChange={(e) => updateNestedField('permanentAddress', 'upazilla', e.target.value)}
-                className="w-full h-10 rounded border border-gray-300 px-3 focus:outline-none focus:ring-2 focus:ring-orange-500"
+                className="w-full h-10 rounded border border-gray-300 px-3 focus:outline-none focus:ring-2"
               />
             </div>
             <div>
@@ -894,7 +1743,7 @@ export default function AddEmployee() {
                 type="text"
                 value={formData.permanentAddress.district}
                 onChange={(e) => updateNestedField('permanentAddress', 'district', e.target.value)}
-                className="w-full h-10 rounded border border-gray-300 px-3 focus:outline-none focus:ring-2 focus:ring-orange-500"
+                className="w-full h-10 rounded border border-gray-300 px-3 focus:outline-none focus:ring-2"
               />
             </div>
           </div>
@@ -908,7 +1757,7 @@ export default function AddEmployee() {
             <select
               value={formData.hasWorkExperience}
               onChange={(e) => updateFormData('hasWorkExperience', e.target.value)}
-              className="w-full h-10 rounded border border-gray-300 px-3 focus:outline-none focus:ring-2 focus:ring-orange-500"
+              className="w-full h-10 rounded border border-gray-300 px-3 focus:outline-none focus:ring-2"
             >
               <option value="No">No</option>
               <option value="Yes">Yes</option>
@@ -925,26 +1774,34 @@ export default function AddEmployee() {
                       type="text"
                       value={exp.companyName}
                       onChange={(e) => updateArrayField('workExperience', index, 'companyName', e.target.value)}
-                      className="w-full h-10 rounded border border-gray-300 px-3 focus:outline-none focus:ring-2 focus:ring-orange-500"
+                      className="w-full h-10 rounded border border-gray-300 px-3 focus:outline-none focus:ring-2"
                     />
                   </div>
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-2">Department</label>
-                    <input
-                      type="text"
+                    <select
                       value={exp.department}
                       onChange={(e) => updateArrayField('workExperience', index, 'department', e.target.value)}
-                      className="w-full h-10 rounded border border-gray-300 px-3 focus:outline-none focus:ring-2 focus:ring-orange-500"
-                    />
+                      className="w-full h-10 rounded border border-gray-300 px-3 focus:outline-none focus:ring-2"
+                    >
+                      <option value="">Select Department</option>
+                      {departments.map(department => (
+                        <option key={department} value={department}>{department}</option>
+                      ))}
+                    </select>
                   </div>
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-2">Designation</label>
-                    <input
-                      type="text"
+                    <select
                       value={exp.designation}
                       onChange={(e) => updateArrayField('workExperience', index, 'designation', e.target.value)}
-                      className="w-full h-10 rounded border border-gray-300 px-3 focus:outline-none focus:ring-2 focus:ring-orange-500"
-                    />
+                      className="w-full h-10 rounded border border-gray-300 px-3 focus:outline-none focus:ring-2"
+                    >
+                      <option value="">Select Designation</option>
+                      {designations.map(designation => (
+                        <option key={designation} value={designation}>{designation}</option>
+                      ))}
+                    </select>
                   </div>
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-2">Salary</label>
@@ -952,7 +1809,7 @@ export default function AddEmployee() {
                       type="number"
                       value={exp.salary}
                       onChange={(e) => updateArrayField('workExperience', index, 'salary', e.target.value)}
-                      className="w-full h-10 rounded border border-gray-300 px-3 focus:outline-none focus:ring-2 focus:ring-orange-500"
+                      className="w-full h-10 rounded border border-gray-300 px-3 focus:outline-none focus:ring-2"
                     />
                   </div>
                   <div className="flex items-end gap-2">
@@ -962,7 +1819,7 @@ export default function AddEmployee() {
                         type="text"
                         value={exp.duration}
                         onChange={(e) => updateArrayField('workExperience', index, 'duration', e.target.value)}
-                        className="w-full h-10 rounded border border-gray-300 px-3 focus:outline-none focus:ring-2 focus:ring-orange-500"
+                        className="w-full h-10 rounded border border-gray-300 px-3 focus:outline-none focus:ring-2"
                         placeholder="2 years"
                       />
                     </div>
@@ -981,7 +1838,10 @@ export default function AddEmployee() {
               <button
                 type="button"
                 onClick={addWorkExperience}
-                className="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600"
+                className="px-4 py-2 text-white rounded transition-colors"
+                style={{ backgroundColor: 'rgb(255,200,150)' }}
+                onMouseEnter={(e) => e.target.style.backgroundColor = 'rgb(255,185,125)'}
+                onMouseLeave={(e) => e.target.style.backgroundColor = 'rgb(255,200,150)'}
               >
                 Add More Experience
               </button>
@@ -998,23 +1858,33 @@ export default function AddEmployee() {
                 <div key={index} className="grid grid-cols-1 md:grid-cols-3 gap-4 p-4 border border-gray-200 rounded">
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-2">Operation</label>
-                    <input
-                      type="text"
+                    <select
                       value={expertise.operation}
-                      onChange={(e) => updateArrayField('processExpertise', index, 'operation', e.target.value)}
-                      className="w-full h-10 rounded border border-gray-300 px-3 focus:outline-none focus:ring-2 focus:ring-orange-500"
-                      placeholder="Neck Joint"
-                    />
+                      onChange={(e) => updateOperationAndMachines(index, e.target.value)}
+                      className="w-full h-10 rounded border border-gray-300 px-3 focus:outline-none focus:ring-2"
+                    >
+                      <option value="">Select Operation</option>
+                      {operations.map((option) => (
+                        <option key={option.id} value={option.operation}>
+                          {option.operation}
+                        </option>
+                      ))}
+                    </select>
                   </div>
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-2">Machine</label>
-                    <input
-                      type="text"
+                    <select
                       value={expertise.machine}
                       onChange={(e) => updateArrayField('processExpertise', index, 'machine', e.target.value)}
-                      className="w-full h-10 rounded border border-gray-300 px-3 focus:outline-none focus:ring-2 focus:ring-orange-500"
-                      placeholder="Machine"
-                    />
+                      className="w-full h-10 rounded border border-gray-300 px-3 focus:outline-none focus:ring-2"
+                    >
+                      <option value="">Select Machine</option>
+                      {allMachines.map((machineOption) => (
+                        <option key={machineOption.id} value={machineOption.machine}>
+                          {machineOption.machine}
+                        </option>
+                      ))}
+                    </select>
                   </div>
                   <div className="flex items-end gap-2">
                     <div className="flex-1">
@@ -1023,7 +1893,7 @@ export default function AddEmployee() {
                         type="text"
                         value={expertise.duration}
                         onChange={(e) => updateArrayField('processExpertise', index, 'duration', e.target.value)}
-                        className="w-full h-10 rounded border border-gray-300 px-3 focus:outline-none focus:ring-2 focus:ring-orange-500"
+                        className="w-full h-10 rounded border border-gray-300 px-3 focus:outline-none focus:ring-2"
                         placeholder="2 YEARS"
                       />
                     </div>
@@ -1042,7 +1912,10 @@ export default function AddEmployee() {
               <button
                 type="button"
                 onClick={addProcessExpertise}
-                className="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600"
+                className="px-4 py-2 text-white rounded transition-colors"
+                style={{ backgroundColor: 'rgb(255,200,150)' }}
+                onMouseEnter={(e) => e.target.style.backgroundColor = 'rgb(255,185,125)'}
+                onMouseLeave={(e) => e.target.style.backgroundColor = 'rgb(255,200,150)'}
               >
                 Add More Process Expertise
               </button>
@@ -1063,7 +1936,7 @@ export default function AddEmployee() {
                       type="text"
                       value={efficiency.itemDescription}
                       onChange={(e) => updateArrayField('processEfficiency', index, 'itemDescription', e.target.value)}
-                      className="w-full h-10 rounded border border-gray-300 px-3 focus:outline-none focus:ring-2 focus:ring-orange-500"
+                      className="w-full h-10 rounded border border-gray-300 px-3 focus:outline-none focus:ring-2"
                       placeholder="T-SHIRT"
                     />
                   </div>
@@ -1073,7 +1946,7 @@ export default function AddEmployee() {
                       type="text"
                       value={efficiency.processDeliveryPerHour}
                       onChange={(e) => updateArrayField('processEfficiency', index, 'processDeliveryPerHour', e.target.value)}
-                      className="w-full h-10 rounded border border-gray-300 px-3 focus:outline-none focus:ring-2 focus:ring-orange-500"
+                      className="w-full h-10 rounded border border-gray-300 px-3 focus:outline-none focus:ring-2"
                       placeholder="50 PIECES"
                     />
                   </div>
@@ -1084,7 +1957,7 @@ export default function AddEmployee() {
                         type="text"
                         value={efficiency.remarks}
                         onChange={(e) => updateArrayField('processEfficiency', index, 'remarks', e.target.value)}
-                        className="w-full h-10 rounded border border-gray-300 px-3 focus:outline-none focus:ring-2 focus:ring-orange-500"
+                        className="w-full h-10 rounded border border-gray-300 px-3 focus:outline-none focus:ring-2"
                         placeholder="EXCELLENT QUALITY"
                       />
                     </div>
@@ -1103,7 +1976,10 @@ export default function AddEmployee() {
               <button
                 type="button"
                 onClick={addProcessEfficiency}
-                className="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600"
+                className="px-4 py-2 text-white rounded transition-colors"
+                style={{ backgroundColor: 'rgb(255,200,150)' }}
+                onMouseEnter={(e) => e.target.style.backgroundColor = 'rgb(255,185,125)'}
+                onMouseLeave={(e) => e.target.style.backgroundColor = 'rgb(255,200,150)'}
               >
                 Add More Process Efficiency
               </button>
@@ -1123,7 +1999,7 @@ export default function AddEmployee() {
                     type="text"
                     value={nominee.name}
                     onChange={(e) => updateArrayField('nominee', index, 'name', e.target.value)}
-                    className="w-full h-10 rounded border border-gray-300 px-3 focus:outline-none focus:ring-2 focus:ring-orange-500"
+                    className="w-full h-10 rounded border border-gray-300 px-3 focus:outline-none focus:ring-2"
                     placeholder="Hassan"
                   />
                 </div>
@@ -1133,7 +2009,7 @@ export default function AddEmployee() {
                     type="tel"
                     value={nominee.mobile}
                     onChange={(e) => updateArrayField('nominee', index, 'mobile', e.target.value)}
-                    className="w-full h-10 rounded border border-gray-300 px-3 focus:outline-none focus:ring-2 focus:ring-orange-500"
+                    className="w-full h-10 rounded border border-gray-300 px-3 focus:outline-none focus:ring-2"
                   />
                 </div>
                 <div>
@@ -1142,7 +2018,7 @@ export default function AddEmployee() {
                     type="text"
                     value={nominee.nidBirthCertificate}
                     onChange={(e) => updateArrayField('nominee', index, 'nidBirthCertificate', e.target.value)}
-                    className="w-full h-10 rounded border border-gray-300 px-3 focus:outline-none focus:ring-2 focus:ring-orange-500"
+                    className="w-full h-10 rounded border border-gray-300 px-3 focus:outline-none focus:ring-2"
                     placeholder="1234567890123"
                   />
                 </div>
@@ -1163,7 +2039,7 @@ export default function AddEmployee() {
                 type="text"
                 value={formData.emergencyContact.name}
                 onChange={(e) => updateNestedField('emergencyContact', 'name', e.target.value)}
-                className="w-full h-10 rounded border border-gray-300 px-3 focus:outline-none focus:ring-2 focus:ring-orange-500"
+                className="w-full h-10 rounded border border-gray-300 px-3 focus:outline-none focus:ring-2"
               />
             </div>
             <div>
@@ -1172,7 +2048,7 @@ export default function AddEmployee() {
                 type="tel"
                 value={formData.emergencyContact.mobile}
                 onChange={(e) => updateNestedField('emergencyContact', 'mobile', e.target.value)}
-                className="w-full h-10 rounded border border-gray-300 px-3 focus:outline-none focus:ring-2 focus:ring-orange-500"
+                className="w-full h-10 rounded border border-gray-300 px-3 focus:outline-none focus:ring-2"
               />
             </div>
             <div>
@@ -1181,7 +2057,7 @@ export default function AddEmployee() {
                 type="text"
                 value={formData.emergencyContact.relation}
                 onChange={(e) => updateNestedField('emergencyContact', 'relation', e.target.value)}
-                className="w-full h-10 rounded border border-gray-300 px-3 focus:outline-none focus:ring-2 focus:ring-orange-500"
+                className="w-full h-10 rounded border border-gray-300 px-3 focus:outline-none focus:ring-2"
               />
             </div>
           </div>
@@ -1189,7 +2065,7 @@ export default function AddEmployee() {
 
         {/* Administration Section */}
         <div className="rounded border border-gray-200 bg-white p-6">
-          <h2 className="text-xl font-semibold mb-6 text-orange-600">Section Only For Administration</h2>
+          <h2 className="text-xl font-semibold mb-6" style={{ color: 'rgb(200,100,50)' }}>Department Only For Administration</h2>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">Employee ID *</label>
@@ -1197,29 +2073,30 @@ export default function AddEmployee() {
                 type="text"
                 value={formData.employeeId}
                 onChange={(e) => updateFormData('employeeId', e.target.value)}
-                className="w-full h-10 rounded border border-gray-300 px-3 focus:outline-none focus:ring-2 focus:ring-orange-500"
+                className="w-full h-10 rounded border border-gray-300 px-3 focus:outline-none focus:ring-2"
                 placeholder="EMP001"
                 required
               />
             </div>
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">Level of Work *</label>
-              <select
+              <input
+                type="text"
                 value={formData.levelOfWork}
-                onChange={(e) => updateFormData('levelOfWork', e.target.value)}
-                className="w-full h-10 rounded border border-gray-300 px-3 focus:outline-none focus:ring-2 focus:ring-orange-500"
-                required
-              >
-                <option value="Worker">Worker</option>
-                <option value="Staff">Staff</option>
-              </select>
+                className="w-full h-10 rounded border border-gray-300 px-3 bg-gray-100 cursor-not-allowed"
+                readOnly
+                disabled
+              />
+              <p className="text-xs text-gray-500 mt-1">
+                Level of Work is automatically set to match the selected employee type
+              </p>
             </div>
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">Off-Day</label>
               <select
                 value={formData.offDay}
                 onChange={(e) => updateFormData('offDay', e.target.value)}
-                className="w-full h-10 rounded border border-gray-300 px-3 focus:outline-none focus:ring-2 focus:ring-orange-500"
+                className="w-full h-10 rounded border border-gray-300 px-3 focus:outline-none focus:ring-2"
               >
                 <option value="">Select Off-Day</option>
                 {offDays.map(day => (
@@ -1234,7 +2111,7 @@ export default function AddEmployee() {
                   <select
                     value={formData.unit}
                     onChange={(e) => updateFormData('unit', e.target.value)}
-                    className="w-full h-10 rounded border border-gray-300 px-3 focus:outline-none focus:ring-2 focus:ring-orange-500"
+                    className="w-full h-10 rounded border border-gray-300 px-3 focus:outline-none focus:ring-2"
                   >
                     <option value="">Select Unit</option>
                     {units.map(unit => (
@@ -1248,7 +2125,7 @@ export default function AddEmployee() {
                     type="text"
                     value={formData.line}
                     onChange={(e) => updateFormData('line', e.target.value)}
-                    className="w-full h-10 rounded border border-gray-300 px-3 focus:outline-none focus:ring-2 focus:ring-orange-500"
+                    className="w-full h-10 rounded border border-gray-300 px-3 focus:outline-none focus:ring-2"
                     placeholder="Line 1, Line 2, etc."
                   />
                 </div>
@@ -1259,7 +2136,7 @@ export default function AddEmployee() {
               <select
                 value={formData.designation}
                 onChange={(e) => updateFormData('designation', e.target.value)}
-                className="w-full h-10 rounded border border-gray-300 px-3 focus:outline-none focus:ring-2 focus:ring-orange-500"
+                className="w-full h-10 rounded border border-gray-300 px-3 focus:outline-none focus:ring-2"
               >
                 <option value="">Select Designation</option>
                 {designations.map(designation => (
@@ -1268,15 +2145,15 @@ export default function AddEmployee() {
               </select>
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">Section</label>
+              <label className="block text-sm font-medium text-gray-700 mb-2">Department</label>
               <select
-                value={formData.section}
-                onChange={(e) => updateFormData('section', e.target.value)}
-                className="w-full h-10 rounded border border-gray-300 px-3 focus:outline-none focus:ring-2 focus:ring-orange-500"
+                value={formData.department}
+                onChange={(e) => updateFormData('department', e.target.value)}
+                className="w-full h-10 rounded border border-gray-300 px-3 focus:outline-none focus:ring-2"
               >
-                <option value="">Select Section</option>
-                {sections.map(section => (
-                  <option key={section} value={section}>{section}</option>
+                <option value="">Select Department</option>
+                {departments.map(department => (
+                  <option key={department} value={department}>{department}</option>
                 ))}
               </select>
             </div>
@@ -1287,17 +2164,36 @@ export default function AddEmployee() {
                   type="text"
                   value={formData.supervisorName}
                   onChange={(e) => updateFormData('supervisorName', e.target.value)}
-                  className="w-full h-10 rounded border border-gray-300 px-3 focus:outline-none focus:ring-2 focus:ring-orange-500"
+                  className="w-full h-10 rounded border border-gray-300 px-3 focus:outline-none focus:ring-2"
                 />
               </div>
             )}
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                {employeeType} Salary Grade
+              </label>
+              <select
+                value={formData.salaryGrade}
+                onChange={(e) => handleSalaryGradeChange(e.target.value)}
+                className="w-full h-10 rounded border border-gray-300 px-3 focus:outline-none focus:ring-2"
+              >
+                <option value="">Select {employeeType} Salary Grade</option>
+                {salaryGrades
+                  .filter(grade => grade.type === employeeType)
+                  .map((grade) => (
+                    <option key={grade.id} value={grade.name}>
+                      {grade.name} - ৳{grade.grossSalary.toLocaleString()}
+                    </option>
+                  ))}
+              </select>
+            </div>
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">Gross Salary *</label>
               <input
                 type="number"
                 value={formData.grossSalary}
                 onChange={(e) => handleGrossSalaryChange(e.target.value)}
-                className="w-full h-10 rounded border border-gray-300 px-3 focus:outline-none focus:ring-2 focus:ring-orange-500"
+                className="w-full h-10 rounded border border-gray-300 px-3 focus:outline-none focus:ring-2"
                 placeholder="0"
                 required
               />
@@ -1306,8 +2202,8 @@ export default function AddEmployee() {
               <label className="block text-sm font-medium text-gray-700 mb-2">Date of Joining *</label>
               <CustomDateInput
                 value={formData.dateOfJoining}
-                onChange={(e) => updateFormData('dateOfJoining', e.target.value)}
-                className="w-full h-10 rounded border border-gray-300 px-3 focus:outline-none focus:ring-2 focus:ring-orange-500"
+                onChange={handleDateOfJoiningChange}
+                className="w-full h-10 rounded border border-gray-300 px-3 focus:outline-none focus:ring-2"
                 required
               />
             </div>
@@ -1315,8 +2211,8 @@ export default function AddEmployee() {
               <label className="block text-sm font-medium text-gray-700 mb-2">Date of Issue</label>
               <CustomDateInput
                 value={formData.dateOfIssue}
-                onChange={(e) => updateFormData('dateOfIssue', e.target.value)}
-                className="w-full h-10 rounded border border-gray-300 px-3 focus:outline-none focus:ring-2 focus:ring-orange-500"
+                onChange={handleDateOfIssueChange}
+                className="w-full h-10 rounded border border-gray-300 px-3 focus:outline-none focus:ring-2"
               />
             </div>
           </div>
@@ -1324,7 +2220,9 @@ export default function AddEmployee() {
 
         {/* Salary Components Section */}
         <div className="rounded border border-gray-200 bg-white p-6">
-          <h2 className="text-xl font-semibold mb-6 text-green-600">Salary Components</h2>
+          <h2 className="text-xl font-semibold mb-6 text-orange-600">
+            {employeeType} Salary Components
+          </h2>
           
           {/* Salary Components Table */}
           <div className="overflow-x-auto">
@@ -1332,9 +2230,7 @@ export default function AddEmployee() {
               <thead className="bg-gray-50">
                 <tr>
                   <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Component</th>
-                  <th className="px-4 py-3 text-center text-xs font-medium text-gray-500 uppercase">Enable</th>
                   <th className="px-4 py-3 text-center text-xs font-medium text-gray-500 uppercase">Amount (৳)</th>
-                  <th className="px-4 py-3 text-center text-xs font-medium text-gray-500 uppercase">Custom</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-gray-200">
@@ -1342,33 +2238,13 @@ export default function AddEmployee() {
                 <tr className="hover:bg-gray-50">
                   <td className="px-4 py-3">
                     <div className="font-medium text-gray-900">Basic Salary</div>
-                    
                   </td>
                   <td className="px-4 py-3 text-center">
                     <input
-                      type="checkbox"
-                      checked={formData.salaryComponents.basicSalary.enabled}
-                      onChange={(e) => toggleSalaryComponent('basicSalary', e.target.checked)}
-                      className="w-4 h-4 text-blue-600 bg-gray-100 border-gray-300 rounded focus:ring-blue-500"
-                    />
-                  </td>
-                  <td className="px-4 py-3 text-center">
-                                         <input
-                       type="number"
-                       value={formData.salaryComponents.basicSalary.amount}
-                       onChange={(e) => updateSalaryComponent('basicSalary', e.target.value, true)}
-                       className="w-20 h-8 text-center border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-orange-500"
-                       disabled={!formData.salaryComponents.basicSalary.enabled}
-                       readOnly={!formData.salaryComponents.basicSalary.custom}
-                     />
-                  </td>
-                  <td className="px-4 py-3 text-center">
-                    <input
-                      type="checkbox"
-                      checked={formData.salaryComponents.basicSalary.custom}
-                      onChange={(e) => updateSalaryComponent('basicSalary', formData.salaryComponents.basicSalary.amount, e.target.checked)}
-                      className="w-4 h-4 text-green-600 bg-gray-100 border-gray-300 rounded focus:ring-green-500"
-                      disabled={!formData.salaryComponents.basicSalary.enabled}
+                      type="number"
+                      value={formData.salaryComponents?.basicSalary?.amount || 0}
+                      onChange={(e) => updateSalaryComponent('basicSalary', e.target.value)}
+                      className="w-24 h-8 text-center border border-gray-300 rounded focus:outline-none focus:ring-2"
                     />
                   </td>
                 </tr>
@@ -1377,33 +2253,13 @@ export default function AddEmployee() {
                 <tr className="hover:bg-gray-50">
                   <td className="px-4 py-3">
                     <div className="font-medium text-gray-900">House Rent</div>
-                                         
                   </td>
                   <td className="px-4 py-3 text-center">
                     <input
-                      type="checkbox"
-                      checked={formData.salaryComponents.houseRent.enabled}
-                      onChange={(e) => toggleSalaryComponent('houseRent', e.target.checked)}
-                      className="w-4 h-4 text-blue-600 bg-gray-100 border-gray-300 rounded focus:ring-blue-500"
-                    />
-                  </td>
-                  <td className="px-4 py-3 text-center">
-                                         <input
-                       type="number"
-                       value={formData.salaryComponents.houseRent.amount}
-                       onChange={(e) => updateSalaryComponent('houseRent', e.target.value, true)}
-                       className="w-20 h-8 text-center border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-orange-500"
-                       disabled={!formData.salaryComponents.houseRent.enabled}
-                       readOnly={!formData.salaryComponents.houseRent.custom}
-                     />
-                  </td>
-                  <td className="px-4 py-3 text-center">
-                    <input
-                      type="checkbox"
-                      checked={formData.salaryComponents.houseRent.custom}
-                      onChange={(e) => updateSalaryComponent('houseRent', formData.salaryComponents.houseRent.amount, e.target.checked)}
-                      className="w-4 h-4 text-green-600 bg-gray-100 border-gray-300 rounded focus:ring-green-500"
-                      disabled={!formData.salaryComponents.houseRent.enabled}
+                      type="number"
+                      value={formData.salaryComponents?.houseRent?.amount || 0}
+                      onChange={(e) => updateSalaryComponent('houseRent', e.target.value)}
+                      className="w-24 h-8 text-center border border-gray-300 rounded focus:outline-none focus:ring-2"
                     />
                   </td>
                 </tr>
@@ -1412,33 +2268,13 @@ export default function AddEmployee() {
                 <tr className="hover:bg-gray-50">
                   <td className="px-4 py-3">
                     <div className="font-medium text-gray-900">Medical</div>
-                                         
                   </td>
                   <td className="px-4 py-3 text-center">
                     <input
-                      type="checkbox"
-                      checked={formData.salaryComponents.medical.enabled}
-                      onChange={(e) => toggleSalaryComponent('medical', e.target.checked)}
-                      className="w-4 h-4 text-blue-600 bg-gray-100 border-gray-300 rounded focus:ring-blue-500"
-                    />
-                  </td>
-                  <td className="px-4 py-3 text-center">
-                                         <input
-                       type="number"
-                       value={formData.salaryComponents.medical.amount}
-                       onChange={(e) => updateSalaryComponent('medical', e.target.value, true)}
-                       className="w-20 h-8 text-center border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-orange-500"
-                       disabled={!formData.salaryComponents.medical.enabled}
-                       readOnly={!formData.salaryComponents.medical.custom}
-                     />
-                  </td>
-                  <td className="px-4 py-3 text-center">
-                    <input
-                      type="checkbox"
-                      checked={formData.salaryComponents.medical.custom}
-                      onChange={(e) => updateSalaryComponent('medical', formData.salaryComponents.medical.amount, e.target.checked)}
-                      className="w-4 h-4 text-green-600 bg-gray-100 border-gray-300 rounded focus:ring-green-500"
-                      disabled={!formData.salaryComponents.medical.enabled}
+                      type="number"
+                      value={formData.salaryComponents?.medicalAllowance?.amount || 0}
+                      onChange={(e) => updateSalaryComponent('medicalAllowance', e.target.value)}
+                      className="w-24 h-8 text-center border border-gray-300 rounded focus:outline-none focus:ring-2"
                     />
                   </td>
                 </tr>
@@ -1448,33 +2284,13 @@ export default function AddEmployee() {
                   <tr className="hover:bg-gray-50">
                     <td className="px-4 py-3">
                       <div className="font-medium text-gray-900">Food</div>
-                      
                     </td>
                     <td className="px-4 py-3 text-center">
                       <input
-                        type="checkbox"
-                        checked={formData.salaryComponents.food.enabled}
-                        onChange={(e) => toggleSalaryComponent('food', e.target.checked)}
-                        className="w-4 h-4 text-blue-600 bg-gray-100 border-gray-300 rounded focus:ring-blue-500"
-                      />
-                    </td>
-                    <td className="px-4 py-3 text-center">
-                                             <input
-                         type="number"
-                         value={formData.salaryComponents.food.amount}
-                         onChange={(e) => updateSalaryComponent('food', e.target.value, true)}
-                         className="w-20 h-8 text-center border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-orange-500"
-                         disabled={!formData.salaryComponents.food.enabled}
-                         readOnly={!formData.salaryComponents.food.custom}
-                       />
-                    </td>
-                    <td className="px-4 py-3 text-center">
-                      <input
-                        type="checkbox"
-                        checked={formData.salaryComponents.food.custom}
-                        onChange={(e) => updateSalaryComponent('food', formData.salaryComponents.food.amount, e.target.checked)}
-                        className="w-4 h-4 text-green-600 bg-gray-100 border-gray-300 rounded focus:ring-green-500"
-                        disabled={!formData.salaryComponents.food.enabled}
+                        type="number"
+                        value={formData.salaryComponents?.foodAllowance?.amount || 0}
+                        onChange={(e) => updateSalaryComponent('foodAllowance', e.target.value)}
+                        className="w-24 h-8 text-center border border-gray-300 rounded focus:outline-none focus:ring-2"
                       />
                     </td>
                   </tr>
@@ -1484,36 +2300,33 @@ export default function AddEmployee() {
                 <tr className="hover:bg-gray-50">
                   <td className="px-4 py-3">
                     <div className="font-medium text-gray-900">Conveyance</div>
-                                         
                   </td>
                   <td className="px-4 py-3 text-center">
                     <input
-                      type="checkbox"
-                      checked={formData.salaryComponents.conveyance.enabled}
-                      onChange={(e) => toggleSalaryComponent('conveyance', e.target.checked)}
-                      className="w-4 h-4 text-blue-600 bg-gray-100 border-gray-300 rounded focus:ring-blue-500"
-                    />
-                  </td>
-                  <td className="px-4 py-3 text-center">
-                                         <input
-                       type="number"
-                       value={formData.salaryComponents.conveyance.amount}
-                       onChange={(e) => updateSalaryComponent('conveyance', e.target.value, true)}
-                       className="w-20 h-8 text-center border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-orange-500"
-                       disabled={!formData.salaryComponents.conveyance.enabled}
-                       readOnly={!formData.salaryComponents.conveyance.custom}
-                     />
-                  </td>
-                  <td className="px-4 py-3 text-center">
-                    <input
-                      type="checkbox"
-                      checked={formData.salaryComponents.conveyance.custom}
-                      onChange={(e) => updateSalaryComponent('conveyance', formData.salaryComponents.conveyance.amount, e.target.checked)}
-                      className="w-4 h-4 text-green-600 bg-gray-100 border-gray-300 rounded focus:ring-green-500"
-                      disabled={!formData.salaryComponents.conveyance.enabled}
+                      type="number"
+                      value={formData.salaryComponents?.conveyance?.amount || 0}
+                      onChange={(e) => updateSalaryComponent('conveyance', e.target.value)}
+                      className="w-24 h-8 text-center border border-gray-300 rounded focus:outline-none focus:ring-2"
                     />
                   </td>
                 </tr>
+
+                {/* Mobile Bill - Only for Staff */}
+                {employeeType === 'Staff' && (
+                  <tr className="hover:bg-gray-50">
+                    <td className="px-4 py-3">
+                      <div className="font-medium text-gray-900">Mobile Bill</div>
+                    </td>
+                    <td className="px-4 py-3 text-center">
+                      <input
+                        type="number"
+                        value={formData.salaryComponents?.mobileBill?.amount || 0}
+                        onChange={(e) => updateSalaryComponent('mobileBill', e.target.value)}
+                        className="w-24 h-8 text-center border border-gray-300 rounded focus:outline-none focus:ring-2"
+                      />
+                    </td>
+                  </tr>
+                )}
 
                 {/* Total Row */}
                 <tr className="bg-gray-50 font-semibold">
@@ -1521,14 +2334,11 @@ export default function AddEmployee() {
                     <div className="font-medium text-gray-900">Total</div>
                     <div className="text-xs text-gray-500">Calculated Total</div>
                   </td>
-                  <td className="px-4 py-3 text-center">-</td>
                   <td className="px-4 py-3 text-center text-lg">
                     ৳{Object.values(formData.salaryComponents)
-                      .filter(comp => comp.enabled)
                       .reduce((sum, comp) => sum + comp.amount, 0)
                       .toLocaleString()}
                   </td>
-                  <td className="px-4 py-3 text-center">-</td>
                 </tr>
               </tbody>
             </table>
@@ -1542,7 +2352,10 @@ export default function AddEmployee() {
           <button
             type="button"
             onClick={handlePreview}
-            className="px-6 py-3 bg-blue-600 text-white rounded hover:bg-blue-700 font-medium"
+            className="px-6 py-3 text-white rounded font-medium transition-colors"
+            style={{ backgroundColor: 'rgb(255,200,150)' }}
+            onMouseEnter={(e) => e.target.style.backgroundColor = 'rgb(255,185,125)'}
+            onMouseLeave={(e) => e.target.style.backgroundColor = 'rgb(255,200,150)'}
           >
             See Preview
           </button>
@@ -1556,7 +2369,10 @@ export default function AddEmployee() {
               // If preview has been shown, allow direct submission
               document.querySelector('form').requestSubmit()
             }}
-            className="px-8 py-3 bg-green-600 text-white rounded hover:bg-green-700 font-medium"
+            className="px-8 py-3 text-white rounded font-medium transition-colors"
+            style={{ backgroundColor: 'rgb(255,185,125)' }}
+            onMouseEnter={(e) => e.target.style.backgroundColor = 'rgb(255,170,100)'}
+            onMouseLeave={(e) => e.target.style.backgroundColor = 'rgb(255,185,125)'}
           >
             Add {employeeType}
           </button>
@@ -1568,17 +2384,17 @@ export default function AddEmployee() {
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
           <div className="bg-white rounded-lg shadow-2xl max-w-4xl w-full max-h-[90vh] overflow-y-auto">
             {/* Interactive Header */}
-            <div className="bg-gradient-to-r from-blue-50 to-indigo-50 border-b border-gray-200 p-6">
+            <div className="border-b border-gray-200 p-6" style={{ background: 'linear-gradient(to right, rgb(255,250,245), rgb(255,240,220))' }}>
               <div className="flex justify-between items-start">
                 <div>
                   <h1 className="text-3xl font-bold text-gray-800 mb-2">Employee Registration Form</h1>
                   <p className="text-lg text-gray-600">Company Name: RP Creations & Apparels Limited</p>
                   <p className="text-gray-600">Form Date: {formatDate(new Date().toISOString().split('T')[0])}</p>
                   <div className="mt-3 flex gap-2">
-                    <span className="px-3 py-1 bg-blue-100 text-blue-800 rounded-full text-sm font-medium">
+                    <span className="px-3 py-1 rounded-full text-sm font-medium" style={{ backgroundColor: 'rgb(255,250,245)', color: 'rgb(200,100,50)' }}>
                       {employeeType} Registration
                     </span>
-                    <span className="px-3 py-1 bg-green-100 text-green-800 rounded-full text-sm font-medium">
+                    <span className="px-3 py-1 rounded-full text-sm font-medium" style={{ backgroundColor: 'rgb(255,240,220)', color: 'rgb(180,90,40)' }}>
                       ID: {formData.employeeId || 'TBD'}
                     </span>
                   </div>
@@ -1717,7 +2533,7 @@ export default function AddEmployee() {
 
               {/* Employment Information */}
               <div className="border-2 border-gray-300 rounded-lg p-4">
-                <h3 className="text-xl font-bold mb-4 text-orange-800 border-b-2 border-orange-800 pb-2">Employment Information</h3>
+                <h3 className="text-xl font-bold mb-4 pb-2" style={{ color: 'rgb(200,100,50)', borderBottom: '2px solid rgb(255,200,150)' }}>Employment Information</h3>
                 <div className="grid grid-cols-2 gap-4 text-sm">
                   <div className="flex">
                     <span className="font-bold w-32">Employee ID:</span>
@@ -1732,8 +2548,8 @@ export default function AddEmployee() {
                     <span className="border-b border-gray-400 flex-1 px-2">{formData.designation || '_________________'}</span>
                   </div>
                   <div className="flex">
-                    <span className="font-bold w-32">Section:</span>
-                    <span className="border-b border-gray-400 flex-1 px-2">{formData.section || '_________________'}</span>
+                    <span className="font-bold w-32">Department:</span>
+                    <span className="border-b border-gray-400 flex-1 px-2">{formData.department || '_________________'}</span>
                   </div>
                   {employeeType === 'Worker' && (
                     <>
@@ -1754,6 +2570,10 @@ export default function AddEmployee() {
                   <div className="flex">
                     <span className="font-bold w-32">Date of Joining:</span>
                     <span className="border-b border-gray-400 flex-1 px-2">{formatDate(formData.dateOfJoining)}</span>
+                  </div>
+                  <div className="flex">
+                    <span className="font-bold w-32">{employeeType} Salary Grade:</span>
+                    <span className="border-b border-gray-400 flex-1 px-2">{formData.salaryGrade || '_________________'}</span>
                   </div>
                   <div className="flex">
                     <span className="font-bold w-32">Gross Salary:</span>
@@ -2133,7 +2953,10 @@ export default function AddEmployee() {
                       printWindow.document.close()
                       printWindow.print()
                     }}
-                    className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 flex items-center gap-2 transition-colors"
+                    className="px-4 py-2 text-white rounded flex items-center gap-2 transition-colors"
+                    style={{ backgroundColor: 'rgb(255,200,150)' }}
+                    onMouseEnter={(e) => e.target.style.backgroundColor = 'rgb(255,185,125)'}
+                    onMouseLeave={(e) => e.target.style.backgroundColor = 'rgb(255,200,150)'}
                   >
                     <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z" />
@@ -2275,7 +3098,10 @@ export default function AddEmployee() {
                       printWindow.document.close()
                       printWindow.print()
                     }}
-                    className="px-4 py-2 bg-purple-600 text-white rounded hover:bg-purple-700 flex items-center gap-2 transition-colors"
+                    className="px-4 py-2 text-white rounded flex items-center gap-2 transition-colors"
+                    style={{ backgroundColor: 'rgb(255,185,125)' }}
+                    onMouseEnter={(e) => e.target.style.backgroundColor = 'rgb(255,170,100)'}
+                    onMouseLeave={(e) => e.target.style.backgroundColor = 'rgb(255,185,125)'}
                   >
                     <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
@@ -2299,7 +3125,10 @@ export default function AddEmployee() {
                         alert('Employee info copied to clipboard!')
                       }
                     }}
-                    className="px-4 py-2 bg-green-600 text-white rounded hover:bg-green-700 flex items-center gap-2 transition-colors"
+                    className="px-4 py-2 text-white rounded flex items-center gap-2 transition-colors"
+                    style={{ backgroundColor: 'rgb(255,170,100)' }}
+                    onMouseEnter={(e) => e.target.style.backgroundColor = 'rgb(255,155,75)'}
+                    onMouseLeave={(e) => e.target.style.backgroundColor = 'rgb(255,170,100)'}
                   >
                     <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.367 2.684 3 3 0 00-5.367-2.684z" />
@@ -2320,7 +3149,10 @@ export default function AddEmployee() {
                       // Submit the form
                       document.querySelector('form').requestSubmit()
                     }}
-                    className="px-6 py-2 bg-green-600 text-white rounded hover:bg-green-700 font-medium transition-colors"
+                    className="px-6 py-2 text-white rounded font-medium transition-colors"
+                    style={{ backgroundColor: 'rgb(255,185,125)' }}
+                    onMouseEnter={(e) => e.target.style.backgroundColor = 'rgb(255,170,100)'}
+                    onMouseLeave={(e) => e.target.style.backgroundColor = 'rgb(255,185,125)'}
                   >
                     Submit & Add to Dashboard
                   </button>
