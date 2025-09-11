@@ -309,15 +309,26 @@ export default function EmployeeDashboard() {
             </thead>
             <tbody className="bg-white divide-y divide-gray-200">
               {filteredEmployees.map((employee) => (
-                <tr key={employee.id} className="hover:bg-gray-50">
+                <tr key={employee.id} className="hover:bg-gray-50"> 
+                
                   <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">{employee.id.replace('EMP', '')}</td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">{employee.name}</td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{employee.designation}</td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{employee.department}</td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{employee.levelOfWork}</td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{employee.phone}</td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{employee.processExpertise || 'N/A'}</td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{employee.machine || 'N/A'}</td>
+                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                    {Array.isArray(employee.processExpertise) && employee.processExpertise.length > 0 
+                      ? employee.processExpertise.map((exp) => exp.operation || 'N/A').join(', ')
+                      : 'N/A'
+                    }
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                    {Array.isArray(employee.processExpertise) && employee.processExpertise.length > 0 
+                      ? employee.processExpertise.map((exp) => exp.machine || 'N/A').join(', ')
+                      : employee.machine || 'N/A'
+                    }
+                  </td>
                   <td className="px-6 py-4 whitespace-nowrap">
                     <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${getStatusColor(employee.status)}`}>
                       {employee.status}

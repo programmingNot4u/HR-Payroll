@@ -71,6 +71,8 @@ export default function AddEmployee() {
   const [showBulkUpload, setShowBulkUpload] = useState(false)
   const [uploadProgress, setUploadProgress] = useState(0)
   const [uploadErrors, setUploadErrors] = useState([])
+  const [formErrors, setFormErrors] = useState([])
+  const [picturePreviewUrl, setPicturePreviewUrl] = useState(null)
 
   // Load organizational data on component mount
   useEffect(() => {
@@ -95,6 +97,7 @@ export default function AddEmployee() {
       window.removeEventListener('storage', handleStorageChange)
     }
   }, [])
+
 
   // Function to format date to DD/MM/YYYY
   const formatDate = (dateString) => {
@@ -356,6 +359,32 @@ export default function AddEmployee() {
     }
   })
 
+  // Handle picture preview URL creation and cleanup
+  useEffect(() => {
+    if (formData.picture && formData.picture instanceof File) {
+      const url = URL.createObjectURL(formData.picture)
+      setPicturePreviewUrl(url)
+      
+      // Cleanup function
+      return () => {
+        URL.revokeObjectURL(url)
+      }
+    } else if (formData.picture && typeof formData.picture === 'string') {
+      setPicturePreviewUrl(formData.picture)
+    } else {
+      setPicturePreviewUrl(null)
+    }
+  }, [formData.picture])
+
+  // Cleanup on component unmount
+  useEffect(() => {
+    return () => {
+      if (picturePreviewUrl && formData.picture instanceof File) {
+        URL.revokeObjectURL(picturePreviewUrl)
+      }
+    }
+  }, [picturePreviewUrl, formData.picture])
+
   // Ensure salaryComponents is always initialized and level of work matches employee type
   useEffect(() => {
     if (!formData.salaryComponents) {
@@ -417,22 +446,26 @@ export default function AddEmployee() {
     })
   }, []) // Only run once on mount
 
-  const updateFormData = (field, value) => {
+  const updateFormData = useCallback((field, value) => {
     setFormData(prev => ({ ...prev, [field]: value }))
-  }
+    // Clear form errors when user starts typing
+    if (formErrors.length > 0) {
+      setFormErrors([])
+    }
+  }, [formErrors.length])
 
   // Memoized callbacks for date fields to prevent unnecessary re-renders
   const handleDateOfBirthChange = useCallback((e) => {
     updateFormData('dateOfBirth', e.target.value)
-  }, [])
+  }, [updateFormData])
 
   const handleDateOfJoiningChange = useCallback((e) => {
     updateFormData('dateOfJoining', e.target.value)
-  }, [])
+  }, [updateFormData])
 
   const handleDateOfIssueChange = useCallback((e) => {
     updateFormData('dateOfIssue', e.target.value)
-  }, [])
+  }, [updateFormData])
 
   const updateNestedField = (parentField, childField, value) => {
     setFormData(prev => ({
@@ -917,16 +950,131 @@ export default function AddEmployee() {
   const handleSubmit = async (e) => {
     e.preventDefault()
     
-    // Validate required fields based on employee type
+    // Comprehensive form validation
+    const errors = []
+    
+    // Required fields validation
+    if (!formData.nameEnglish?.trim()) {
+      errors.push('Name (English) is required')
+    }
+    
+    if (!formData.employeeId?.trim()) {
+      errors.push('Employee ID is required')
+    }
+    
+    if (!formData.mobileNumber?.trim() || formData.mobileNumber === '+880 ') {
+      errors.push('Mobile Number is required')
+    }
+    
+    if (!formData.dateOfBirth) {
+      errors.push('Date of Birth is required')
+    }
+    
+    if (!formData.dateOfJoining) {
+      errors.push('Date of Joining is required')
+    }
+    
+    if (!formData.department) {
+      errors.push('Department is required')
+    }
+    
+    if (!formData.designation) {
+      errors.push('Designation is required')
+    }
+    
+    if (!formData.levelOfWork) {
+      errors.push('Level of Work is required')
+    }
+    
+    if (!formData.grossSalary || formData.grossSalary <= 0) {
+      errors.push('Gross Salary is required and must be greater than 0')
+    }
+    
+    if (!formData.gender) {
+      errors.push('Gender is required')
+    }
+    
+    if (!formData.bloodGroup) {
+      errors.push('Blood Group is required')
+    }
+    
+    if (!formData.maritalStatus) {
+      errors.push('Marital Status is required')
+    }
+    
+    if (!formData.nationality) {
+      errors.push('Nationality is required')
+    }
+    
+    if (!formData.religion) {
+      errors.push('Religion is required')
+    }
+    
+    if (!formData.educationLevel) {
+      errors.push('Education Level is required')
+    }
+    
+    if (!formData.nidNumber?.trim()) {
+      errors.push('NID Number is required')
+    }
+    
+    if (!formData.presentAddress?.trim()) {
+      errors.push('Present Address is required')
+    }
+    
+    if (!formData.permanentAddress?.trim()) {
+      errors.push('Permanent Address is required')
+    }
+    
+    if (!formData.emergencyContact?.name?.trim()) {
+      errors.push('Emergency Contact Name is required')
+    }
+    
+    if (!formData.emergencyContact?.mobile?.trim()) {
+      errors.push('Emergency Contact Mobile is required')
+    }
+    
+    if (!formData.emergencyContact?.relation?.trim()) {
+      errors.push('Emergency Contact Relation is required')
+    }
+    
+    // Employee type specific validation
     if (employeeType === 'Worker') {
+      if (!formData.unit) {
+        errors.push('Unit is required for Workers')
+      }
+      
+      if (!formData.supervisorName?.trim()) {
+        errors.push('Supervisor Name is required for Workers')
+      }
+      
       // For workers, only nominee is required, children is optional
-      const hasValidNominee = formData.nominee.some(nominee => nominee.name && nominee.mobile)
+      const hasValidNominee = formData.nominee.some(nominee => nominee.name?.trim() && nominee.mobile?.trim())
       
       if (!hasValidNominee) {
-        alert('Please provide at least one nominee for workers.')
-        return
+        errors.push('At least one nominee is required for workers')
+      }
+      
+      // Validate process expertise for workers
+      if (!formData.processExpertise?.[0]?.operation?.trim()) {
+        errors.push('Process Expertise Operation is required for Workers')
+      }
+      
+      if (!formData.processExpertise?.[0]?.machine?.trim()) {
+        errors.push('Process Expertise Machine is required for Workers')
       }
     }
+    
+    // Show validation errors if any
+    if (errors.length > 0) {
+      setFormErrors(errors)
+      // Scroll to top to show errors
+      window.scrollTo({ top: 0, behavior: 'smooth' })
+      return
+    }
+    
+    // Clear any previous errors
+    setFormErrors([])
     
     // Show confirmation dialog
     const confirmMessage = `Are you sure you want to add this ${employeeType.toLowerCase()}?\n\nEmployee ID: ${formData.employeeId}\nName: ${formData.nameEnglish}\n${employeeType} Salary Grade: ${formData.salaryGrade || 'Not selected'}\nGross Salary: ৳${formData.grossSalary}`
@@ -1328,6 +1476,29 @@ export default function AddEmployee() {
         
       </div>
 
+      {/* Form Errors Display */}
+      {formErrors.length > 0 && (
+        <div className="rounded border border-red-200 bg-red-50 p-4 mb-6">
+          <div className="flex">
+            <div className="flex-shrink-0">
+              <svg className="h-5 w-5 text-red-400" viewBox="0 0 20 20" fill="currentColor">
+                <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clipRule="evenodd" />
+              </svg>
+            </div>
+            <div className="ml-3">
+              <h3 className="text-sm font-medium text-red-800">Please fix the following errors:</h3>
+              <div className="mt-2 text-sm text-red-700">
+                <ul className="list-disc list-inside space-y-1">
+                  {formErrors.map((error, index) => (
+                    <li key={index}>{error}</li>
+                  ))}
+                </ul>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
       <form onSubmit={handleSubmit} className="space-y-8">
         {/* Form Type Indicator */}
         <div className="rounded border border-gray-200 bg-white p-4">
@@ -1352,9 +1523,9 @@ export default function AddEmployee() {
             <label className="block text-sm font-medium text-gray-700 mb-2">Employee Picture</label>
             <div className="flex items-center space-x-4">
               <div className="w-24 h-24 border-2 border-gray-300 border-dashed rounded-lg flex items-center justify-center bg-gray-50">
-                {formData.picture ? (
+                {picturePreviewUrl ? (
                   <img 
-                    src={URL.createObjectURL(formData.picture)} 
+                    src={picturePreviewUrl} 
                     alt="Employee" 
                     className="w-20 h-20 object-cover rounded"
                   />
@@ -2401,9 +2572,9 @@ export default function AddEmployee() {
                 </div>
                 <div className="text-right">
                   <div className="w-24 h-32 border-2 border-gray-300 bg-gray-100 flex items-center justify-center rounded-lg shadow-sm">
-                    {formData.picture ? (
+                    {picturePreviewUrl ? (
                       <img 
-                        src={URL.createObjectURL(formData.picture)} 
+                        src={picturePreviewUrl} 
                         alt="Employee" 
                         className="w-20 h-28 object-cover rounded"
                       />

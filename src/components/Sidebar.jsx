@@ -92,7 +92,7 @@ const sections = [
   },
   {
     title: 'Employees',
-    items: ['Employee Dashboard', 'Add Employee', 'Employee Portal'],
+    items: ['Employee Dashboard', 'Add Employee', 'Employee Details', 'Employee Portal'],
   },
   {
     title: 'Payroll',
