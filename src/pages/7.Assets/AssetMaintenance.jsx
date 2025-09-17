@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react'
 import assetService from '../../services/assetService'
+import { formatDateToDDMMYYYY } from '../../utils/dateUtils'
 
 // Custom Date Input Component for DD/MM/YYYY format
 const CustomDateInput = ({ value, onChange, required, className, ...props }) => {
@@ -125,11 +126,7 @@ const AssetMaintenance = () => {
 
   const [assets, setAssets] = useState([])
 
-  const [maintenanceHistory, setMaintenanceHistory] = useState(() => {
-    // Load from localStorage on component mount
-    const saved = localStorage.getItem('assetMaintenanceHistory')
-    return saved ? JSON.parse(saved) : []
-  })
+  const [maintenanceHistory, setMaintenanceHistory] = useState([])
 
   // Load assets from asset service
   useEffect(() => {
@@ -142,12 +139,35 @@ const AssetMaintenance = () => {
       }
     }
     loadAssets()
+    loadMaintenanceHistory()
   }, [])
 
-  // Save maintenance history to localStorage whenever it changes
-  useEffect(() => {
-    localStorage.setItem('assetMaintenanceHistory', JSON.stringify(maintenanceHistory))
-  }, [maintenanceHistory])
+  // Load maintenance history from asset service
+  const loadMaintenanceHistory = async () => {
+    try {
+      const allAssets = await assetService.getAllAssets()
+      const allMaintenanceHistory = []
+      
+      allAssets.forEach(asset => {
+        if (asset.maintenanceHistory && asset.maintenanceHistory.length > 0) {
+          asset.maintenanceHistory.forEach(maintenance => {
+            allMaintenanceHistory.push({
+              ...maintenance,
+              asset: asset.name,
+              assetId: asset.id
+            })
+          })
+        }
+      })
+      
+      // Sort by scheduled date (newest first)
+      allMaintenanceHistory.sort((a, b) => new Date(b.scheduledDate) - new Date(a.scheduledDate))
+      setMaintenanceHistory(allMaintenanceHistory)
+    } catch (error) {
+      console.error('Error loading maintenance history:', error)
+      setMaintenanceHistory([])
+    }
+  }
 
 
   const handleSubmit = async (e) => {
@@ -179,19 +199,8 @@ const AssetMaintenance = () => {
       
       await assetService.addMaintenanceRecord(selectedAsset, maintenanceData)
 
-      // Create new maintenance history entry for local state
-      const newMaintenanceEntry = {
-        id: `HIST-${Date.now()}`, // Generate unique ID
-        assetId: selectedAssetData.id,
-        asset: selectedAssetData.name,
-        scheduledDate: maintenanceDate,
-        completedDate: '', // Will be filled when maintenance is completed
-        maintenanceProvider: maintenanceProvider,
-        status: 'Pending'
-      }
-
-      // Add to maintenance history
-      setMaintenanceHistory(prev => [newMaintenanceEntry, ...prev])
+      // Reload maintenance history from asset service
+      await loadMaintenanceHistory()
 
       // Reset form
       setSelectedAsset('')
@@ -222,11 +231,21 @@ const AssetMaintenance = () => {
     setIsDeleteModalOpen(true)
   }
 
-  const confirmDelete = () => {
+  const confirmDelete = async () => {
     if (deletingMaintenanceId) {
-      // Remove from maintenance history
-      setMaintenanceHistory(prev => prev.filter(record => record.id !== deletingMaintenanceId))
-      console.log('Delete maintenance record:', deletingMaintenanceId)
+      // Find the maintenance record to get asset ID
+      const maintenanceRecord = maintenanceHistory.find(record => record.id === deletingMaintenanceId)
+      if (maintenanceRecord) {
+        try {
+          // Delete from asset service
+          await assetService.deleteMaintenanceRecord(maintenanceRecord.assetId, deletingMaintenanceId)
+          // Reload maintenance history
+          await loadMaintenanceHistory()
+        } catch (error) {
+          console.error('Error deleting maintenance record:', error)
+          alert('Error deleting maintenance record. Please try again.')
+        }
+      }
     }
     // Close modal and reset
     setIsDeleteModalOpen(false)
@@ -255,18 +274,14 @@ const AssetMaintenance = () => {
         await assetService.updateAssetStatusForMaintenance(editingMaintenance.assetId, 'Available')
       }
 
-      // Update the maintenance record in local state
-      setMaintenanceHistory(prev => 
-        prev.map(record => 
-          record.id === editingMaintenance.id 
-            ? {
-                ...record,
-                maintenanceProvider: editMaintenanceProvider,
-                completedDate: completedDate
-              }
-            : record
-        )
-      )
+      // Update the maintenance record in asset service
+      await assetService.updateMaintenanceRecord(editingMaintenance.assetId, editingMaintenance.id, {
+        maintenanceProvider: editMaintenanceProvider,
+        completedDate: completedDate
+      })
+
+      // Reload maintenance history
+      await loadMaintenanceHistory()
 
       // Close modal and reset form
       setIsEditModalOpen(false)
@@ -304,17 +319,10 @@ const AssetMaintenance = () => {
         // For Pending or Ongoing, update status and asset status
         const maintenanceRecord = maintenanceHistory.find(record => record.id === historyId)
         if (maintenanceRecord) {
-          // Update maintenance record status
-          setMaintenanceHistory(prev => 
-            prev.map(record => 
-              record.id === historyId 
-                ? {
-                    ...record,
-                    status: newStatus
-                  }
-                : record
-            )
-          )
+          // Update maintenance record status in asset service
+          await assetService.updateMaintenanceRecord(maintenanceRecord.assetId, historyId, {
+            status: newStatus
+          })
           
           // Update asset status based on maintenance status
           let assetStatus = 'Available' // Default
@@ -323,6 +331,9 @@ const AssetMaintenance = () => {
           }
           
           await assetService.updateAssetStatusForMaintenance(maintenanceRecord.assetId, assetStatus)
+          
+          // Reload maintenance history
+          await loadMaintenanceHistory()
         }
         
         alert(`Maintenance status updated to "${newStatus}" successfully! Asset status updated to "${newStatus === 'Pending' || newStatus === 'Ongoing' ? 'Maintenance' : 'Available'}".`)
@@ -356,23 +367,19 @@ const AssetMaintenance = () => {
         }
       }
 
-      // Update the maintenance record in local state
-      setMaintenanceHistory(prev => 
-        prev.map(record => 
-          record.id === completingMaintenanceId 
-            ? {
-                ...record,
-                status: 'Complete',
-                completedDate: completedDateForStorage
-              }
-            : record
-        )
-      )
-      
-      // Update asset status to Available
+      // Update the maintenance record in asset service
       const maintenanceRecord = maintenanceHistory.find(record => record.id === completingMaintenanceId)
       if (maintenanceRecord) {
+        await assetService.updateMaintenanceRecord(maintenanceRecord.assetId, completingMaintenanceId, {
+          status: 'Complete',
+          completedDate: completedDateForStorage
+        })
+        
+        // Update asset status to Available
         await assetService.updateAssetStatusForMaintenance(maintenanceRecord.assetId, 'Available')
+        
+        // Reload maintenance history
+        await loadMaintenanceHistory()
       }
       
       // Close modal and reset form
@@ -438,35 +445,30 @@ const AssetMaintenance = () => {
         }
       }
 
-      // Update the maintenance record in local state
-      setMaintenanceHistory(prev => 
-        prev.map(record => 
-          record.id === editingDatesId 
-            ? {
-                ...record,
-                scheduledDate: scheduledDateForStorage,
-                completedDate: completedDateForStorage,
-                status: completedDateForStorage ? 'Complete' : record.status
-              }
-            : record
-        )
-      )
-
-      // Update asset status based on completion date
+      // Update the maintenance record in asset service
       const maintenanceRecord = maintenanceHistory.find(record => record.id === editingDatesId)
       if (maintenanceRecord) {
+        await assetService.updateMaintenanceRecord(maintenanceRecord.assetId, editingDatesId, {
+          scheduledDate: scheduledDateForStorage,
+          completedDate: completedDateForStorage,
+          status: completedDateForStorage ? 'Complete' : maintenanceRecord.status
+        })
+
+        // Update asset status based on completion date
         let assetStatus = 'Available' // Default
         if (completedDateForStorage) {
           assetStatus = 'Available' // Completed maintenance
         } else {
           // If no completion date, check current maintenance status
-          const currentRecord = maintenanceHistory.find(record => record.id === editingDatesId)
-          if (currentRecord && (currentRecord.status === 'Pending' || currentRecord.status === 'Ongoing')) {
+          if (maintenanceRecord.status === 'Pending' || maintenanceRecord.status === 'Ongoing') {
             assetStatus = 'Maintenance'
           }
         }
         
         await assetService.updateAssetStatusForMaintenance(maintenanceRecord.assetId, assetStatus)
+        
+        // Reload maintenance history
+        await loadMaintenanceHistory()
       }
 
       // Close modal and reset form
@@ -608,20 +610,20 @@ const AssetMaintenance = () => {
               <label className="block text-sm font-medium text-gray-700 mb-2">Scheduled Date *</label>
               <CustomDateInput
                 value={maintenanceDate}
-                onChange={(e) => setMaintenanceDate(e.target.value)}
+                onChange={setMaintenanceDate}
                 required
                 className="w-full h-10 rounded border border-gray-300 px-3 focus:outline-none focus:ring-2 focus:ring-orange-500"
               />
             </div>
 
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">Maintenance Provider</label>
-              <input
-                type="text"
-                value={maintenanceProvider}
-                onChange={(e) => setMaintenanceProvider(e.target.value)}
-                placeholder="Enter provider name"
-                className="w-full h-10 rounded border border-gray-300 px-3 focus:outline-none focus:ring-2 focus:ring-orange-500"
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">Maintenance Provider</label>
+                <input
+                  type="text"
+                  value={maintenanceProvider}
+                  onChange={(e) => setMaintenanceProvider(e.target.value)}
+                  placeholder="Enter provider name"
+                  className="w-full h-10 rounded border border-gray-300 px-3 focus:outline-none focus:ring-2 focus:ring-orange-500"
               />
             </div>
 
@@ -635,24 +637,24 @@ const AssetMaintenance = () => {
         </div>
 
         {/* Assets Due for Maintenance */}
-        <div className="bg-white rounded-lg border border-gray-200 p-6">
-          <h2 className="text-lg font-medium mb-4">Assets Due for Maintenance</h2>
+          <div className="bg-white rounded-lg border border-gray-200 p-6">
+            <h2 className="text-lg font-medium mb-4">Assets Due for Maintenance</h2>
           <div className="space-y-3 max-h-64 overflow-y-auto">
             {getAssetsWithMaintenanceStatus().map(asset => (
-              <div key={asset.id} className="flex items-center justify-between p-3 border border-gray-200 rounded">
+                <div key={asset.id} className="flex items-center justify-between p-3 border border-gray-200 rounded">
                 <div className="flex-1">
-                  <div className="font-medium text-gray-900">{asset.name}</div>
-                  <div className="text-sm text-gray-500">{asset.category} • {asset.department}</div>
+                    <div className="font-medium text-gray-900">{asset.name}</div>
+                    <div className="text-sm text-gray-500">{asset.category} • {asset.department}</div>
                   <div className="text-xs text-gray-400">ID: {asset.id}</div>
-                </div>
-                <div className="text-right">
+                  </div>
+                  <div className="text-right">
                   <div className="text-sm font-medium text-gray-700">{asset.timeSinceLastMaintenance}</div>
-                  <div className="text-xs text-gray-500">
-                    {asset.lastMaintenanceDate ? `Last: ${asset.lastMaintenanceDate}` : 'No maintenance history'}
+                    <div className="text-xs text-gray-500">
+                    {asset.lastMaintenanceDate ? `Last: ${formatDateToDDMMYYYY(asset.lastMaintenanceDate)}` : 'No maintenance history'}
+                    </div>
                   </div>
                 </div>
-              </div>
-            ))}
+              ))}
           </div>
         </div>
       </div>
@@ -665,31 +667,31 @@ const AssetMaintenance = () => {
           <p className="text-sm text-gray-500">Completed maintenance records</p>
         </div>
         {maintenanceHistory.length > 0 ? (
-          <div className="overflow-x-auto">
-            <table className="min-w-full divide-y divide-gray-200">
-              <thead className="bg-gray-50">
-                <tr>
+        <div className="overflow-x-auto">
+          <table className="min-w-full divide-y divide-gray-200">
+            <thead className="bg-gray-50">
+              <tr>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Asset ID</th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Asset</th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Asset</th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Scheduled Date</th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Completed Date</th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Completed Date</th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Maintenance Provider</th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
-                </tr>
-              </thead>
-              <tbody className="bg-white divide-y divide-gray-200">
-                {maintenanceHistory.map((history) => (
-                  <tr key={history.id} className="hover:bg-gray-50">
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
+              </tr>
+            </thead>
+            <tbody className="bg-white divide-y divide-gray-200">
+              {maintenanceHistory.map((history) => (
+                <tr key={history.id} className="hover:bg-gray-50">
                     <td className="px-6 py-4 whitespace-nowrap">
                       <div className="text-sm font-medium text-gray-900">{history.assetId}</div>
                     </td>
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <div className="text-sm font-medium text-gray-900">{history.asset}</div>
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap">
+                  <td className="px-6 py-4 whitespace-nowrap">
+                    <div className="text-sm font-medium text-gray-900">{history.asset}</div>
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap">
                       <div className="flex items-center gap-2">
-                        <span className="text-sm text-gray-900">{history.scheduledDate}</span>
+                        <span className="text-sm text-gray-900">{formatDateToDDMMYYYY(history.scheduledDate)}</span>
                         <button
                           onClick={() => handleEditDates(history.id)}
                           className="text-orange-600 hover:text-orange-800 transition-colors"
@@ -700,10 +702,10 @@ const AssetMaintenance = () => {
                           </svg>
                         </button>
                       </div>
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap">
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap">
                       <div className="flex items-center gap-2">
-                        <span className="text-sm text-gray-900">{history.completedDate || '-'}</span>
+                        <span className="text-sm text-gray-900">{history.completedDate ? formatDateToDDMMYYYY(history.completedDate) : '-'}</span>
                         <button
                           onClick={() => handleEditDates(history.id)}
                           className="text-orange-600 hover:text-orange-800 transition-colors"
@@ -714,8 +716,8 @@ const AssetMaintenance = () => {
                           </svg>
                         </button>
                       </div>
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap">
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap">
                       <div className="flex items-center gap-2">
                         <span className="text-sm text-gray-900">{history.maintenanceProvider}</span>
                         <button
@@ -728,8 +730,8 @@ const AssetMaintenance = () => {
                           </svg>
                         </button>
                       </div>
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap">
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap">
                       <select
                         value={history.status || 'Pending'}
                         onChange={(e) => handleStatusChange(history.id, e.target.value)}
@@ -747,9 +749,9 @@ const AssetMaintenance = () => {
                         <option value="Ongoing">Ongoing</option>
                         <option value="Complete">Complete</option>
                       </select>
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
-                      <div className="flex space-x-2">
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                    <div className="flex space-x-2">
                         <button 
                           onClick={() => handleEditMaintenance(history.id)}
                           className="bg-gradient-to-r from-orange-100 to-orange-200 text-orange-700 px-3 py-1 rounded-md hover:from-orange-200 hover:to-orange-300 transition-all duration-200"
@@ -762,13 +764,13 @@ const AssetMaintenance = () => {
                         >
                           Delete
                         </button>
-                      </div>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
+                    </div>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
         ) : (
           <div className="text-center py-8">
             <div className="text-gray-400 mb-2">
@@ -829,7 +831,7 @@ const AssetMaintenance = () => {
                 </label>
                 <input
                   type="text"
-                  value={editingMaintenance?.scheduledDate || ''}
+                  value={editingMaintenance?.scheduledDate ? formatDateToDDMMYYYY(editingMaintenance.scheduledDate) : ''}
                   disabled
                   className="w-full p-3 border border-gray-300 rounded-md bg-gray-50 text-gray-500"
                 />
@@ -1053,7 +1055,7 @@ const AssetMaintenance = () => {
                 </button>
               </div>
             </form>
-          </div>
+      </div>
         </div>
       )}
 

@@ -291,10 +291,9 @@ const AssetReturn = () => {
 
   const getConditionColor = (condition) => {
     switch (condition) {
-      case 'Excellent': return 'text-green-600'
-      case 'Good': return 'text-blue-600'
-      case 'Fair': return 'text-yellow-600'
-      case 'Poor': return 'text-red-600'
+      case 'Good': return 'text-green-600'
+      case 'Need Maintenance': return 'text-orange-600'
+      case 'Lost': return 'text-red-600'
       default: return 'text-gray-600'
     }
   }
@@ -510,7 +509,7 @@ const AssetReturn = () => {
                 >
                   <option value="">Select condition...</option>
                   <option value="Good">Good</option>
-                  <option value="Damaged">Damaged</option>
+                  <option value="Need Maintenance">Need Maintenance</option>
                   <option value="Lost">Lost</option>
                 </select>
               </div>

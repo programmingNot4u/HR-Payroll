@@ -471,6 +471,29 @@ class AssetService {
     return Promise.resolve(asset)
   }
 
+  // Delete maintenance record
+  deleteMaintenanceRecord(assetId, maintenanceId) {
+    const asset = this.assets.find(a => a.id === assetId)
+    if (!asset) {
+      return Promise.reject(new Error('Asset not found'))
+    }
+    
+    if (!asset.maintenanceHistory) {
+      return Promise.reject(new Error('No maintenance history found'))
+    }
+    
+    const maintenanceIndex = asset.maintenanceHistory.findIndex(m => m.id === maintenanceId)
+    if (maintenanceIndex === -1) {
+      return Promise.reject(new Error('Maintenance record not found'))
+    }
+    
+    // Remove the maintenance record
+    asset.maintenanceHistory.splice(maintenanceIndex, 1)
+    
+    this.saveAssetsToStorage()
+    return Promise.resolve(asset)
+  }
+
   // Get maintenance history for asset
   getMaintenanceHistory(assetId) {
     const asset = this.assets.find(a => a.id === assetId)

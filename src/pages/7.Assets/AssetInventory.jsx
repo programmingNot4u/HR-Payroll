@@ -48,7 +48,7 @@ const CustomDateInput = ({ value, onChange, required, className, ...props }) => 
       // Check if date is valid
       if (date.getFullYear() == year && date.getMonth() == month - 1 && date.getDate() == day) {
         const isoDate = `${year}-${month}-${day}`
-        onChange({ target: { value: isoDate } })
+        onChange(isoDate)
         // Update display value to ensure consistency
         setDisplayValue(`${day}/${month}/${year}`)
       } else {
@@ -105,6 +105,8 @@ const AssetInventory = () => {
   const [editingAsset, setEditingAsset] = useState(null)
   const [showDoneAnimation, setShowDoneAnimation] = useState(false)
   const [animationMessage, setAnimationMessage] = useState('')
+  const [editingDisposalDate, setEditingDisposalDate] = useState(null)
+  const [disposalDateValue, setDisposalDateValue] = useState('')
   const [formData, setFormData] = useState({
     id: '',
     name: '',
@@ -372,14 +374,14 @@ const AssetInventory = () => {
   }
 
   // Calculate asset age in years for depreciation calculation
-  const calculateAssetAgeInYears = (purchaseDate) => {
+  const calculateAssetAgeInYears = (purchaseDate, endDate = null) => {
     if (!purchaseDate || purchaseDate.trim() === '') return 0
     
     const purchase = parseDate(purchaseDate)
     if (!purchase || isNaN(purchase.getTime())) return 0
     
-    const now = new Date()
-    const diffInMs = now - purchase
+    const end = endDate || new Date()
+    const diffInMs = end - purchase
     
     // Check if purchase date is in the future
     if (diffInMs < 0) return 0
@@ -389,7 +391,7 @@ const AssetInventory = () => {
   }
 
   // Calculate asset age in user-friendly format
-  const calculateAssetAge = (purchaseDate) => {
+  const calculateAssetAge = (purchaseDate, assetStatus = null, disposalDate = null) => {
     if (!purchaseDate || purchaseDate.trim() === '') return 'Unknown'
     
     const purchase = parseDate(purchaseDate)
@@ -398,8 +400,26 @@ const AssetInventory = () => {
       return 'Invalid Date'
     }
     
-    const now = new Date()
-    const diffInMs = now - purchase
+    // For lost, damaged, or retired assets, use disposal date if available
+    let endDate = new Date()
+    if (assetStatus && ['Lost', 'Damaged', 'Retired'].includes(assetStatus) && disposalDate) {
+      // Parse disposal date (could be DD/MM/YYYY or YYYY-MM-DD format)
+      let parsedDisposalDate
+      if (disposalDate.includes('/')) {
+        // DD/MM/YYYY format
+        const [day, month, year] = disposalDate.split('/')
+        parsedDisposalDate = new Date(year, month - 1, day)
+      } else {
+        // YYYY-MM-DD format
+        parsedDisposalDate = new Date(disposalDate)
+      }
+      
+      if (!isNaN(parsedDisposalDate.getTime())) {
+        endDate = parsedDisposalDate
+      }
+    }
+    
+    const diffInMs = endDate - purchase
     
     // Check if purchase date is in the future
     if (diffInMs < 0) {
@@ -430,13 +450,32 @@ const AssetInventory = () => {
   }
 
   // Calculate depreciation with annual depreciation rate based on asset age
-  const calculateDepreciation = (purchaseDate, purchaseValue, annualDepreciationRate = 20) => {
+  const calculateDepreciation = (purchaseDate, purchaseValue, annualDepreciationRate = 20, assetStatus = null, disposalDate = null) => {
     if (!purchaseDate || !purchaseValue || purchaseValue <= 0) {
       return { depreciation: 0, depreciatedValue: purchaseValue || 0, ageInYears: 0 }
     }
     
-    // Calculate asset age in years
-    const ageInYears = calculateAssetAgeInYears(purchaseDate)
+    // For lost, damaged, or retired assets, use disposal date if available
+    let endDate = null
+    if (assetStatus && ['Lost', 'Damaged', 'Retired'].includes(assetStatus) && disposalDate) {
+      // Parse disposal date (could be DD/MM/YYYY or YYYY-MM-DD format)
+      let parsedDisposalDate
+      if (disposalDate.includes('/')) {
+        // DD/MM/YYYY format
+        const [day, month, year] = disposalDate.split('/')
+        parsedDisposalDate = new Date(year, month - 1, day)
+      } else {
+        // YYYY-MM-DD format
+        parsedDisposalDate = new Date(disposalDate)
+      }
+      
+      if (!isNaN(parsedDisposalDate.getTime())) {
+        endDate = parsedDisposalDate
+      }
+    }
+    
+    // Calculate asset age in years from purchase date to end date (disposal or current)
+    const ageInYears = calculateAssetAgeInYears(purchaseDate, endDate)
     
     // If no age or invalid date, no depreciation
     if (ageInYears <= 0) {
@@ -449,14 +488,14 @@ const AssetInventory = () => {
     // Calculate total depreciation: Amount × Annual Rate × Years
     const totalDepreciation = purchaseValue * annualRate * ageInYears
     
-    // Cap depreciation at 90% of original value
-    const maxDepreciation = purchaseValue * 0.9
+    // Allow depreciation up to 100% of original value (book value can reach 0)
+    const maxDepreciation = purchaseValue
     const cappedDepreciation = Math.min(totalDepreciation, maxDepreciation)
     
-    // Calculate book value: Amount - Capped Depreciation
-    const depreciatedValue = Math.max(purchaseValue - cappedDepreciation, purchaseValue * 0.1) // Minimum 10% of original value
+    // Calculate book value: Amount - Depreciation (can reach 0)
+    const depreciatedValue = Math.max(purchaseValue - cappedDepreciation, 0) // Minimum 0 (can reach 0)
     
-    // For display purposes, show the actual depreciation percentage (capped at 90%)
+    // For display purposes, show the actual depreciation percentage (up to 100%)
     const displayDepreciation = Math.round((cappedDepreciation / purchaseValue) * 100)
     
     return {
@@ -474,14 +513,17 @@ const AssetInventory = () => {
   }, 0)
 
   // Calculate total book value (based on amount and depreciation rate)
-  const totalBookValue = assets.reduce((total, asset) => {
-    const purchaseValue = parseInt(asset.value.replace(/[^\d]/g, ''))
-    const quantity = asset.quantity || 1
-    const amount = purchaseValue * quantity
-    const depreciationRate = asset.depreciationRate || 20
-    const depreciation = calculateDepreciation(asset.purchaseDate, amount, depreciationRate)
-    return total + depreciation.depreciatedValue
-  }, 0)
+  // Exclude lost and damaged assets from book value calculations
+  const totalBookValue = assets
+    .filter(asset => !['Lost', 'Damaged'].includes(asset.status))
+    .reduce((total, asset) => {
+      const purchaseValue = parseInt(asset.value.replace(/[^\d]/g, ''))
+      const quantity = asset.quantity || 1
+      const amount = purchaseValue * quantity
+      const depreciationRate = asset.depreciationRate || 20
+      const depreciation = calculateDepreciation(asset.purchaseDate, amount, depreciationRate, asset.status, asset.disposalDate)
+      return total + depreciation.depreciatedValue
+    }, 0)
 
   // Calculate search values based on selected category filter
   const getSearchValues = () => {
@@ -494,12 +536,15 @@ const AssetInventory = () => {
       const quantity = asset.quantity || 1
       const amount = purchaseValue * quantity
       const depreciationRate = asset.depreciationRate || 20
-      const depreciation = calculateDepreciation(asset.purchaseDate, amount, depreciationRate)
+      const depreciation = calculateDepreciation(asset.purchaseDate, amount, depreciationRate, asset.status, asset.disposalDate)
+      
+      // Only include book value for assets that are not lost or damaged
+      const bookValue = !['Lost', 'Damaged'].includes(asset.status) ? depreciation.depreciatedValue : 0
       
       return {
         quantity: totals.quantity + quantity,
         amount: totals.amount + amount,
-        bookValue: totals.bookValue + depreciation.depreciatedValue
+        bookValue: totals.bookValue + bookValue
       }
     }, {
       quantity: 0,
@@ -509,6 +554,7 @@ const AssetInventory = () => {
   }
 
   // Calculate values by status
+  // Exclude lost and damaged assets from book value calculations
   const getValueByStatus = (status) => {
     return assets
       .filter(asset => asset.status === status)
@@ -517,8 +563,10 @@ const AssetInventory = () => {
         const quantity = asset.quantity || 1
         const amount = purchaseValue * quantity
         const depreciationRate = asset.depreciationRate || 20
-        const depreciation = calculateDepreciation(asset.purchaseDate, amount, depreciationRate)
-        return total + depreciation.depreciatedValue
+        const depreciation = calculateDepreciation(asset.purchaseDate, amount, depreciationRate, asset.status, asset.disposalDate)
+        
+        // Only include book value for assets that are not lost or damaged
+        return total + (!['Lost', 'Damaged'].includes(asset.status) ? depreciation.depreciatedValue : 0)
       }, 0)
   }
 
@@ -531,6 +579,51 @@ const AssetInventory = () => {
         const quantity = asset.quantity || 1
         const amount = purchaseValue * quantity
         return total + amount
+      }, 0)
+  }
+
+  // Calculate book value by status
+  // Exclude lost and damaged assets from book value calculations
+  const getBookValueByStatus = (status) => {
+    return assets
+      .filter(asset => asset.status === status)
+      .reduce((total, asset) => {
+        const purchaseValue = parseInt(asset.value.replace(/[^\d]/g, ''))
+        const quantity = asset.quantity || 1
+        const amount = purchaseValue * quantity
+        const depreciationRate = asset.depreciationRate || 20
+        const depreciation = calculateDepreciation(asset.purchaseDate, amount, depreciationRate, asset.status, asset.disposalDate)
+        
+        // Only include book value for assets that are not lost or damaged
+        return total + (!['Lost', 'Damaged'].includes(asset.status) ? depreciation.depreciatedValue : 0)
+      }, 0)
+  }
+
+  // Calculate loss on lost assets (book value of lost assets)
+  const getLossOnLostAssets = () => {
+    return assets
+      .filter(asset => asset.status === 'Lost')
+      .reduce((total, asset) => {
+        const purchaseValue = parseInt(asset.value.replace(/[^\d]/g, ''))
+        const quantity = asset.quantity || 1
+        const amount = purchaseValue * quantity
+        const depreciationRate = asset.depreciationRate || 20
+        const depreciation = calculateDepreciation(asset.purchaseDate, amount, depreciationRate, asset.status, asset.disposalDate)
+        return total + depreciation.depreciatedValue
+      }, 0)
+  }
+
+  // Calculate loss on damaged assets (book value of damaged assets)
+  const getLossOnDamagedAssets = () => {
+    return assets
+      .filter(asset => asset.status === 'Damaged')
+      .reduce((total, asset) => {
+        const purchaseValue = parseInt(asset.value.replace(/[^\d]/g, ''))
+        const quantity = asset.quantity || 1
+        const amount = purchaseValue * quantity
+        const depreciationRate = asset.depreciationRate || 20
+        const depreciation = calculateDepreciation(asset.purchaseDate, amount, depreciationRate, asset.status, asset.disposalDate)
+        return total + depreciation.depreciatedValue
       }, 0)
   }
 
@@ -551,6 +644,7 @@ const AssetInventory = () => {
     }, 0)
   
   // Active Items Value includes only Available and Assigned items
+  // Exclude lost and damaged assets from book value calculations
   const activeItemsValue = assets
     .filter(asset => ['Available', 'Assigned'].includes(asset.status))
     .reduce((total, asset) => {
@@ -558,9 +652,242 @@ const AssetInventory = () => {
       const quantity = asset.quantity || 1
       const amount = purchaseValue * quantity
       const depreciationRate = asset.depreciationRate || 20
-      const depreciation = calculateDepreciation(asset.purchaseDate, amount, depreciationRate)
-      return total + depreciation.depreciatedValue
+      const depreciation = calculateDepreciation(asset.purchaseDate, amount, depreciationRate, asset.status, asset.disposalDate)
+      
+      // Only include book value for assets that are not lost or damaged
+      return total + (!['Lost', 'Damaged'].includes(asset.status) ? depreciation.depreciatedValue : 0)
   }, 0)
+
+  // Print function for asset list
+  const handlePrint = () => {
+    const printWindow = window.open('', '_blank')
+    const currentDate = new Date().toLocaleDateString('en-GB')
+    
+    const printContent = `
+      <!DOCTYPE html>
+      <html>
+        <head>
+          <title>Asset Inventory Report - ${currentDate}</title>
+          <style>
+            body { font-family: Arial, sans-serif; margin: 20px; }
+            .header { text-align: center; margin-bottom: 30px; }
+            .header h1 { color: #333; margin-bottom: 5px; }
+            .header p { color: #666; margin: 0; }
+            .summary { display: flex; justify-content: space-around; margin-bottom: 30px; padding: 15px; background: #f8f9fa; border-radius: 8px; }
+            .summary-item { text-align: center; }
+            .summary-item .value { font-size: 18px; font-weight: bold; color: #333; }
+            .summary-item .label { font-size: 12px; color: #666; margin-top: 5px; }
+            table { width: 100%; border-collapse: collapse; margin-top: 20px; }
+            th, td { border: 1px solid #ddd; padding: 8px; text-align: left; font-size: 12px; }
+            th { background-color: #f8f9fa; font-weight: bold; }
+            .status-available { background-color: #d4edda; color: #155724; padding: 2px 6px; border-radius: 3px; font-size: 10px; }
+            .status-assigned { background-color: #cce5ff; color: #004085; padding: 2px 6px; border-radius: 3px; font-size: 10px; }
+            .status-maintenance { background-color: #fff3cd; color: #856404; padding: 2px 6px; border-radius: 3px; font-size: 10px; }
+            .status-retired { background-color: #e2e3e5; color: #383d41; padding: 2px 6px; border-radius: 3px; font-size: 10px; }
+            .status-lost { background-color: #f8d7da; color: #721c24; padding: 2px 6px; border-radius: 3px; font-size: 10px; }
+            .status-damaged { background-color: #ffeaa7; color: #856404; padding: 2px 6px; border-radius: 3px; font-size: 10px; }
+            .footer { margin-top: 30px; text-align: center; font-size: 10px; color: #666; }
+            @media print {
+              body { margin: 0; }
+              .no-print { display: none; }
+            }
+          </style>
+        </head>
+        <body>
+          <div class="header">
+            <h1>Asset Inventory Report</h1>
+            <p>Generated on ${currentDate}</p>
+          </div>
+          
+          <div class="summary">
+            <div class="summary-item">
+              <div class="value">${filteredAssets.length}</div>
+              <div class="label">Filtered Assets</div>
+            </div>
+            <div class="summary-item">
+              <div class="value">${filteredAssets.reduce((total, asset) => {
+                const value = parseInt(asset.value.replace(/[^\d]/g, ''))
+                const quantity = asset.quantity || 1
+                return total + (value * quantity)
+              }, 0).toLocaleString()}</div>
+              <div class="label">Total Value</div>
+            </div>
+            <div class="summary-item">
+              <div class="value">${filteredAssets.filter(asset => !['Lost', 'Damaged'].includes(asset.status)).reduce((total, asset) => {
+                const purchaseValue = parseInt(asset.value.replace(/[^\d]/g, ''))
+                const quantity = asset.quantity || 1
+                const amount = purchaseValue * quantity
+                const depreciationRate = asset.depreciationRate || 20
+                const depreciation = calculateDepreciation(asset.purchaseDate, amount, depreciationRate, asset.status, asset.disposalDate)
+                return total + depreciation.depreciatedValue
+              }, 0).toLocaleString()}</div>
+              <div class="label">Book Value</div>
+            </div>
+            <div class="summary-item">
+              <div class="value">${filteredAssets.filter(asset => asset.status === 'Lost').reduce((total, asset) => {
+                const purchaseValue = parseInt(asset.value.replace(/[^\d]/g, ''))
+                const quantity = asset.quantity || 1
+                const amount = purchaseValue * quantity
+                const depreciationRate = asset.depreciationRate || 20
+                const depreciation = calculateDepreciation(asset.purchaseDate, amount, depreciationRate, asset.status, asset.disposalDate)
+                return total + depreciation.depreciatedValue
+              }, 0).toLocaleString()}</div>
+              <div class="label">Loss on Lost Asset</div>
+            </div>
+            <div class="summary-item">
+              <div class="value">${filteredAssets.filter(asset => asset.status === 'Damaged').reduce((total, asset) => {
+                const purchaseValue = parseInt(asset.value.replace(/[^\d]/g, ''))
+                const quantity = asset.quantity || 1
+                const amount = purchaseValue * quantity
+                const depreciationRate = asset.depreciationRate || 20
+                const depreciation = calculateDepreciation(asset.purchaseDate, amount, depreciationRate, asset.status, asset.disposalDate)
+                return total + depreciation.depreciatedValue
+              }, 0).toLocaleString()}</div>
+              <div class="label">Loss on Damaged Asset</div>
+            </div>
+            <div class="summary-item">
+              <div class="value">${filteredAssets.filter(asset => ['Available', 'Assigned'].includes(asset.status)).reduce((total, asset) => {
+                const purchaseValue = parseInt(asset.value.replace(/[^\d]/g, ''))
+                const quantity = asset.quantity || 1
+                const amount = purchaseValue * quantity
+                const depreciationRate = asset.depreciationRate || 20
+                const depreciation = calculateDepreciation(asset.purchaseDate, amount, depreciationRate, asset.status, asset.disposalDate)
+                return total + depreciation.depreciatedValue
+              }, 0).toLocaleString()}</div>
+              <div class="label">Active Items Value</div>
+            </div>
+          </div>
+          
+          <table>
+            <thead>
+              <tr>
+                <th>Asset ID</th>
+                <th>Asset Name</th>
+                <th>Category</th>
+                <th>Department</th>
+                <th>Status</th>
+                <th>Assigned To</th>
+                <th>Purchase Date</th>
+                <th>Age</th>
+                <th>Purchase Value</th>
+                <th>Book Value</th>
+                <th>Depreciation</th>
+                <th>Disposal Date</th>
+              </tr>
+            </thead>
+            <tbody>
+              ${filteredAssets.map(asset => {
+                const purchaseValue = parseInt(asset.value.replace(/[^\d]/g, ''))
+                const quantity = asset.quantity || 1
+                const amount = purchaseValue * quantity
+                const depreciationRate = asset.depreciationRate || 20
+                const depreciation = calculateDepreciation(asset.purchaseDate, amount, depreciationRate, asset.status, asset.disposalDate)
+                
+                const getStatusClass = (status) => {
+                  switch (status) {
+                    case 'Available': return 'status-available'
+                    case 'Assigned': return 'status-assigned'
+                    case 'Maintenance': return 'status-maintenance'
+                    case 'Retired': return 'status-retired'
+                    case 'Lost': return 'status-lost'
+                    case 'Damaged': return 'status-damaged'
+                    default: return 'status-available'
+                  }
+                }
+                
+                return `
+                  <tr>
+                    <td>${asset.id}</td>
+                    <td>${asset.name}</td>
+                    <td>${asset.category}</td>
+                    <td>${asset.department}</td>
+                    <td><span class="${getStatusClass(asset.status)}">${asset.status}</span></td>
+                    <td>${asset.assignedTo || '-'}</td>
+                    <td>${asset.purchaseDate ? formatDateToDDMMYYYY(asset.purchaseDate) : '-'}</td>
+                    <td>${calculateAssetAge(asset.purchaseDate, asset.status, asset.disposalDate)}</td>
+                    <td>${amount.toLocaleString()}</td>
+                    <td>${['Lost', 'Damaged'].includes(asset.status) ? 'Loss on Asset' : depreciation.depreciatedValue.toLocaleString()}</td>
+                    <td>${depreciation.depreciation}%</td>
+                    <td>${(asset.status === 'Retired' || asset.status === 'Lost') && asset.disposalDate && typeof asset.disposalDate === 'string' ? formatDateToDDMMYYYY(asset.disposalDate) : '-'}</td>
+                  </tr>
+                `
+              }).join('')}
+            </tbody>
+          </table>
+          
+          <div class="footer">
+            <p>This report was generated from the HR-Payroll Asset Management System</p>
+          </div>
+        </body>
+      </html>
+    `
+    
+    printWindow.document.write(printContent)
+    printWindow.document.close()
+    printWindow.focus()
+    printWindow.print()
+    printWindow.close()
+  }
+
+  // Handle disposal date editing
+  const handleEditDisposalDate = (asset) => {
+    setEditingDisposalDate(asset.id)
+    
+    // Convert DD/MM/YYYY to YYYY-MM-DD for CustomDateInput
+    let dateForInput = ''
+    if (asset.disposalDate && typeof asset.disposalDate === 'string') {
+      if (asset.disposalDate.includes('/')) {
+        // DD/MM/YYYY format - convert to YYYY-MM-DD
+        const [day, month, year] = asset.disposalDate.split('/')
+        dateForInput = `${year}-${month}-${day}`
+      } else {
+        // Already in YYYY-MM-DD format
+        dateForInput = asset.disposalDate
+      }
+    }
+    
+    setDisposalDateValue(dateForInput)
+  }
+
+  const handleSaveDisposalDate = async (assetId) => {
+    try {
+      const asset = assets.find(a => a.id === assetId)
+      if (!asset) return
+
+      // Convert YYYY-MM-DD to DD/MM/YYYY for storage
+      let disposalDateForStorage = disposalDateValue
+      if (disposalDateValue && disposalDateValue.includes('-')) {
+        const [year, month, day] = disposalDateValue.split('-')
+        disposalDateForStorage = `${day}/${month}/${year}`
+      }
+
+      const updatedAsset = {
+        ...asset,
+        disposalDate: disposalDateForStorage
+      }
+
+      await assetService.updateAsset(assetId, updatedAsset)
+      
+      // Update local state
+      setAssets(prev => prev.map(a => a.id === assetId ? updatedAsset : a))
+      
+      setEditingDisposalDate(null)
+      setDisposalDateValue('')
+      
+      // Show success animation
+      setAnimationMessage('Disposal date updated successfully!')
+      setShowDoneAnimation(true)
+      setTimeout(() => setShowDoneAnimation(false), 2000)
+    } catch (error) {
+      console.error('Error updating disposal date:', error)
+      alert('Error updating disposal date. Please try again.')
+    }
+  }
+
+  const handleCancelDisposalDate = () => {
+    setEditingDisposalDate(null)
+    setDisposalDateValue('')
+  }
 
   return (
     <div className="space-y-6">
@@ -813,6 +1140,96 @@ const AssetInventory = () => {
         </div>
       </div>
 
+      {/* Asset Values by Status - Book Value */}
+      <div className="bg-white rounded-lg border border-gray-200 p-4">
+        <h3 className="text-base font-medium text-gray-900 mb-3">Asset Value By Status According to Book Value</h3>
+        <div className="grid grid-cols-7 gap-2">
+          <div className="bg-gray-50 rounded-lg p-2">
+            <div className="flex flex-col items-center text-center">
+              <div className="p-1 bg-gray-100 rounded mb-1">
+                <svg className="w-3 h-3 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+              </div>
+              <p className="text-xs font-medium text-gray-600 mb-1">Active Items Book Value</p>
+              <p className="text-sm font-semibold text-gray-900">{activeItemsValue.toLocaleString()}</p>
+            </div>
+          </div>
+          
+          <div className="bg-blue-50 rounded-lg p-2">
+            <div className="flex flex-col items-center text-center">
+              <div className="p-1 bg-blue-100 rounded mb-1">
+                <svg className="w-3 h-3 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                </svg>
+              </div>
+              <p className="text-xs font-medium text-gray-600 mb-1">Assigned Items Book Value</p>
+              <p className="text-sm font-semibold text-gray-900">{getBookValueByStatus('Assigned').toLocaleString()}</p>
+            </div>
+          </div>
+          
+          <div className="bg-green-50 rounded-lg p-2">
+            <div className="flex flex-col items-center text-center">
+              <div className="p-1 bg-green-100 rounded mb-1">
+                <svg className="w-3 h-3 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" />
+                </svg>
+              </div>
+              <p className="text-xs font-medium text-gray-600 mb-1">Available Items Book Value</p>
+              <p className="text-sm font-semibold text-gray-900">{getBookValueByStatus('Available').toLocaleString()}</p>
+            </div>
+          </div>
+          
+          <div className="bg-yellow-50 rounded-lg p-2">
+            <div className="flex flex-col items-center text-center">
+              <div className="p-1 bg-yellow-100 rounded mb-1">
+                <svg className="w-3 h-3 text-yellow-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
+                </svg>
+              </div>
+              <p className="text-xs font-medium text-gray-600 mb-1">Maintenance Items Book Value</p>
+              <p className="text-sm font-semibold text-gray-900">{getBookValueByStatus('Maintenance').toLocaleString()}</p>
+            </div>
+          </div>
+          
+          <div className="bg-gray-50 rounded-lg p-2">
+            <div className="flex flex-col items-center text-center">
+              <div className="p-1 bg-gray-100 rounded mb-1">
+                <svg className="w-3 h-3 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-2.586a1 1 0 00-.707.293l-2.414 2.414a1 1 0 01-.707.293h-3.172a1 1 0 01-.707-.293l-2.414-2.414A1 1 0 006.586 13H4" />
+                </svg>
+              </div>
+              <p className="text-xs font-medium text-gray-600 mb-1">Retired Items Book Value</p>
+              <p className="text-sm font-semibold text-gray-900">{getBookValueByStatus('Retired').toLocaleString()}</p>
+            </div>
+          </div>
+          
+          <div className="bg-red-50 rounded-lg p-2">
+            <div className="flex flex-col items-center text-center">
+              <div className="p-1 bg-red-100 rounded mb-1">
+                <svg className="w-3 h-3 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L3.732 16.5c-.77.833.192 2.5 1.732 2.5z" />
+                </svg>
+              </div>
+              <p className="text-xs font-medium text-gray-600 mb-1">Loss on Lost Asset</p>
+              <p className="text-sm font-semibold text-gray-900">{getLossOnLostAssets().toLocaleString()}</p>
+            </div>
+          </div>
+          
+          <div className="bg-orange-50 rounded-lg p-2">
+            <div className="flex flex-col items-center text-center">
+              <div className="p-1 bg-orange-100 rounded mb-1">
+                <svg className="w-3 h-3 text-orange-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L3.732 16.5c-.77.833.192 2.5 1.732 2.5z" />
+                </svg>
+              </div>
+              <p className="text-xs font-medium text-gray-600 mb-1">Loss on Damaged Asset</p>
+              <p className="text-sm font-semibold text-gray-900">{getLossOnDamagedAssets().toLocaleString()}</p>
+            </div>
+          </div>
+        </div>
+      </div>
+
       {/* Search and Filters */}
       <div className="bg-white rounded-lg border border-gray-200 p-6">
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-6 gap-4">
@@ -879,12 +1296,21 @@ const AssetInventory = () => {
               className="w-full h-10 rounded border border-gray-300 px-3 focus:outline-none focus:ring-2 focus:ring-orange-500"
             />
           </div>
-          <div className="flex items-end">
+          <div className="flex items-end space-x-2">
             <button 
               onClick={handleAddAsset}
-              className="w-full bg-orange-600 text-white py-2 px-4 rounded hover:bg-orange-700 transition-colors"
+              className="flex-1 bg-orange-600 text-white py-2 px-4 rounded hover:bg-orange-700 transition-colors"
             >
               Add New Asset
+            </button>
+            <button 
+              onClick={handlePrint}
+              className="flex-1 bg-gradient-to-r from-orange-400 to-orange-500 text-white py-2 px-4 rounded hover:from-orange-500 hover:to-orange-600 transition-all duration-200 flex items-center justify-center gap-2"
+            >
+              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z" />
+              </svg>
+              Print Report
             </button>
           </div>
         </div>
@@ -893,8 +1319,10 @@ const AssetInventory = () => {
       {/* Assets Table */}
       <div className="bg-white rounded-lg border border-gray-200 overflow-hidden">
         <div className="px-6 py-4 border-b border-gray-200">
+          <div>
           <h3 className="text-lg font-medium text-gray-900">Asset List</h3>
           <p className="text-sm text-gray-500">Showing {filteredAssets.length} of {assets.length} assets</p>
+          </div>
         </div>
         <div className="overflow-x-auto">
           <table className="min-w-full divide-y divide-gray-200">
@@ -913,6 +1341,7 @@ const AssetInventory = () => {
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Asset Age</th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Annual Depreciation Rate</th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Book Value</th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Disposal Date</th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
               </tr>
             </thead>
@@ -970,7 +1399,7 @@ const AssetInventory = () => {
                     <span className="text-sm text-gray-900">{asset.purchaseDate || '-'}</span>
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap">
-                    <span className="text-sm text-gray-900">{calculateAssetAge(asset.purchaseDate)}</span>
+                    <span className="text-sm text-gray-900">{calculateAssetAge(asset.purchaseDate, asset.status, asset.disposalDate)}</span>
                   </td>
             <td className="px-6 py-4 whitespace-nowrap">
               <span className="text-sm text-gray-900">
@@ -984,17 +1413,68 @@ const AssetInventory = () => {
                         const quantity = asset.quantity || 1
                         const amount = purchaseValue * quantity
                         const depreciationRate = asset.depreciationRate || 20
-                        const depreciation = calculateDepreciation(asset.purchaseDate, amount, depreciationRate)
+                        const depreciation = calculateDepreciation(asset.purchaseDate, amount, depreciationRate, asset.status, asset.disposalDate)
                         return (
                           <div>
-                            <div className="font-semibold">{depreciation.depreciatedValue.toLocaleString()}</div>
+                            <div className="font-semibold">
+                              {['Lost', 'Damaged'].includes(asset.status) ? 'Loss on Asset' : depreciation.depreciatedValue.toLocaleString()}
+                            </div>
                             <div className="text-xs text-gray-500">
-                              {depreciation.depreciation > 0 ? `${depreciation.depreciation}% depreciated` : 'No depreciation'}
+                              {['Lost', 'Damaged'].includes(asset.status) ? 'Asset disposed' : 
+                               (depreciation.depreciation > 0 ? `${depreciation.depreciation}% depreciated` : 'No depreciation')}
                             </div>
                           </div>
                         )
                       })()}
                     </div>
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap">
+                    {asset.status === 'Retired' || asset.status === 'Lost' ? (
+                      editingDisposalDate === asset.id ? (
+                        <div className="flex items-center gap-2">
+                          <CustomDateInput
+                            value={disposalDateValue}
+                            onChange={(value) => setDisposalDateValue(value)}
+                            className="w-32 h-8 text-xs border border-gray-300 rounded px-2 focus:outline-none focus:ring-1 focus:ring-orange-500"
+                          />
+                          <button
+                            onClick={() => handleSaveDisposalDate(asset.id)}
+                            className="text-green-600 hover:text-green-800 text-xs"
+                            title="Save"
+                          >
+                            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                            </svg>
+                          </button>
+                          <button
+                            onClick={handleCancelDisposalDate}
+                            className="text-red-600 hover:text-red-800 text-xs"
+                            title="Cancel"
+                          >
+                            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                            </svg>
+                          </button>
+                        </div>
+                      ) : (
+                        <div className="flex items-center gap-2">
+                          <span className="text-sm text-gray-900">
+                            {asset.disposalDate && typeof asset.disposalDate === 'string' ? formatDateToDDMMYYYY(asset.disposalDate) : '-'}
+                          </span>
+                          <button
+                            onClick={() => handleEditDisposalDate(asset)}
+                            className="text-orange-600 hover:text-orange-800 transition-colors"
+                            title="Edit disposal date"
+                          >
+                            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                            </svg>
+                          </button>
+                        </div>
+                      )
+                    ) : (
+                      <span className="text-sm text-gray-400">-</span>
+                    )}
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
                     <div className="flex space-x-2">
@@ -1121,7 +1601,7 @@ const AssetInventory = () => {
                     <label className="block text-sm font-medium text-gray-700 mb-1">Purchased Date</label>
                     <CustomDateInput
                       value={formData.purchaseDate}
-                      onChange={(e) => setFormData(prev => ({ ...prev, purchaseDate: e.target.value }))}
+                      onChange={(value) => setFormData(prev => ({ ...prev, purchaseDate: value }))}
                       className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-orange-500"
                     />
                   </div>
@@ -1293,7 +1773,7 @@ const AssetInventory = () => {
                     <label className="block text-sm font-medium text-gray-700 mb-1">Purchased Date</label>
                     <CustomDateInput
                       value={formData.purchaseDate}
-                      onChange={(e) => setFormData(prev => ({ ...prev, purchaseDate: e.target.value }))}
+                      onChange={(value) => setFormData(prev => ({ ...prev, purchaseDate: value }))}
                       className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-orange-500"
                     />
                   </div>

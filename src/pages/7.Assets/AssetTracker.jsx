@@ -246,39 +246,11 @@ const AssetTracker = () => {
   }
 
   const getMaintenanceCount = (asset) => {
-    // This would be connected to a maintenance service in a real application
-    // For now, we'll simulate based on asset age and status
-    const ageString = calculateAssetAge(asset.purchaseDate)
-    
-    if (ageString === 'Unknown' || ageString === 'Invalid Date') {
+    // Use actual maintenance history count
+    if (!asset || !asset.maintenanceHistory) {
       return 0
     }
-    
-    // Extract years from the age string
-    if (ageString.includes('year')) {
-      const years = parseInt(ageString.split(' ')[0])
-      if (!isNaN(years)) {
-        return Math.floor(years * 2) // Simulate 2 maintenance per year
-      }
-    }
-    
-    // For assets less than a year old, calculate based on months
-    if (ageString.includes('month')) {
-      const months = parseInt(ageString.split(' ')[0])
-      if (!isNaN(months)) {
-        return Math.floor(months / 6) // 1 maintenance every 6 months
-      }
-    }
-    
-    // For assets less than a month old
-    if (ageString.includes('days')) {
-      const days = parseInt(ageString.split(' ')[0])
-      if (!isNaN(days) && days > 30) {
-        return 1 // At least 1 maintenance for older assets
-      }
-    }
-    
-    return 0
+    return asset.maintenanceHistory.length
   }
 
   const getStatusIcon = (status) => {
@@ -607,6 +579,7 @@ const AssetTracker = () => {
                 </h3>
                 <div className="max-h-96 overflow-y-auto">
                   <div className="space-y-4">
+                    {/* Purchase Event */}
                     <div className="flex items-center gap-4 p-3 bg-green-50 rounded-lg">
                       <div className="w-3 h-3 bg-green-500 rounded-full"></div>
                       <div>
@@ -617,6 +590,58 @@ const AssetTracker = () => {
                       </div>
                     </div>
                     
+                    {/* Status Changes */}
+                    {selectedAsset.status === 'Available' && (
+                      <div className="flex items-center gap-4 p-3 bg-gray-50 rounded-lg">
+                        <div className="w-3 h-3 bg-gray-500 rounded-full"></div>
+                        <div>
+                          <p className="font-medium text-gray-900 text-sm">Status: Available</p>
+                          <p className="text-xs text-gray-700">Asset is available for assignment</p>
+                        </div>
+                      </div>
+                    )}
+                    
+                    {selectedAsset.status === 'Maintenance' && (
+                      <div className="flex items-center gap-4 p-3 bg-yellow-50 rounded-lg">
+                        <div className="w-3 h-3 bg-yellow-500 rounded-full"></div>
+                        <div>
+                          <p className="font-medium text-yellow-900 text-sm">Status: Under Maintenance</p>
+                          <p className="text-xs text-yellow-700">Asset is currently being maintained</p>
+                        </div>
+                      </div>
+                    )}
+                    
+                    {selectedAsset.status === 'Damaged' && (
+                      <div className="flex items-center gap-4 p-3 bg-red-50 rounded-lg">
+                        <div className="w-3 h-3 bg-red-500 rounded-full"></div>
+                        <div>
+                          <p className="font-medium text-red-900 text-sm">Status: Damaged</p>
+                          <p className="text-xs text-red-700">Asset requires repair or replacement</p>
+                        </div>
+                      </div>
+                    )}
+                    
+                    {selectedAsset.status === 'Lost' && (
+                      <div className="flex items-center gap-4 p-3 bg-red-50 rounded-lg">
+                        <div className="w-3 h-3 bg-red-500 rounded-full"></div>
+                        <div>
+                          <p className="font-medium text-red-900 text-sm">Status: Lost</p>
+                          <p className="text-xs text-red-700">Asset has been reported as lost</p>
+                        </div>
+                      </div>
+                    )}
+                    
+                    {selectedAsset.status === 'Retired' && (
+                      <div className="flex items-center gap-4 p-3 bg-gray-50 rounded-lg">
+                        <div className="w-3 h-3 bg-gray-500 rounded-full"></div>
+                        <div>
+                          <p className="font-medium text-gray-900 text-sm">Status: Retired</p>
+                          <p className="text-xs text-gray-700">Asset has been retired from service</p>
+                        </div>
+                      </div>
+                    )}
+                    
+                    {/* Assignment History */}
                     {selectedAsset.assignmentHistory && selectedAsset.assignmentHistory.map((assignment, index) => (
                       <div key={index} className="flex items-center gap-4 p-3 bg-blue-50 rounded-lg">
                         <div className="w-3 h-3 bg-blue-500 rounded-full"></div>
@@ -629,12 +654,29 @@ const AssetTracker = () => {
                       </div>
                     ))}
                     
-                    {selectedAsset.returnDate && (
-                      <div className="flex items-center gap-4 p-3 bg-gray-50 rounded-lg">
-                        <div className="w-3 h-3 bg-gray-500 rounded-full"></div>
+                    {/* Maintenance History */}
+                    {maintenanceHistory && maintenanceHistory.map((maintenance, index) => (
+                      <div key={`maintenance-${index}`} className="flex items-center gap-4 p-3 bg-orange-50 rounded-lg">
+                        <div className="w-3 h-3 bg-orange-500 rounded-full"></div>
                         <div>
-                          <p className="font-medium text-gray-900 text-sm">Asset Returned</p>
-                          <p className="text-xs text-gray-700">
+                          <p className="font-medium text-orange-900 text-sm">
+                            Maintenance - {maintenance.status}
+                          </p>
+                          <p className="text-xs text-orange-700">
+                            {formatDateToDDMMYYYY(maintenance.scheduledDate)} - {maintenance.maintenanceProvider}
+                            {maintenance.completedDate && ` (Completed: ${formatDateToDDMMYYYY(maintenance.completedDate)})`}
+                          </p>
+                        </div>
+                      </div>
+                    ))}
+                    
+                    {/* Return Events */}
+                    {selectedAsset.returnDate && (
+                      <div className="flex items-center gap-4 p-3 bg-purple-50 rounded-lg">
+                        <div className="w-3 h-3 bg-purple-500 rounded-full"></div>
+                        <div>
+                          <p className="font-medium text-purple-900 text-sm">Asset Returned</p>
+                          <p className="text-xs text-purple-700">
                             {formatDateToDDMMYYYY(selectedAsset.returnDate)} - {selectedAsset.returnCondition || 'Good'}
                           </p>
                         </div>

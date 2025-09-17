@@ -1,355 +1,580 @@
-import { useState } from 'react'
+import { useState, useEffect, useMemo, useCallback } from 'react'
+import { 
+  Search, 
+  Filter, 
+  Download, 
+  RefreshCw, 
+  Eye, 
+  Trash2, 
+  Calendar,
+  AlertTriangle,
+  CheckCircle,
+  XCircle,
+  Info,
+  Shield,
+  User,
+  DollarSign,
+  Settings
+} from 'lucide-react'
 
-const auditLogTypes = [
-  {
-    id: 'system',
-    title: 'System Logs',
-    description: 'Monitor system operations, errors, and performance metrics',
-    icon: '🔧',
-    color: 'from-blue-600 to-blue-800',
-    count: 156
+// Constants
+const LOG_TYPES = {
+  SYSTEM: 'system',
+  USER: 'user', 
+  SECURITY: 'security',
+  PAYROLL: 'payroll',
+  ALL: 'all'
+}
+
+const LOG_LEVELS = {
+  ERROR: 'ERROR',
+  WARNING: 'WARNING', 
+  INFO: 'INFO',
+  DEBUG: 'DEBUG'
+}
+
+const SEVERITY_LEVELS = {
+  HIGH: 'HIGH',
+  MEDIUM: 'MEDIUM',
+  LOW: 'LOW'
+}
+
+const STATUS_TYPES = {
+  SUCCESS: 'SUCCESS',
+  FAILED: 'FAILED',
+  PENDING: 'PENDING',
+  APPROVED: 'APPROVED',
+  PROCESSING: 'PROCESSING',
+  ACTIVE: 'ACTIVE',
+  COMPLETED: 'COMPLETED'
+}
+
+// Mock data service
+const auditLogService = {
+  async getLogs(filters = {}) {
+    // Simulate API call
+    await new Promise(resolve => setTimeout(resolve, 300))
+    
+    const allLogs = [
+      // System Logs
+      {
+        id: 1,
+        timestamp: '2024-01-15 14:30:25',
+        level: LOG_LEVELS.INFO,
+        component: 'Database',
+        message: 'Database backup completed successfully',
+        details: 'Backup size: 2.4GB, Duration: 15m 32s, Location: /backups/db_20240115_143025.sql',
+        category: LOG_TYPES.SYSTEM,
+        type: 'System Log'
+      },
+      {
+        id: 2,
+        timestamp: '2024-01-15 14:28:10',
+        level: LOG_LEVELS.WARNING,
+        component: 'Email Service',
+        message: 'SMTP connection timeout',
+        details: 'Retry attempt 2/3, Server: smtp.company.com, Port: 587, Timeout: 30s',
+        category: LOG_TYPES.SYSTEM,
+        type: 'System Log'
+      },
+      {
+        id: 3,
+        timestamp: '2024-01-15 14:25:45',
+        level: LOG_LEVELS.ERROR,
+        component: 'File Upload',
+        message: 'Failed to process large file upload',
+        details: 'File size: 45MB, User: john.doe, Error: Memory limit exceeded, Max allowed: 25MB',
+        category: LOG_TYPES.SYSTEM,
+        type: 'System Log'
+      },
+      // User Activities
+      {
+        id: 4,
+        timestamp: '2024-01-15 14:35:22',
+        user: 'john.doe@company.com',
+        action: 'LOGIN_SUCCESS',
+        ip: '192.168.1.100',
+        status: STATUS_TYPES.SUCCESS,
+        details: 'User logged in from Chrome browser, Session ID: sess_abc123',
+        category: LOG_TYPES.USER,
+        type: 'User Activity'
+      },
+      {
+        id: 5,
+        timestamp: '2024-01-15 14:30:15',
+        user: 'jane.smith@company.com',
+        action: 'PASSWORD_CHANGE',
+        ip: '10.0.0.50',
+        status: STATUS_TYPES.SUCCESS,
+        details: 'Password changed successfully, Security level: High',
+        category: LOG_TYPES.USER,
+        type: 'User Activity'
+      },
+      // Security Events
+      {
+        id: 6,
+        timestamp: '2024-01-15 14:40:15',
+        event: 'LOGIN_ATTEMPT',
+        severity: SEVERITY_LEVELS.HIGH,
+        ip: '203.45.67.89',
+        description: 'Multiple failed login attempts detected',
+        details: '5 failed attempts in 2 minutes, Account: admin@company.com, IP blocked for 30 minutes',
+        category: LOG_TYPES.SECURITY,
+        type: 'Security Event'
+      },
+      {
+        id: 7,
+        timestamp: '2024-01-15 14:35:42',
+        event: 'FILE_ACCESS',
+        severity: SEVERITY_LEVELS.MEDIUM,
+        ip: '192.168.1.100',
+        description: 'Sensitive file access detected',
+        details: 'File: /confidential/salary_data.xlsx, User: john.doe, Action: READ',
+        category: LOG_TYPES.SECURITY,
+        type: 'Security Event'
+      },
+      // Payroll Changes
+      {
+        id: 8,
+        timestamp: '2024-01-15 14:45:30',
+        user: 'hr.manager@company.com',
+        action: 'SALARY_UPDATE',
+        employee: 'EMP001 - John Doe',
+        oldValue: '৳45,000',
+        newValue: '৳48,000',
+        reason: 'Annual performance review - Rating: A, Merit increase: 6.7%',
+        status: STATUS_TYPES.APPROVED,
+        category: LOG_TYPES.PAYROLL,
+        type: 'Payroll Change'
+      },
+      {
+        id: 9,
+        timestamp: '2024-01-15 14:40:15',
+        user: 'payroll.admin@company.com',
+        action: 'BONUS_ADDED',
+        employee: 'EMP023 - Sarah Johnson',
+        oldValue: '৳0',
+        newValue: '৳5,000',
+        reason: 'Q4 performance bonus - Outstanding contribution to project delivery',
+        status: STATUS_TYPES.PROCESSING,
+        category: LOG_TYPES.PAYROLL,
+        type: 'Payroll Change'
+      }
+    ]
+
+    // Apply filters
+    let filteredLogs = allLogs
+
+    if (filters.category && filters.category !== LOG_TYPES.ALL) {
+      filteredLogs = filteredLogs.filter(log => log.category === filters.category)
+    }
+
+    if (filters.searchQuery) {
+      const query = filters.searchQuery.toLowerCase()
+      filteredLogs = filteredLogs.filter(log => 
+        log.message?.toLowerCase().includes(query) ||
+        log.description?.toLowerCase().includes(query) ||
+        log.user?.toLowerCase().includes(query) ||
+        log.action?.toLowerCase().includes(query) ||
+        log.event?.toLowerCase().includes(query) ||
+        log.component?.toLowerCase().includes(query) ||
+        log.ip?.includes(query) ||
+        log.employee?.toLowerCase().includes(query) ||
+        log.reason?.toLowerCase().includes(query) ||
+        log.type?.toLowerCase().includes(query)
+      )
+    }
+
+    if (filters.dateFrom) {
+      filteredLogs = filteredLogs.filter(log => log.timestamp >= filters.dateFrom)
+    }
+
+    if (filters.dateTo) {
+      filteredLogs = filteredLogs.filter(log => log.timestamp <= filters.dateTo)
+    }
+
+    // Sort by timestamp (newest first)
+    filteredLogs.sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp))
+
+    return {
+      logs: filteredLogs,
+      total: filteredLogs.length,
+      page: filters.page || 1,
+      pageSize: filters.pageSize || 20
+    }
   },
-  {
-    id: 'user',
-    title: 'User Activities',
-    description: 'Track user actions, login sessions, and data modifications',
-    icon: '👤',
-    color: 'from-green-600 to-green-800',
-    count: 89
-  },
-  {
-    id: 'security',
-    title: 'Security Events',
-    description: 'Monitor security events, access attempts, and violations',
-    icon: '🛡️',
-    color: 'from-red-600 to-red-800',
-    count: 23
-  },
-  {
-    id: 'payroll',
-    title: 'Payroll Changes',
-    description: 'Track salary modifications, bonuses, and payroll processing',
-    icon: '💰',
-    color: 'from-purple-600 to-purple-800',
-    count: 45
+
+  async exportLogs(format = 'csv', filters = {}) {
+    const { logs } = await this.getLogs(filters)
+    
+    if (format === 'csv') {
+      const headers = ['Timestamp', 'Type', 'Category', 'Level/Severity', 'Status', 'Details', 'User/IP']
+      const csvContent = [
+        headers.join(','),
+        ...logs.map(log => [
+          log.timestamp,
+          log.type,
+          log.category,
+          log.level || log.severity || '-',
+          log.status || '-',
+          `"${(log.message || log.description || log.details || '').replace(/"/g, '""')}"`,
+          log.user || log.ip || '-'
+        ].join(','))
+      ].join('\n')
+      
+      const blob = new Blob([csvContent], { type: 'text/csv' })
+      const url = URL.createObjectURL(blob)
+      const a = document.createElement('a')
+      a.href = url
+      a.download = `audit-logs-${new Date().toISOString().split('T')[0]}.csv`
+      a.click()
+      URL.revokeObjectURL(url)
+    }
   }
-]
+}
 
-const mockSystemLogs = [
-  {
-    id: 1,
-    timestamp: '2024-01-15 14:30:25',
-    level: 'INFO',
-    component: 'Database',
-    message: 'Database backup completed successfully',
-    details: 'Backup size: 2.4GB, Duration: 15m 32s, Location: /backups/db_20240115_143025.sql'
-  },
-  {
-    id: 2,
-    timestamp: '2024-01-15 14:28:10',
-    level: 'WARNING',
-    component: 'Email Service',
-    message: 'SMTP connection timeout',
-    details: 'Retry attempt 2/3, Server: smtp.company.com, Port: 587, Timeout: 30s'
-  },
-  {
-    id: 3,
-    timestamp: '2024-01-15 14:25:45',
-    level: 'ERROR',
-    component: 'File Upload',
-    message: 'Failed to process large file upload',
-    details: 'File size: 45MB, User: john.doe, Error: Memory limit exceeded, Max allowed: 25MB'
-  },
-  {
-    id: 4,
-    timestamp: '2024-01-15 14:22:18',
-    level: 'INFO',
-    component: 'Cache',
-    message: 'Cache cleared successfully',
-    details: 'Cleared 1,245 items, Memory freed: 128MB, Cache hit rate: 87.3%'
-  },
-  {
-    id: 5,
-    timestamp: '2024-01-15 14:20:15',
-    level: 'INFO',
-    component: 'Payroll Engine',
-    message: 'Monthly payroll calculation started',
-    details: 'Processing 156 employees, Estimated time: 45 minutes, Tax year: 2024-25'
+// Utility functions
+const getLogTypeConfig = (category) => {
+  const configs = {
+    [LOG_TYPES.SYSTEM]: {
+      icon: Settings,
+      color: 'from-blue-600 to-blue-800',
+      bgColor: 'bg-blue-100',
+      textColor: 'text-blue-800'
+    },
+    [LOG_TYPES.USER]: {
+      icon: User,
+      color: 'from-green-600 to-green-800',
+      bgColor: 'bg-green-100',
+      textColor: 'text-green-800'
+    },
+    [LOG_TYPES.SECURITY]: {
+      icon: Shield,
+      color: 'from-red-600 to-red-800',
+      bgColor: 'bg-red-100',
+      textColor: 'text-red-800'
+    },
+    [LOG_TYPES.PAYROLL]: {
+      icon: DollarSign,
+      color: 'from-purple-600 to-purple-800',
+      bgColor: 'bg-purple-100',
+      textColor: 'text-purple-800'
+    }
   }
-]
+  return configs[category] || configs[LOG_TYPES.SYSTEM]
+}
 
-const mockUserLogs = [
-  {
-    id: 1,
-    timestamp: '2024-01-15 14:35:22',
-    user: 'john.doe@company.com',
-    action: 'LOGIN_SUCCESS',
-    ip: '192.168.1.100',
-    status: 'SUCCESS',
-    details: 'User logged in from Chrome browser, Session ID: sess_abc123'
-  },
-  {
-    id: 2,
-    timestamp: '2024-01-15 14:30:15',
-    user: 'jane.smith@company.com',
-    action: 'PASSWORD_CHANGE',
-    ip: '10.0.0.50',
-    status: 'SUCCESS',
-    details: 'Password changed successfully, Security level: High'
-  },
-  {
-    id: 3,
-    timestamp: '2024-01-15 14:25:08',
-    user: 'admin@company.com',
-    action: 'USER_CREATED',
-    ip: '172.16.0.10',
-    status: 'SUCCESS',
-    details: 'New user account created: mike.wilson@company.com'
-  },
-  {
-    id: 4,
-    timestamp: '2024-01-15 14:20:33',
-    user: 'hr.manager@company.com',
-    action: 'EMPLOYEE_UPDATE',
-    ip: '192.168.1.150',
-    status: 'SUCCESS',
-    details: 'Employee profile updated: EMP001 - John Doe, Department: IT'
-  },
-  {
-    id: 5,
-    timestamp: '2024-01-15 14:15:45',
-    user: 'payroll.admin@company.com',
-    action: 'SALARY_UPDATE',
-    ip: '10.0.0.75',
-    status: 'SUCCESS',
-    details: 'Salary updated for 5 employees, Total processed: ৳2,450,000'
+const getLevelColor = (level) => {
+  const colors = {
+    [LOG_LEVELS.ERROR]: 'bg-red-100 text-red-800 border-red-200',
+    [LOG_LEVELS.WARNING]: 'bg-yellow-100 text-yellow-800 border-yellow-200',
+    [LOG_LEVELS.INFO]: 'bg-green-100 text-green-800 border-green-200',
+    [LOG_LEVELS.DEBUG]: 'bg-gray-100 text-gray-800 border-gray-200'
   }
-]
+  return colors[level] || colors[LOG_LEVELS.INFO]
+}
 
-const mockSecurityLogs = [
-  {
-    id: 1,
-    timestamp: '2024-01-15 14:40:15',
-    event: 'LOGIN_ATTEMPT',
-    severity: 'HIGH',
-    ip: '203.45.67.89',
-    description: 'Multiple failed login attempts detected',
-    details: '5 failed attempts in 2 minutes, Account: admin@company.com, IP blocked for 30 minutes'
-  },
-  {
-    id: 2,
-    timestamp: '2024-01-15 14:35:42',
-    event: 'FILE_ACCESS',
-    severity: 'MEDIUM',
-    ip: '192.168.1.100',
-    description: 'Sensitive file access detected',
-    details: 'File: /confidential/salary_data.xlsx, User: john.doe, Action: READ'
-  },
-  {
-    id: 3,
-    timestamp: '2024-01-15 14:30:18',
-    event: 'PERMISSION_CHANGE',
-    severity: 'HIGH',
-    ip: '172.16.0.10',
-    description: 'User permissions modified',
-    details: 'User: mike.wilson, Old role: employee, New role: manager, Modified by: admin'
-  },
-  {
-    id: 4,
-    timestamp: '2024-01-15 14:25:55',
-    event: 'SESSION_EXPIRED',
-    severity: 'LOW',
-    ip: '192.168.1.200',
-    description: 'User session expired due to inactivity',
-    details: 'User: sarah.johnson, Session duration: 45 minutes, Auto-logout: Yes'
-  },
-  {
-    id: 5,
-    timestamp: '2024-01-15 14:20:30',
-    event: 'API_RATE_LIMIT',
-    severity: 'MEDIUM',
-    ip: '203.45.67.90',
-    description: 'API rate limit exceeded',
-    details: 'Endpoint: /api/employees, Requests: 150/min, Limit: 100/min, IP: 203.45.67.90'
+const getSeverityColor = (severity) => {
+  const colors = {
+    [SEVERITY_LEVELS.HIGH]: 'bg-red-100 text-red-800 border-red-200',
+    [SEVERITY_LEVELS.MEDIUM]: 'bg-yellow-100 text-yellow-800 border-yellow-200',
+    [SEVERITY_LEVELS.LOW]: 'bg-blue-100 text-blue-800 border-blue-200'
   }
-]
+  return colors[severity] || 'bg-gray-100 text-gray-800 border-gray-200'
+}
 
-const mockPayrollLogs = [
-  {
-    id: 1,
-    timestamp: '2024-01-15 14:45:30',
-    user: 'hr.manager@company.com',
-    action: 'SALARY_UPDATE',
-    employee: 'EMP001 - John Doe',
-    oldValue: '৳45,000',
-    newValue: '৳48,000',
-    reason: 'Annual performance review - Rating: A, Merit increase: 6.7%',
-    status: 'APPROVED'
-  },
-  {
-    id: 2,
-    timestamp: '2024-01-15 14:40:15',
-    user: 'payroll.admin@company.com',
-    action: 'BONUS_ADDED',
-    employee: 'EMP023 - Sarah Johnson',
-    oldValue: '৳0',
-    newValue: '৳5,000',
-    reason: 'Q4 performance bonus - Outstanding contribution to project delivery',
-    status: 'PROCESSING'
-  },
-  {
-    id: 3,
-    timestamp: '2024-01-15 14:35:22',
-    user: 'hr.director@company.com',
-    action: 'ALLOWANCE_UPDATE',
-    employee: 'EMP045 - Mike Wilson',
-    oldValue: '৳2,000',
-    newValue: '৳2,500',
-    reason: 'Transportation allowance increase - New location assignment',
-    status: 'ACTIVE'
-  },
-  {
-    id: 4,
-    timestamp: '2024-01-15 14:30:18',
-    user: 'payroll.manager@company.com',
-    action: 'DEDUCTION_ADDED',
-    employee: 'EMP078 - David Wilson',
-    oldValue: '৳0',
-    newValue: '৳1,500',
-    reason: 'Health insurance premium - Family coverage plan',
-    status: 'ACTIVE'
-  },
-  {
-    id: 5,
-    timestamp: '2024-01-15 14:25:45',
-    user: 'hr.admin@company.com',
-    action: 'SALARY_RESTORATION',
-    employee: 'EMP012 - Lisa Chen',
-    oldValue: '৳38,000',
-    newValue: '৳42,000',
-    reason: 'Salary restored after performance improvement - Previous freeze: 6 months',
-    status: 'APPROVED'
+const getStatusColor = (status) => {
+  const colors = {
+    [STATUS_TYPES.SUCCESS]: 'bg-green-100 text-green-800 border-green-200',
+    [STATUS_TYPES.FAILED]: 'bg-red-100 text-red-800 border-red-200',
+    [STATUS_TYPES.PENDING]: 'bg-yellow-100 text-yellow-800 border-yellow-200',
+    [STATUS_TYPES.APPROVED]: 'bg-green-100 text-green-800 border-green-200',
+    [STATUS_TYPES.PROCESSING]: 'bg-blue-100 text-blue-800 border-blue-200',
+    [STATUS_TYPES.ACTIVE]: 'bg-purple-100 text-purple-800 border-purple-200',
+    [STATUS_TYPES.COMPLETED]: 'bg-green-100 text-green-800 border-green-200'
   }
-]
+  return colors[status] || 'bg-gray-100 text-gray-800 border-gray-200'
+}
 
+// Components
+const LogTypeCard = ({ type, count, isSelected, onClick }) => {
+  const config = getLogTypeConfig(type.id)
+  const Icon = config.icon
+
+  return (
+    <div 
+      className={`bg-white rounded-lg p-4 border cursor-pointer transition-all duration-200 shadow-sm ${
+        isSelected ? 'border-orange-500 ring-2 ring-orange-500' : 'border-gray-200 hover:border-gray-300'
+      }`}
+      onClick={onClick}
+    >
+      <div className="flex items-center justify-between">
+        <div>
+          <p className="text-sm text-gray-600">{type.title}</p>
+          <p className="text-2xl font-bold text-gray-900">{count}</p>
+        </div>
+        <div className={`w-10 h-10 bg-gradient-to-r ${config.color} rounded-lg flex items-center justify-center`}>
+          <Icon className="w-5 h-5 text-white" />
+        </div>
+      </div>
+    </div>
+  )
+}
+
+const LogRow = ({ log, onView, onDelete, isAdmin }) => {
+  const config = getLogTypeConfig(log.category)
+  const Icon = config.icon
+
+  return (
+    <tr className="hover:bg-gray-50 transition-colors">
+      <td className="px-6 py-4 whitespace-nowrap">
+        <div className="flex items-center gap-2">
+          <Icon className="w-4 h-4 text-gray-500" />
+          <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${config.bgColor} ${config.textColor}`}>
+            {log.type}
+          </span>
+        </div>
+      </td>
+      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-700">
+        {new Date(log.timestamp).toLocaleString()}
+      </td>
+      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-700">
+        {log.component || log.user || log.event || log.action || '-'}
+      </td>
+      <td className="px-6 py-4 text-sm text-gray-700 max-w-xs">
+        <div className="truncate" title={log.message || log.description || log.reason || log.details}>
+          {log.message || log.description || log.reason || log.details}
+        </div>
+      </td>
+      <td className="px-6 py-4 whitespace-nowrap">
+        <div className="flex flex-wrap gap-1">
+          {log.level && (
+            <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full border ${getLevelColor(log.level)}`}>
+              {log.level}
+            </span>
+          )}
+          {log.severity && (
+            <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full border ${getSeverityColor(log.severity)}`}>
+              {log.severity}
+            </span>
+          )}
+          {log.status && (
+            <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full border ${getStatusColor(log.status)}`}>
+              {log.status}
+            </span>
+          )}
+        </div>
+      </td>
+      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-700">
+        <div className="flex items-center gap-2">
+          <button
+            onClick={() => onView(log)}
+            className="p-1 text-gray-500 hover:text-orange-500 transition-colors"
+            title="View details"
+          >
+            <Eye className="w-4 h-4" />
+          </button>
+          {isAdmin && (
+            <button
+              onClick={() => onDelete(log.id)}
+              className="p-1 text-gray-500 hover:text-red-500 transition-colors"
+              title="Delete log"
+            >
+              <Trash2 className="w-4 h-4" />
+            </button>
+          )}
+        </div>
+      </td>
+    </tr>
+  )
+}
+
+const Pagination = ({ currentPage, totalPages, onPageChange, totalItems, pageSize }) => {
+  const startItem = (currentPage - 1) * pageSize + 1
+  const endItem = Math.min(currentPage * pageSize, totalItems)
+
+  return (
+    <div className="flex items-center justify-between px-6 py-4 bg-gray-50 border-t border-gray-200">
+      <div className="text-sm text-gray-600">
+        Showing {startItem} to {endItem} of {totalItems} logs
+      </div>
+      <div className="flex items-center gap-2">
+        <button
+          onClick={() => onPageChange(currentPage - 1)}
+          disabled={currentPage === 1}
+          className="px-3 py-2 bg-white hover:bg-gray-50 disabled:bg-gray-100 disabled:text-gray-400 text-gray-700 border border-gray-300 rounded-lg transition-colors"
+        >
+          Previous
+        </button>
+        
+        {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
+          const page = i + 1
+          return (
+            <button
+              key={page}
+              onClick={() => onPageChange(page)}
+              className={`px-3 py-2 rounded-lg transition-colors border ${
+                currentPage === page
+                  ? 'bg-orange-600 text-white border-orange-600'
+                  : 'bg-white hover:bg-gray-50 text-gray-700 border-gray-300'
+              }`}
+            >
+              {page}
+            </button>
+          )
+        })}
+        
+        <button
+          onClick={() => onPageChange(currentPage + 1)}
+          disabled={currentPage === totalPages}
+          className="px-3 py-2 bg-white hover:bg-gray-50 disabled:bg-gray-100 disabled:text-gray-400 text-gray-700 border border-gray-300 rounded-lg transition-colors"
+        >
+          Next
+        </button>
+      </div>
+    </div>
+  )
+}
+
+// Main component
 export default function AuditLog() {
-  const [selectedLogType, setSelectedLogType] = useState('all')
+  // State
+  const [logs, setLogs] = useState([])
+  const [loading, setLoading] = useState(false)
+  const [selectedLogType, setSelectedLogType] = useState(LOG_TYPES.ALL)
   const [searchQuery, setSearchQuery] = useState('')
-  
-  // Mock user role - in real app this would come from authentication context
+  const [dateFrom, setDateFrom] = useState('')
+  const [dateTo, setDateTo] = useState('')
+  const [currentPage, setCurrentPage] = useState(1)
+  const [pageSize, setPageSize] = useState(20)
+  const [totalItems, setTotalItems] = useState(0)
+  const [selectedLog, setSelectedLog] = useState(null)
+  const [showLogModal, setShowLogModal] = useState(false)
+
+  // Mock user data
   const currentUser = {
     id: 'user123',
     email: 'admin@company.com',
     role: 'admin',
     name: 'System Administrator'
   }
-  
+
   const isAdmin = currentUser.role === 'admin'
 
-  const getAllLogs = () => {
-    return [
-      ...mockSystemLogs.map(log => ({ ...log, category: 'system', type: 'System Log' })),
-      ...mockUserLogs.map(log => ({ ...log, category: 'user', type: 'User Activity' })),
-      ...mockSecurityLogs.map(log => ({ ...log, category: 'security', type: 'Security Event' })),
-      ...mockPayrollLogs.map(log => ({ ...log, category: 'payroll', type: 'Payroll Change' }))
-    ]
+  // Log type configurations
+  const logTypes = [
+    { id: LOG_TYPES.SYSTEM, title: 'System Logs', description: 'Monitor system operations, errors, and performance metrics', count: 156 },
+    { id: LOG_TYPES.USER, title: 'User Activities', description: 'Track user actions, login sessions, and data modifications', count: 89 },
+    { id: LOG_TYPES.SECURITY, title: 'Security Events', description: 'Monitor security events, access attempts, and violations', count: 23 },
+    { id: LOG_TYPES.PAYROLL, title: 'Payroll Changes', description: 'Track salary modifications, bonuses, and payroll processing', count: 45 }
+  ]
+
+  // Load logs
+  const loadLogs = useCallback(async () => {
+    setLoading(true)
+    try {
+      const filters = {
+        category: selectedLogType,
+        searchQuery,
+        dateFrom,
+        dateTo,
+        page: currentPage,
+        pageSize
+      }
+      
+      const result = await auditLogService.getLogs(filters)
+      setLogs(result.logs)
+      setTotalItems(result.total)
+    } catch (error) {
+      console.error('Error loading logs:', error)
+    } finally {
+      setLoading(false)
+    }
+  }, [selectedLogType, searchQuery, dateFrom, dateTo, currentPage, pageSize])
+
+  // Load logs on mount and when filters change
+  useEffect(() => {
+    loadLogs()
+  }, [loadLogs])
+
+  // Handlers
+  const handleLogTypeChange = (logType) => {
+    setSelectedLogType(logType)
+    setCurrentPage(1)
   }
 
-  const getSeverityColor = (severity) => {
-    switch (severity) {
-      case 'HIGH':
-        return 'bg-red-100 text-red-800 border-red-200'
-      case 'MEDIUM':
-        return 'bg-yellow-100 text-yellow-800 border-yellow-200'
-      case 'LOW':
-        return 'bg-blue-100 text-blue-800 border-blue-200'
-      case 'INFO':
-        return 'bg-green-100 text-green-800 border-green-200'
-      default:
-        return 'bg-gray-100 text-gray-800 border-gray-200'
+  const handleSearchChange = (e) => {
+    setSearchQuery(e.target.value)
+    setCurrentPage(1)
+  }
+
+  const handleDateFromChange = (e) => {
+    setDateFrom(e.target.value)
+    setCurrentPage(1)
+  }
+
+  const handleDateToChange = (e) => {
+    setDateTo(e.target.value)
+    setCurrentPage(1)
+  }
+
+  const handlePageChange = (page) => {
+    setCurrentPage(page)
+  }
+
+  const handleViewLog = (log) => {
+    setSelectedLog(log)
+    setShowLogModal(true)
+  }
+
+  const handleDeleteLog = async (logId) => {
+    if (window.confirm('Are you sure you want to delete this log entry?')) {
+      // In a real app, this would call an API
+      console.log('Deleting log:', logId)
+      await loadLogs()
     }
   }
 
-  const getLevelColor = (level) => {
-    switch (level) {
-      case 'ERROR':
-        return 'bg-red-100 text-red-800 border-red-200'
-      case 'WARNING':
-        return 'bg-yellow-100 text-yellow-800 border-yellow-200'
-      case 'INFO':
-        return 'bg-green-100 text-green-800 border-green-200'
-      default:
-        return 'bg-gray-100 text-gray-800 border-gray-200'
+  const handleExportLogs = async () => {
+    try {
+      const filters = {
+        category: selectedLogType,
+        searchQuery,
+        dateFrom,
+        dateTo
+      }
+      await auditLogService.exportLogs('csv', filters)
+    } catch (error) {
+      console.error('Error exporting logs:', error)
     }
   }
 
-  const getStatusColor = (status) => {
-    switch (status) {
-      case 'SUCCESS':
-        return 'bg-green-100 text-green-800 border-green-200'
-      case 'FAILED':
-        return 'bg-red-100 text-red-800 border-red-200'
-      case 'PENDING':
-        return 'bg-yellow-100 text-yellow-800 border-yellow-200'
-      case 'APPROVED':
-        return 'bg-green-100 text-green-800 border-green-200'
-      case 'PROCESSING':
-        return 'bg-blue-100 text-blue-800 border-blue-200'
-      case 'ACTIVE':
-        return 'bg-purple-100 text-purple-800 border-purple-200'
-      case 'COMPLETED':
-        return 'bg-green-100 text-green-800 border-green-200'
-      default:
-        return 'bg-gray-100 text-gray-800 border-gray-200'
-    }
+  const handleRefresh = () => {
+    loadLogs()
   }
 
-  const filteredLogs = getAllLogs().filter(log => {
-    // Filter by category first
-    if (selectedLogType !== 'all' && log.category !== selectedLogType) {
-      return false
-    }
-    
-    // Then filter by search query
-    if (!searchQuery) return true
-    
-    const query = searchQuery.toLowerCase()
-    return (
-      log.message?.toLowerCase().includes(query) ||
-      log.description?.toLowerCase().includes(query) ||
-      log.user?.toLowerCase().includes(query) ||
-      log.action?.toLowerCase().includes(query) ||
-      log.event?.toLowerCase().includes(query) ||
-      log.component?.toLowerCase().includes(query) ||
-      log.ip?.includes(query) ||
-      log.employee?.toLowerCase().includes(query) ||
-      log.reason?.toLowerCase().includes(query) ||
-      log.type?.toLowerCase().includes(query)
-    )
-  })
+  const totalPages = Math.ceil(totalItems / pageSize)
 
   return (
-    <div className="min-h-screen bg-gray-900 text-white">
+    <div className="min-h-screen bg-gray-50 text-gray-900">
       {/* Header */}
-      <div className="bg-gray-800 border-b border-gray-700 px-6 py-6">
+      <div className="bg-white border-b border-gray-200 px-6 py-6 shadow-sm">
         <div className="max-w-7xl mx-auto">
           <div className="flex items-center justify-between mb-6">
             <div className="flex items-center gap-4">
               <div className="w-12 h-12 bg-gradient-to-r from-orange-500 to-red-600 rounded-lg flex items-center justify-center">
-                <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-                </svg>
+                <Settings className="w-6 h-6 text-white" />
               </div>
               <div>
-                <h1 className="text-3xl font-bold text-white">Audit Logs</h1>
-                <p className="text-gray-400">Comprehensive monitoring and tracking system for all system activities</p>
+                <h1 className="text-3xl font-bold text-gray-900">Audit Logs</h1>
+                <p className="text-gray-600">Comprehensive monitoring and tracking system for all system activities</p>
               </div>
             </div>
             
             {/* User Info */}
             <div className="text-right">
-              <p className="text-sm text-gray-400">Logged in as</p>
-              <p className="text-white font-medium">{currentUser.name}</p>
+              <p className="text-sm text-gray-500">Logged in as</p>
+              <p className="text-gray-900 font-medium">{currentUser.name}</p>
               <span className="inline-flex px-2 py-1 text-xs font-semibold rounded-full bg-red-100 text-red-800">
                 {currentUser.role.toUpperCase()}
               </span>
@@ -358,18 +583,14 @@ export default function AuditLog() {
           
           {/* Stats Cards */}
           <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-            {auditLogTypes.map(logType => (
-              <div key={logType.id} className="bg-gray-700 rounded-lg p-4 border border-gray-600">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <p className="text-sm text-gray-400">{logType.title}</p>
-                    <p className="text-2xl font-bold text-white">{logType.count}</p>
-                  </div>
-                  <div className={`w-10 h-10 bg-gradient-to-r ${logType.color} rounded-lg flex items-center justify-center`}>
-                    <span className="text-xl">{logType.icon}</span>
-                  </div>
-                </div>
-              </div>
+            {logTypes.map(logType => (
+              <LogTypeCard
+                key={logType.id}
+                type={logType}
+                count={logType.count}
+                isSelected={selectedLogType === logType.id}
+                onClick={() => handleLogTypeChange(logType.id)}
+              />
             ))}
           </div>
         </div>
@@ -381,33 +602,61 @@ export default function AuditLog() {
         <div className="mb-6">
           <div className="flex flex-col lg:flex-row gap-4">
             <div className="flex-1">
-              <input
-                type="text"
-                placeholder="Search logs..."
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                className="w-full px-4 py-2 bg-gray-700 border border-gray-600 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-orange-500"
-              />
+              <div className="relative">
+                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-500" />
+                <input
+                  type="text"
+                  placeholder="Search logs..."
+                  value={searchQuery}
+                  onChange={handleSearchChange}
+                  className="w-full pl-10 pr-4 py-2 bg-white border border-gray-300 rounded-lg text-gray-900 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
+                />
+              </div>
             </div>
             <div className="flex gap-3">
               <select 
                 value={selectedLogType} 
-                onChange={(e) => setSelectedLogType(e.target.value)}
-                className="px-4 py-2 bg-gray-700 border border-gray-600 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-orange-500"
+                onChange={(e) => handleLogTypeChange(e.target.value)}
+                className="px-4 py-2 bg-white border border-gray-300 rounded-lg text-gray-900 focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
               >
-                <option value="all">All Categories</option>
-                <option value="system">System Logs</option>
-                <option value="user">User Activities</option>
-                <option value="security">Security Events</option>
-                <option value="payroll">Payroll Changes</option>
+                <option value={LOG_TYPES.ALL}>All Categories</option>
+                {logTypes.map(type => (
+                  <option key={type.id} value={type.id}>{type.title}</option>
+                ))}
               </select>
+              
               <input
                 type="date"
-                className="px-4 py-2 bg-gray-700 border border-gray-600 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-orange-500"
+                value={dateFrom}
+                onChange={handleDateFromChange}
+                className="px-4 py-2 bg-white border border-gray-300 rounded-lg text-gray-900 focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
+                placeholder="From Date"
               />
+              
+              <input
+                type="date"
+                value={dateTo}
+                onChange={handleDateToChange}
+                className="px-4 py-2 bg-white border border-gray-300 rounded-lg text-gray-900 focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
+                placeholder="To Date"
+              />
+              
+              <button
+                onClick={handleRefresh}
+                disabled={loading}
+                className="px-4 py-2 bg-gray-100 hover:bg-gray-200 disabled:bg-gray-100 text-gray-700 rounded-lg transition-colors flex items-center gap-2 border border-gray-300"
+              >
+                <RefreshCw className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`} />
+                Refresh
+              </button>
+              
               {isAdmin && (
-                <button className="px-4 py-2 bg-orange-600 hover:bg-orange-700 text-white rounded-lg transition-colors">
-                  Export Logs
+                <button
+                  onClick={handleExportLogs}
+                  className="px-4 py-2 bg-orange-600 hover:bg-orange-700 text-white rounded-lg transition-colors flex items-center gap-2"
+                >
+                  <Download className="w-4 h-4" />
+                  Export
                 </button>
               )}
             </div>
@@ -415,92 +664,113 @@ export default function AuditLog() {
         </div>
 
         {/* Logs Table */}
-        <div className="bg-gray-800 rounded-xl border border-gray-700 overflow-hidden">
+        <div className="bg-white rounded-xl border border-gray-200 overflow-hidden shadow-sm">
           <div className="overflow-x-auto">
             <table className="w-full">
-              <thead className="bg-gray-700">
+              <thead className="bg-gray-50">
                 <tr>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-300 uppercase tracking-wider">Type</th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-300 uppercase tracking-wider">Timestamp</th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-300 uppercase tracking-wider">Category</th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-300 uppercase tracking-wider">Details</th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-300 uppercase tracking-wider">Status/Level</th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-300 uppercase tracking-wider">Actions</th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Type</th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Timestamp</th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Category</th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Details</th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status/Level</th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
                 </tr>
               </thead>
-              <tbody className="bg-gray-800 divide-y divide-gray-700">
-                {filteredLogs.slice(0, 20).map((log, index) => (
-                  <tr key={log.id} className={index % 2 === 0 ? 'bg-gray-800' : 'bg-gray-750'}>
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${
-                        log.category === 'system' ? 'bg-blue-100 text-blue-800' :
-                        log.category === 'user' ? 'bg-green-100 text-green-800' :
-                        log.category === 'security' ? 'bg-red-100 text-red-800' :
-                        'bg-purple-100 text-purple-800'
-                      }`}>
-                        {log.type}
-                      </span>
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-300">{log.timestamp}</td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-300">
-                      {log.component || log.user || log.event || log.action}
-                    </td>
-                    <td className="px-6 py-4 text-sm text-gray-300 max-w-xs truncate">
-                      {log.message || log.description || log.reason || log.details}
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      {log.level && (
-                        <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full border ${getLevelColor(log.level)}`}>
-                          {log.level}
-                        </span>
-                      )}
-                      {log.severity && (
-                        <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full border ${getSeverityColor(log.severity)}`}>
-                          {log.severity}
-                        </span>
-                      )}
-                      {log.status && (
-                        <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full border ${getStatusColor(log.status)}`}>
-                          {log.status}
-                        </span>
-                      )}
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-300">
-                      {isAdmin && (
-                        <button className="w-6 h-6 bg-gray-600 hover:bg-red-600 rounded transition-colors flex items-center justify-center">
-                          <svg className="w-3 h-3 text-gray-400 hover:text-white transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                          </svg>
-                        </button>
-                      )}
+              <tbody className="bg-white divide-y divide-gray-200">
+                {loading ? (
+                  <tr>
+                    <td colSpan="6" className="px-6 py-8 text-center text-gray-500">
+                      <div className="flex items-center justify-center gap-2">
+                        <RefreshCw className="w-4 h-4 animate-spin" />
+                        Loading logs...
+                      </div>
                     </td>
                   </tr>
-                ))}
+                ) : logs.length === 0 ? (
+                  <tr>
+                    <td colSpan="6" className="px-6 py-8 text-center text-gray-500">
+                      No logs found matching your criteria
+                    </td>
+                  </tr>
+                ) : (
+                  logs.map((log) => (
+                    <LogRow
+                      key={log.id}
+                      log={log}
+                      onView={handleViewLog}
+                      onDelete={handleDeleteLog}
+                      isAdmin={isAdmin}
+                    />
+                  ))
+                )}
               </tbody>
             </table>
           </div>
           
           {/* Pagination */}
-          <div className="px-6 py-4 bg-gray-700 border-t border-gray-600">
-            <div className="flex items-center justify-between">
-              <div className="text-sm text-gray-400">
-                Showing 20 of {filteredLogs.length} logs
+          {totalPages > 1 && (
+            <Pagination
+              currentPage={currentPage}
+              totalPages={totalPages}
+              onPageChange={handlePageChange}
+              totalItems={totalItems}
+              pageSize={pageSize}
+            />
+          )}
+        </div>
+      </div>
+
+      {/* Log Details Modal */}
+      {showLogModal && selectedLog && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white rounded-xl p-6 max-w-2xl w-full mx-4 max-h-[80vh] overflow-y-auto shadow-xl">
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="text-xl font-semibold text-gray-900">Log Details</h3>
+              <button
+                onClick={() => setShowLogModal(false)}
+                className="text-gray-500 hover:text-gray-700 transition-colors"
+              >
+                <XCircle className="w-6 h-6" />
+              </button>
+            </div>
+            
+            <div className="space-y-4">
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="text-sm text-gray-600">Timestamp</label>
+                  <p className="text-gray-900">{new Date(selectedLog.timestamp).toLocaleString()}</p>
+                </div>
+                <div>
+                  <label className="text-sm text-gray-600">Type</label>
+                  <p className="text-gray-900">{selectedLog.type}</p>
+                </div>
               </div>
-              <div className="flex gap-2">
-                <button className="px-3 py-2 bg-gray-600 hover:bg-gray-500 text-white rounded-lg transition-colors">
-                  Previous
-                </button>
-                <button className="px-3 py-2 bg-orange-600 text-white rounded-lg">1</button>
-                <button className="px-3 py-2 bg-gray-600 hover:bg-gray-500 text-white rounded-lg transition-colors">2</button>
-                <button className="px-3 py-2 bg-gray-600 hover:bg-gray-500 text-white rounded-lg transition-colors">3</button>
-                <button className="px-3 py-2 bg-gray-600 hover:bg-gray-500 text-white rounded-lg transition-colors">
-                  Next
-                </button>
+              
+              <div>
+                <label className="text-sm text-gray-600">Details</label>
+                <p className="text-gray-900 bg-gray-50 p-3 rounded-lg border">
+                  {selectedLog.message || selectedLog.description || selectedLog.reason || selectedLog.details}
+                </p>
               </div>
+              
+              {selectedLog.user && (
+                <div>
+                  <label className="text-sm text-gray-600">User</label>
+                  <p className="text-gray-900">{selectedLog.user}</p>
+                </div>
+              )}
+              
+              {selectedLog.ip && (
+                <div>
+                  <label className="text-sm text-gray-600">IP Address</label>
+                  <p className="text-gray-900">{selectedLog.ip}</p>
+                </div>
+              )}
             </div>
           </div>
         </div>
-      </div>
+      )}
     </div>
   )
-} 
+}
