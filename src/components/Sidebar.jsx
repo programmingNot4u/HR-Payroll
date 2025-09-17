@@ -96,7 +96,7 @@ const sections = [
   },
   {
     title: 'Payroll',
-            items: ['Salary & Payslips', 'Bonuses & Penalties'],
+    items: ['Salary & Payslips', 'Bonuses & Penalties', 'Payroll Policies'],
   },
   {
     title: 'Attendance',
@@ -116,7 +116,7 @@ const sections = [
   },
   {
     title: 'Assets',
-    items: ['Asset Inventory', 'Assign Asset', 'Asset Return', 'Maintenance'],
+    items: ['Asset Inventory', 'Assign Asset', 'Asset Return', 'Asset Tracker', 'Maintenance'],
   },
   {
     title: 'Audit Log',
@@ -126,7 +126,7 @@ const sections = [
 
   {
     title: 'Company Policies',
-    items: ['Policies', 'Payroll Policies', 'Notices & Announcements', 'Events', 'Training Sessions'],
+    items: ['Policies', 'Notices & Announcements', 'Events', 'Training Sessions'],
   },
   {
     title: 'Settings',

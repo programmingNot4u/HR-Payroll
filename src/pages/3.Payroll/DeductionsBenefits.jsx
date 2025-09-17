@@ -485,7 +485,13 @@ export default function BonusesPenalties() {
                         {penalty.reason}
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                        {new Date(penalty.date).toLocaleDateString('en-GB')}
+                        {(() => {
+                          const date = new Date(penalty.date)
+                          const day = String(date.getDate()).padStart(2, '0')
+                          const month = String(date.getMonth() + 1).padStart(2, '0')
+                          const year = date.getFullYear()
+                          return `${day}/${month}/${year}`
+                        })()}
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">
                         <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${getStatusColor(penalty.status)}`}>

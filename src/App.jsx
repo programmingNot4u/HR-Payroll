@@ -3,6 +3,7 @@
 import { useState, useMemo, useEffect } from 'react'
 import Sidebar from './components/Sidebar'
 import Navbar from './components/Navbar'
+import AdminLogin from './pages/AdminLogin'
 import Overview from './pages/1.Dashborad/Overview'
 import Reports from './pages/1.Dashborad/Reports'
 import EmployeeDashboard from './pages/2.Employees/EmployeeDashboard'
@@ -29,6 +30,7 @@ import Promotions from './pages/6.Performance/Promotions'
 import AssetInventory from './pages/7.Assets/AssetInventory'
 import AssignAsset from './pages/7.Assets/AssignAsset'
 import AssetReturn from './pages/7.Assets/AssetReturn'
+import AssetTracker from './pages/7.Assets/AssetTracker'
 import AssetMaintenance from './pages/7.Assets/AssetMaintenance'
 import CompanyInfo from './pages/10.CompanyPolicies/CompanyInfo'
 import Events from './pages/10.CompanyPolicies/Events'
@@ -42,6 +44,12 @@ import Templates from './pages/11.Settings/Templates'
 import OrganizationalMetrics from './pages/11.Settings/OrganizationalMetrics'
 
 function App() {
+  // Authentication state
+  const [isAuthenticated, setIsAuthenticated] = useState(() => {
+    const token = localStorage.getItem('adminToken')
+    return !!token
+  })
+  
   // Initialize selectedItem from localStorage or default to 'Employee Dashboard'
   const [selectedItem, setSelectedItem] = useState(() => {
     const savedItem = localStorage.getItem('selectedPage')
@@ -52,6 +60,44 @@ function App() {
   useEffect(() => {
     localStorage.setItem('selectedPage', selectedItem)
   }, [selectedItem])
+
+  // Listen for navigation events from other components
+  useEffect(() => {
+    const handleNavigateTo = (event) => {
+      setSelectedItem(event.detail)
+    }
+
+    window.addEventListener('navigateTo', handleNavigateTo)
+    return () => window.removeEventListener('navigateTo', handleNavigateTo)
+  }, [])
+
+  // Listen for authentication events
+  useEffect(() => {
+    const handleLogin = () => {
+      setIsAuthenticated(true)
+    }
+
+    const handleLogout = () => {
+      localStorage.removeItem('adminToken')
+      localStorage.removeItem('adminUser')
+      setIsAuthenticated(false)
+    }
+
+    window.addEventListener('adminLogin', handleLogin)
+    window.addEventListener('adminLogout', handleLogout)
+    
+    return () => {
+      window.removeEventListener('adminLogin', handleLogin)
+      window.removeEventListener('adminLogout', handleLogout)
+    }
+  }, [])
+
+  // Logout function
+  const handleLogout = () => {
+    localStorage.removeItem('adminToken')
+    localStorage.removeItem('adminUser')
+    setIsAuthenticated(false)
+  }
 
   // HR Admin Dashboard
   const Content = useMemo(() => {
@@ -105,6 +151,8 @@ function App() {
         return <AssignAsset />
       case 'Asset Return':
         return <AssetReturn />
+      case 'Asset Tracker':
+        return <AssetTracker />
       case 'Maintenance':
         return <AssetMaintenance />
       case 'Notices & Announcements':
@@ -138,9 +186,14 @@ function App() {
     }
   }, [selectedItem])
 
+  // Show login page if not authenticated
+  if (!isAuthenticated) {
+    return <AdminLogin />
+  }
+
   return (
     <div className="min-h-screen flex flex-col bg-gray-50">
-      <Navbar />
+      <Navbar onLogout={handleLogout} />
       <div className="flex flex-1 pt-14">
         <Sidebar selectedItem={selectedItem} onSelect={setSelectedItem} />
         <main className="flex-1 p-6 ml-72 overflow-y-auto">

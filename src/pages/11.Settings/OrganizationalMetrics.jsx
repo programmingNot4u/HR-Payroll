@@ -12,18 +12,9 @@ const OrganizationalMetrics = () => {
     { id: 4, name: 'Worker Grade-4', basicSalary: 6700, houseRent: 3350, medicalAllowance: 750, conveyance: 450, foodAllowance: 1250, grossSalary: 12500, isActive: true }
   ])
 
-  const [staffSalaryGrades, setStaffSalaryGrades] = useState([
-    { id: 1, name: 'Staff Grade-1', basicSalary: 25000, houseRent: 12500, medicalAllowance: 2000, conveyance: 1500, mobileBill: 1000, grossSalary: 42000, isActive: true },
-    { id: 2, name: 'Staff Grade-2', basicSalary: 35000, houseRent: 17500, medicalAllowance: 2500, conveyance: 2000, mobileBill: 1500, grossSalary: 58500, isActive: true },
-    { id: 3, name: 'Staff Grade-3', basicSalary: 45000, houseRent: 22500, medicalAllowance: 3000, conveyance: 2500, mobileBill: 2000, grossSalary: 75000, isActive: true }
-  ])
+  const [staffSalaryGrades, setStaffSalaryGrades] = useState([])
   
-  const [skillMetrics] = useState([
-    { id: 1, name: 'Technical Skills', description: 'Programming languages, frameworks, tools', category: 'Technical', isActive: true },
-    { id: 2, name: 'Communication', description: 'Verbal and written communication abilities', category: 'Soft Skills', isActive: true },
-    { id: 3, name: 'Leadership', description: 'Team management and leadership capabilities', category: 'Management', isActive: true },
-    { id: 4, name: 'Problem Solving', description: 'Analytical thinking and problem resolution', category: 'Cognitive', isActive: true }
-  ])
+  const [skillMetrics, setSkillMetrics] = useState([])
 
   const [processExpertise, setProcessExpertise] = useState([])
   const [operations, setOperations] = useState([])
@@ -41,22 +32,12 @@ const OrganizationalMetrics = () => {
       setDesignations(organizationalDataService.getDesignations())
       setDepartments(organizationalDataService.getDepartments())
       setProcessExpertise(organizationalDataService.getProcessExpertise())
+      setSkillMetrics(organizationalDataService.getSkillMetrics())
+      setStaffSalaryGrades(organizationalDataService.getStaffSalaryGrades())
       
-      // Extract unique operations and machines from process expertise
-      const processData = organizationalDataService.getProcessExpertise()
-      const uniqueOperations = [...new Set(processData.map(item => item.operation))].map((operation, index) => ({
-        id: `op_${index + 1}`,
-        name: operation,
-        isActive: true
-      }))
-      const uniqueMachines = [...new Set(processData.map(item => item.machine))].map((machine, index) => ({
-        id: `mach_${index + 1}`,
-        name: machine,
-        isActive: true
-      }))
-      
-      setOperations(uniqueOperations)
-      setMachines(uniqueMachines)
+      // Load operations and machines from service
+      setOperations(organizationalDataService.getOperations())
+      setMachines(organizationalDataService.getMachines())
     }
     
     loadData()
@@ -101,13 +82,6 @@ const OrganizationalMetrics = () => {
     setShowAddModal(true)
   }
 
-  const handleEdit = (item) => {
-    setEditingItem(item)
-    setFormData(item)
-    // Determine if it's a staff or worker grade based on the data
-    setSalaryGradeType(item.mobileBill !== undefined ? 'staff' : 'worker')
-    setShowAddModal(true)
-  }
 
   const handleDelete = (id) => {
     if (window.confirm('Are you sure you want to delete this item?')) {
@@ -119,10 +93,12 @@ const OrganizationalMetrics = () => {
         // Check if it's a staff or worker grade
         const isStaffGrade = staffSalaryGrades.find(item => item.id === id)
         if (isStaffGrade) {
-          setStaffSalaryGrades(prev => prev.filter(item => item.id !== id))
+          organizationalDataService.deleteStaffSalaryGrade(id)
         } else {
           setSalaryGrades(prev => prev.filter(item => item.id !== id))
         }
+      } else if (activeTab === 'skillMetrics') {
+        organizationalDataService.deleteSkillMetric(id)
       } else if (activeTab === 'processExpertise') {
         organizationalDataService.deleteProcessExpertise(id)
       }
@@ -131,6 +107,8 @@ const OrganizationalMetrics = () => {
       setDesignations(organizationalDataService.getDesignations())
       setDepartments(organizationalDataService.getDepartments())
       setProcessExpertise(organizationalDataService.getProcessExpertise())
+      setSkillMetrics(organizationalDataService.getSkillMetrics())
+      setStaffSalaryGrades(organizationalDataService.getStaffSalaryGrades())
     }
   }
 
@@ -173,24 +151,19 @@ const OrganizationalMetrics = () => {
       } else if (activeTab === 'departments') {
         organizationalDataService.addDepartment(formData)
       } else if (activeTab === 'salaryGrades') {
-        const newId = Math.max(
-          ...salaryGrades.map(item => item.id), 
-          ...staffSalaryGrades.map(item => item.id), 
-          0
-        ) + 1
-        
         if (salaryGradeType === 'staff') {
-          setStaffSalaryGrades(prev => [...prev, { ...formData, id: newId, isActive: true }])
+          organizationalDataService.addStaffSalaryGrade(formData)
         } else {
+          const newId = Math.max(...salaryGrades.map(item => item.id), 0) + 1
           setSalaryGrades(prev => [...prev, { ...formData, id: newId, isActive: true }])
         }
+      } else if (activeTab === 'skillMetrics') {
+        organizationalDataService.addSkillMetric(formData)
       } else if (activeTab === 'processExpertise') {
         if (addType === 'operation') {
-          const newId = `op_${operations.length + 1}`
-          setOperations(prev => [...prev, { ...formData, id: newId, isActive: true }])
+          organizationalDataService.addOperation(formData)
         } else if (addType === 'machine') {
-          const newId = `mach_${machines.length + 1}`
-          setMachines(prev => [...prev, { ...formData, id: newId, isActive: true }])
+          organizationalDataService.addMachine(formData)
         } else {
           organizationalDataService.addProcessExpertise(formData)
         }
@@ -201,6 +174,10 @@ const OrganizationalMetrics = () => {
     setDesignations(organizationalDataService.getDesignations())
     setDepartments(organizationalDataService.getDepartments())
     setProcessExpertise(organizationalDataService.getProcessExpertise())
+    setSkillMetrics(organizationalDataService.getSkillMetrics())
+    setStaffSalaryGrades(organizationalDataService.getStaffSalaryGrades())
+    setOperations(organizationalDataService.getOperations())
+    setMachines(organizationalDataService.getMachines())
     
     setShowAddModal(false)
     setEditingItem(null)
@@ -481,9 +458,9 @@ const OrganizationalMetrics = () => {
                   handleAdd()
                 }}
                 className="text-white px-4 py-2 rounded transition-colors flex items-center gap-2"
-                style={{ backgroundColor: 'rgb(59,130,246)' }}
-                onMouseEnter={(e) => e.target.style.backgroundColor = 'rgb(37,99,235)'}
-                onMouseLeave={(e) => e.target.style.backgroundColor = 'rgb(59,130,246)'}
+                style={{ background: 'linear-gradient(135deg, #ffb366, #ff8c42)' }}
+                onMouseEnter={(e) => e.target.style.background = 'linear-gradient(135deg, #ff9f4d, #ff7a2e)'}
+                onMouseLeave={(e) => e.target.style.background = 'linear-gradient(135deg, #ffb366, #ff8c42)'}
               >
                 <span>+</span>
                 Add Worker Grade
@@ -516,12 +493,6 @@ const OrganizationalMetrics = () => {
                       <td className="px-6 py-4 whitespace-nowrap text-sm font-semibold text-gray-900">{item.grossSalary?.toLocaleString()} Tk</td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
                         <div className="flex gap-2">
-                          <button
-                            onClick={() => handleEdit(item)}
-                            className="text-indigo-600 hover:text-indigo-900"
-                          >
-                            Edit
-                          </button>
                           <button
                             onClick={() => handleDelete(item.id)}
                             className="text-red-600 hover:text-red-900"
@@ -557,9 +528,9 @@ const OrganizationalMetrics = () => {
                   handleAdd()
                 }}
                 className="text-white px-4 py-2 rounded transition-colors flex items-center gap-2"
-                style={{ backgroundColor: 'rgb(34,197,94)' }}
-                onMouseEnter={(e) => e.target.style.backgroundColor = 'rgb(22,163,74)'}
-                onMouseLeave={(e) => e.target.style.backgroundColor = 'rgb(34,197,94)'}
+                style={{ background: 'linear-gradient(135deg, #ffb366, #ff8c42)' }}
+                onMouseEnter={(e) => e.target.style.background = 'linear-gradient(135deg, #ff9f4d, #ff7a2e)'}
+                onMouseLeave={(e) => e.target.style.background = 'linear-gradient(135deg, #ffb366, #ff8c42)'}
               >
                 <span>+</span>
                 Add Staff Grade
@@ -593,12 +564,6 @@ const OrganizationalMetrics = () => {
                       <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
                         <div className="flex gap-2">
                           <button
-                            onClick={() => handleEdit(item)}
-                            className="text-indigo-600 hover:text-indigo-900"
-                          >
-                            Edit
-                          </button>
-                          <button
                             onClick={() => handleDelete(item.id)}
                             className="text-red-600 hover:text-red-900"
                           >
@@ -626,9 +591,9 @@ const OrganizationalMetrics = () => {
               <button
                 onClick={() => handleAdd('operation')}
                 className="text-white px-4 py-2 rounded transition-colors flex items-center gap-2"
-                style={{ backgroundColor: 'rgb(100,150,255)' }}
-                onMouseEnter={(e) => e.target.style.backgroundColor = 'rgb(80,130,235)'}
-                onMouseLeave={(e) => e.target.style.backgroundColor = 'rgb(100,150,255)'}
+                style={{ background: 'linear-gradient(135deg, #ffb366, #ff8c42)' }}
+                onMouseEnter={(e) => e.target.style.background = 'linear-gradient(135deg, #ff9f4d, #ff7a2e)'}
+                onMouseLeave={(e) => e.target.style.background = 'linear-gradient(135deg, #ffb366, #ff8c42)'}
               >
                 <span>+</span>
                 Add Operation
@@ -636,22 +601,12 @@ const OrganizationalMetrics = () => {
               <button
                 onClick={() => handleAdd('machine')}
                 className="text-white px-4 py-2 rounded transition-colors flex items-center gap-2"
-                style={{ backgroundColor: 'rgb(100,200,100)' }}
-                onMouseEnter={(e) => e.target.style.backgroundColor = 'rgb(80,180,80)'}
-                onMouseLeave={(e) => e.target.style.backgroundColor = 'rgb(100,200,100)'}
+                style={{ background: 'linear-gradient(135deg, #ffb366, #ff8c42)' }}
+                onMouseEnter={(e) => e.target.style.background = 'linear-gradient(135deg, #ff9f4d, #ff7a2e)'}
+                onMouseLeave={(e) => e.target.style.background = 'linear-gradient(135deg, #ffb366, #ff8c42)'}
               >
                 <span>+</span>
                 Add Machine
-              </button>
-              <button
-                onClick={() => handleAdd('processExpertise')}
-                className="text-white px-4 py-2 rounded transition-colors flex items-center gap-2"
-                style={{ backgroundColor: 'rgb(255,200,150)' }}
-                onMouseEnter={(e) => e.target.style.backgroundColor = 'rgb(255,185,125)'}
-                onMouseLeave={(e) => e.target.style.backgroundColor = 'rgb(255,200,150)'}
-              >
-                <span>+</span>
-                Connect Operation & Machine
               </button>
             </div>
           </div>
@@ -684,25 +639,9 @@ const OrganizationalMetrics = () => {
                           <div className="flex gap-2">
                             <button
                               onClick={() => {
-                                setEditingItem(operation)
-                                setAddType('operation')
-                                setFormData(operation)
-                                setShowAddModal(true)
-                              }}
-                              className="text-white px-3 py-1.5 rounded-lg transition-colors text-sm font-medium flex items-center gap-1"
-                              style={{ backgroundColor: 'rgb(100,150,255)' }}
-                              onMouseEnter={(e) => e.target.style.backgroundColor = 'rgb(80,130,235)'}
-                              onMouseLeave={(e) => e.target.style.backgroundColor = 'rgb(100,150,255)'}
-                            >
-                              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
-                              </svg>
-                              Edit
-                            </button>
-                            <button
-                              onClick={() => {
                                 if (window.confirm('Are you sure you want to delete this operation?')) {
-                                  setOperations(prev => prev.filter(item => item.id !== operation.id))
+                                  organizationalDataService.deleteOperation(operation.id)
+                                  setOperations(organizationalDataService.getOperations())
                                 }
                               }}
                               className="bg-red-500 text-white px-3 py-1.5 rounded-lg hover:bg-red-600 transition-colors text-sm font-medium flex items-center gap-1"
@@ -747,25 +686,9 @@ const OrganizationalMetrics = () => {
                           <div className="flex gap-2">
                             <button
                               onClick={() => {
-                                setEditingItem(machine)
-                                setAddType('machine')
-                                setFormData(machine)
-                                setShowAddModal(true)
-                              }}
-                              className="text-white px-3 py-1.5 rounded-lg transition-colors text-sm font-medium flex items-center gap-1"
-                              style={{ backgroundColor: 'rgb(100,200,100)' }}
-                              onMouseEnter={(e) => e.target.style.backgroundColor = 'rgb(80,180,80)'}
-                              onMouseLeave={(e) => e.target.style.backgroundColor = 'rgb(100,200,100)'}
-                            >
-                              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
-                              </svg>
-                              Edit
-                            </button>
-                            <button
-                              onClick={() => {
                                 if (window.confirm('Are you sure you want to delete this machine?')) {
-                                  setMachines(prev => prev.filter(item => item.id !== machine.id))
+                                  organizationalDataService.deleteMachine(machine.id)
+                                  setMachines(organizationalDataService.getMachines())
                                 }
                               }}
                               className="bg-red-500 text-white px-3 py-1.5 rounded-lg hover:bg-red-600 transition-colors text-sm font-medium flex items-center gap-1"
@@ -798,9 +721,9 @@ const OrganizationalMetrics = () => {
               <button
                 onClick={handleAdd}
                 className="text-white px-4 py-2 rounded transition-colors flex items-center gap-2"
-                style={{ backgroundColor: 'rgb(255,200,150)' }}
-                onMouseEnter={(e) => e.target.style.backgroundColor = 'rgb(255,185,125)'}
-                onMouseLeave={(e) => e.target.style.backgroundColor = 'rgb(255,200,150)'}
+                style={{ background: 'linear-gradient(135deg, #ffb366, #ff8c42)' }}
+                onMouseEnter={(e) => e.target.style.background = 'linear-gradient(135deg, #ff9f4d, #ff7a2e)'}
+                onMouseLeave={(e) => e.target.style.background = 'linear-gradient(135deg, #ffb366, #ff8c42)'}
               >
                 <span>+</span>
                 Add Department
@@ -815,15 +738,6 @@ const OrganizationalMetrics = () => {
                       <h3 className="text-sm font-medium text-gray-900">{item.name}</h3>
                     </div>
                     <div className="flex gap-2 justify-center">
-                      <button
-                        onClick={() => handleEdit(item)}
-                        className="px-3 py-1.5 text-xs font-medium text-indigo-600 bg-indigo-50 rounded-md hover:bg-indigo-100 transition-colors flex items-center gap-1"
-                      >
-                        <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
-                        </svg>
-                        Edit
-                      </button>
                       <button
                         onClick={() => handleDelete(item.id)}
                         className="px-3 py-1.5 text-xs font-medium text-red-600 bg-red-50 rounded-md hover:bg-red-100 transition-colors flex items-center gap-1"
@@ -852,9 +766,9 @@ const OrganizationalMetrics = () => {
           <button
             onClick={handleAdd}
             className="text-white px-4 py-2 rounded transition-colors flex items-center gap-2"
-            style={{ backgroundColor: 'rgb(255,200,150)' }}
-            onMouseEnter={(e) => e.target.style.backgroundColor = 'rgb(255,185,125)'}
-            onMouseLeave={(e) => e.target.style.backgroundColor = 'rgb(255,200,150)'}
+            style={{ background: 'linear-gradient(135deg, #ffb366, #ff8c42)' }}
+            onMouseEnter={(e) => e.target.style.background = 'linear-gradient(135deg, #ff9f4d, #ff7a2e)'}
+            onMouseLeave={(e) => e.target.style.background = 'linear-gradient(135deg, #ffb366, #ff8c42)'}
           >
             <span>+</span>
             Add {tabs.find(tab => tab.id === activeTab)?.name.slice(0, -1)}
@@ -868,15 +782,6 @@ const OrganizationalMetrics = () => {
                 <h3 className="text-sm font-medium text-gray-900">{item.name}</h3>
               </div>
               <div className="flex gap-2 justify-center">
-                <button
-                  onClick={() => handleEdit(item)}
-                  className="px-3 py-1.5 text-xs font-medium text-indigo-600 bg-indigo-50 rounded-md hover:bg-indigo-100 transition-colors flex items-center gap-1"
-                >
-                  <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
-                  </svg>
-                  Edit
-                </button>
                 <button
                   onClick={() => handleDelete(item.id)}
                   className="px-3 py-1.5 text-xs font-medium text-red-600 bg-red-50 rounded-md hover:bg-red-100 transition-colors flex items-center gap-1"
@@ -956,9 +861,9 @@ const OrganizationalMetrics = () => {
                 <button
                   onClick={handleSave}
                   className="px-4 py-2 text-sm font-medium text-white rounded transition-colors"
-                  style={{ backgroundColor: 'rgb(255,200,150)' }}
-                  onMouseEnter={(e) => e.target.style.backgroundColor = 'rgb(255,185,125)'}
-                  onMouseLeave={(e) => e.target.style.backgroundColor = 'rgb(255,200,150)'}
+                  style={{ background: 'linear-gradient(135deg, #ffb366, #ff8c42)' }}
+                  onMouseEnter={(e) => e.target.style.background = 'linear-gradient(135deg, #ff9f4d, #ff7a2e)'}
+                  onMouseLeave={(e) => e.target.style.background = 'linear-gradient(135deg, #ffb366, #ff8c42)'}
                 >
                   {editingItem ? 'Update' : 'Add'}
                 </button>

@@ -360,8 +360,26 @@ export default function GoalsKPIs() {
                 </div>
 
                 <div className="flex items-center gap-4 text-sm text-gray-500">
-                  <span>Start: {new Date(goal.startDate).toLocaleDateString('en-GB')}</span>
-                  <span>End: {new Date(goal.endDate).toLocaleDateString('en-GB')}</span>
+                  <span>Start: {(() => {
+                    const formatDate = (dateString) => {
+                      const date = new Date(dateString)
+                      const day = String(date.getDate()).padStart(2, '0')
+                      const month = String(date.getMonth() + 1).padStart(2, '0')
+                      const year = date.getFullYear()
+                      return `${day}/${month}/${year}`
+                    }
+                    return formatDate(goal.startDate)
+                  })()}</span>
+                  <span>End: {(() => {
+                    const formatDate = (dateString) => {
+                      const date = new Date(dateString)
+                      const day = String(date.getDate()).padStart(2, '0')
+                      const month = String(date.getMonth() + 1).padStart(2, '0')
+                      const year = date.getFullYear()
+                      return `${day}/${month}/${year}`
+                    }
+                    return formatDate(goal.endDate)
+                  })()}</span>
                 </div>
               </div>
               

@@ -128,7 +128,13 @@ export default function Payslip() {
             </div>
             <div>
               <label className="block text-sm font-medium text-gray-500">Payment Date</label>
-              <p className="text-lg font-semibold">{new Date().toLocaleDateString('en-GB')}</p>
+              <p className="text-lg font-semibold">{(() => {
+                const date = new Date()
+                const day = String(date.getDate()).padStart(2, '0')
+                const month = String(date.getMonth() + 1).padStart(2, '0')
+                const year = date.getFullYear()
+                return `${day}/${month}/${year}`
+              })()}</p>
             </div>
           </div>
         </div>

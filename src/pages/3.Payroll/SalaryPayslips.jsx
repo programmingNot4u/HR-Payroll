@@ -499,7 +499,13 @@ export default function SalaryPayslips() {
                 <h1 className="text-3xl font-bold text-gray-900">RP Creations & Apparels Limited</h1>
                 <p className="text-lg text-gray-600 mt-2">Salary Payslip</p>
                 <p className="text-gray-600">For the month of {filters.month} {filters.year}</p>
-                <p className="text-sm text-gray-500 mt-1">Generated on: {new Date().toLocaleDateString('en-GB')}</p>
+                <p className="text-sm text-gray-500 mt-1">Generated on: {(() => {
+                  const date = new Date()
+                  const day = String(date.getDate()).padStart(2, '0')
+                  const month = String(date.getMonth() + 1).padStart(2, '0')
+                  const year = date.getFullYear()
+                  return `${day}/${month}/${year}`
+                })()}</p>
               </div>
 
               {/* Employee Information Section */}

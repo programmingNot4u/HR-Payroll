@@ -427,7 +427,13 @@ export default function Feedback() {
                   </div>
                   <div>
                     <p className="text-sm text-gray-500">Submitted Date</p>
-                    <p className="text-sm font-medium text-gray-900">{new Date(feedback.submittedDate).toLocaleDateString('en-GB')}</p>
+                    <p className="text-sm font-medium text-gray-900">{(() => {
+                      const date = new Date(feedback.submittedDate)
+                      const day = String(date.getDate()).padStart(2, '0')
+                      const month = String(date.getMonth() + 1).padStart(2, '0')
+                      const year = date.getFullYear()
+                      return `${day}/${month}/${year}`
+                    })()}</p>
                   </div>
                 </div>
 
@@ -477,7 +483,13 @@ export default function Feedback() {
                 </div>
 
                 <div className="flex items-center gap-4 text-sm text-gray-500">
-                  <span>Follow-up Date: {new Date(feedback.followUpDate).toLocaleDateString('en-GB')}</span>
+                  <span>Follow-up Date: {(() => {
+                    const date = new Date(feedback.followUpDate)
+                    const day = String(date.getDate()).padStart(2, '0')
+                    const month = String(date.getMonth() + 1).padStart(2, '0')
+                    const year = date.getFullYear()
+                    return `${day}/${month}/${year}`
+                  })()}</span>
                   <span>Department: {feedback.department}</span>
                 </div>
               </div>

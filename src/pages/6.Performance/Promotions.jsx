@@ -436,7 +436,13 @@ export default function Promotions() {
                   </div>
                   <div>
                     <p className="text-sm text-gray-500">Request Date</p>
-                    <p className="text-sm font-medium text-gray-900">{new Date(promotion.requestDate).toLocaleDateString('en-GB')}</p>
+                    <p className="text-sm font-medium text-gray-900">{(() => {
+                      const date = new Date(promotion.requestDate)
+                      const day = String(date.getDate()).padStart(2, '0')
+                      const month = String(date.getMonth() + 1).padStart(2, '0')
+                      const year = date.getFullYear()
+                      return `${day}/${month}/${year}`
+                    })()}</p>
                   </div>
                 </div>
 
@@ -456,7 +462,13 @@ export default function Promotions() {
                   </div>
                   <div>
                     <p className="text-sm text-gray-500">Effective Date</p>
-                    <p className="text-sm font-medium text-gray-900">{new Date(promotion.effectiveDate).toLocaleDateString('en-GB')}</p>
+                    <p className="text-sm font-medium text-gray-900">{(() => {
+                      const date = new Date(promotion.effectiveDate)
+                      const day = String(date.getDate()).padStart(2, '0')
+                      const month = String(date.getMonth() + 1).padStart(2, '0')
+                      const year = date.getFullYear()
+                      return `${day}/${month}/${year}`
+                    })()}</p>
                   </div>
                 </div>
 

@@ -479,7 +479,16 @@ export default function LeaveRequest() {
                       </span>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                      {new Date(request.startDate).toLocaleDateString('en-GB')} - {new Date(request.endDate).toLocaleDateString('en-GB')}
+                      {(() => {
+                        const formatDate = (dateString) => {
+                          const date = new Date(dateString)
+                          const day = String(date.getDate()).padStart(2, '0')
+                          const month = String(date.getMonth() + 1).padStart(2, '0')
+                          const year = date.getFullYear()
+                          return `${day}/${month}/${year}`
+                        }
+                        return `${formatDate(request.startDate)} - ${formatDate(request.endDate)}`
+                      })()}
                       <br />
                       <span className="text-xs text-gray-400">{request.totalDays} days</span>
                     </td>
@@ -490,7 +499,13 @@ export default function LeaveRequest() {
                       </span>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                      {new Date(request.submittedDate).toLocaleDateString('en-GB')}
+                      {(() => {
+                        const date = new Date(request.submittedDate)
+                        const day = String(date.getDate()).padStart(2, '0')
+                        const month = String(date.getMonth() + 1).padStart(2, '0')
+                        const year = date.getFullYear()
+                        return `${day}/${month}/${year}`
+                      })()}
                     </td>
                   </tr>
                 ))}

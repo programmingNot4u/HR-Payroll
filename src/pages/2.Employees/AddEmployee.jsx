@@ -86,15 +86,21 @@ export default function AddEmployee() {
     
     loadOrganizationalData()
     
-    // Listen for storage changes to update data
+    // Listen for storage changes and custom events to update data
     const handleStorageChange = () => {
       loadOrganizationalData()
     }
     
+    const handleOrganizationalDataChange = () => {
+      loadOrganizationalData()
+    }
+    
     window.addEventListener('storage', handleStorageChange)
+    window.addEventListener('organizationalDataChanged', handleOrganizationalDataChange)
     
     return () => {
       window.removeEventListener('storage', handleStorageChange)
+      window.removeEventListener('organizationalDataChanged', handleOrganizationalDataChange)
     }
   }, [])
 
@@ -204,21 +210,28 @@ export default function AddEmployee() {
       tempInput.focus()
       tempInput.showPicker?.() || tempInput.click()
       
+      // Helper function to safely remove the temp input
+      let isRemoved = false
+      const removeTempInput = () => {
+        if (!isRemoved && document.body.contains(tempInput)) {
+          isRemoved = true
+          document.body.removeChild(tempInput)
+        }
+      }
+
       tempInput.addEventListener('change', (e) => {
         console.log('Calendar selected date:', e.target.value) // Debug log
         onChange(e)
-        document.body.removeChild(tempInput)
+        removeTempInput()
       })
       
       tempInput.addEventListener('blur', () => {
-        document.body.removeChild(tempInput)
+        removeTempInput()
       })
       
       // Remove after 5 seconds if no interaction
       setTimeout(() => {
-        if (document.body.contains(tempInput)) {
-          document.body.removeChild(tempInput)
-        }
+        removeTempInput()
       }, 5000)
     }
 
@@ -247,12 +260,41 @@ export default function AddEmployee() {
     )
   }
 
+  // Function to migrate legacy form data to new format
+  const migrateLegacyFormData = (data) => {
+    const migratedData = { ...data }
+    
+    // Migrate presentAddress from string to object format
+    if (typeof data.presentAddress === 'string') {
+      migratedData.presentAddress = {
+        houseOwnerName: '',
+        village: data.presentAddress || '',
+        postOffice: '',
+        upazilla: '',
+        district: ''
+      }
+    }
+    
+    // Migrate permanentAddress from string to object format
+    if (typeof data.permanentAddress === 'string') {
+      migratedData.permanentAddress = {
+        village: data.permanentAddress || '',
+        postOffice: '',
+        upazilla: '',
+        district: ''
+      }
+    }
+    
+    return migratedData
+  }
+
   // Initialize formData from localStorage or default values
   const [formData, setFormData] = useState(() => {
     const savedFormData = localStorage.getItem('addEmployeeFormData')
     if (savedFormData) {
       try {
-        return JSON.parse(savedFormData)
+        const parsedData = JSON.parse(savedFormData)
+        return migrateLegacyFormData(parsedData)
       } catch (error) {
         console.error('Error parsing saved form data:', error)
       }
@@ -298,6 +340,7 @@ export default function AddEmployee() {
     
     // Permanent Address
     permanentAddress: {
+      houseOwnerName: '',
       village: '',
       postOffice: '',
       upazilla: '',
@@ -470,7 +513,7 @@ export default function AddEmployee() {
   const updateNestedField = (parentField, childField, value) => {
     setFormData(prev => ({
       ...prev,
-      [parentField]: { ...prev[parentField], [childField]: value }
+      [parentField]: { ...(prev[parentField] || {}), [childField]: value }
     }))
   }
 
@@ -480,6 +523,22 @@ export default function AddEmployee() {
       [field]: prev[field].map((item, i) => 
         i === index ? { ...item, [childField]: value } : item
       )
+    }))
+  }
+
+  // Add more children
+  const addMoreChildren = () => {
+    setFormData(prev => ({
+      ...prev,
+      children: [...prev.children, { name: '', age: '', education: '', institute: '' }]
+    }))
+  }
+
+  // Remove child
+  const removeChild = (index) => {
+    setFormData(prev => ({
+      ...prev,
+      children: prev.children.filter((_, i) => i !== index)
     }))
   }
 
@@ -950,6 +1009,12 @@ export default function AddEmployee() {
   const handleSubmit = async (e) => {
     e.preventDefault()
     
+    // Debug: Log current form data
+    console.log('=== FORM SUBMISSION STARTED ===')
+    console.log('Form submission started with data:', formData)
+    console.log('Employee type:', employeeType)
+    console.log('Event type:', e.type)
+    
     // Comprehensive form validation
     const errors = []
     
@@ -1018,11 +1083,43 @@ export default function AddEmployee() {
       errors.push('NID Number is required')
     }
     
-    if (!formData.presentAddress?.trim()) {
+    if (!formData.fathersName?.trim()) {
+      errors.push('Father\'s Name is required')
+    }
+    
+    if (!formData.mothersName?.trim()) {
+      errors.push('Mother\'s Name is required')
+    }
+    
+    // Validate present address (handle both object and legacy string formats)
+    if (typeof formData.presentAddress === 'string') {
+      // Legacy string format
+      if (!formData.presentAddress?.trim()) {
+        errors.push('Present Address is required')
+      }
+    } else if (typeof formData.presentAddress === 'object' && formData.presentAddress !== null) {
+      // New object format - at least village and district should be filled
+      if (!formData.presentAddress?.village?.trim() || 
+          !formData.presentAddress?.district?.trim()) {
+        errors.push('Present Address is required (at least Village and District must be filled)')
+      }
+    } else {
       errors.push('Present Address is required')
     }
     
-    if (!formData.permanentAddress?.trim()) {
+    // Validate permanent address (handle both object and legacy string formats)
+    if (typeof formData.permanentAddress === 'string') {
+      // Legacy string format
+      if (!formData.permanentAddress?.trim()) {
+        errors.push('Permanent Address is required')
+      }
+    } else if (typeof formData.permanentAddress === 'object' && formData.permanentAddress !== null) {
+      // New object format - at least village and district should be filled
+      if (!formData.permanentAddress?.village?.trim() || 
+          !formData.permanentAddress?.district?.trim()) {
+        errors.push('Permanent Address is required (at least Village and District must be filled)')
+      }
+    } else {
       errors.push('Permanent Address is required')
     }
     
@@ -1067,6 +1164,30 @@ export default function AddEmployee() {
     
     // Show validation errors if any
     if (errors.length > 0) {
+      console.log('Validation errors found:', errors)
+      console.log('Current form data for debugging:', {
+        nameEnglish: formData.nameEnglish,
+        employeeId: formData.employeeId,
+        mobileNumber: formData.mobileNumber,
+        dateOfBirth: formData.dateOfBirth,
+        dateOfJoining: formData.dateOfJoining,
+        department: formData.department,
+        designation: formData.designation,
+        levelOfWork: formData.levelOfWork,
+        grossSalary: formData.grossSalary,
+        gender: formData.gender,
+        bloodGroup: formData.bloodGroup,
+        maritalStatus: formData.maritalStatus,
+        nationality: formData.nationality,
+        religion: formData.religion,
+        educationLevel: formData.educationLevel,
+        nidNumber: formData.nidNumber,
+        fathersName: formData.fathersName,
+        mothersName: formData.mothersName,
+        presentAddress: formData.presentAddress,
+        permanentAddress: formData.permanentAddress,
+        emergencyContact: formData.emergencyContact
+      })
       setFormErrors(errors)
       // Scroll to top to show errors
       window.scrollTo({ top: 0, behavior: 'smooth' })
@@ -1114,8 +1235,12 @@ export default function AddEmployee() {
           educationLevel: formData.educationLevel,
           subject: formData.subject,
           nidNumber: formData.nidNumber,
+          birthCertificateNumber: formData.birthCertificateNumber,
           height: formData.height,
           weight: formData.weight,
+          fathersName: formData.fathersName,
+          mothersName: formData.mothersName,
+          spouseName: formData.spouseName,
           
           // Work Information
           employeeId: formData.employeeId,
@@ -1123,13 +1248,13 @@ export default function AddEmployee() {
           dateOfIssue: formData.dateOfIssue,
           offDay: formData.offDay,
           unit: formData.unit,
+          line: formData.line,
           supervisorName: formData.supervisorName,
           grossSalary: formData.grossSalary,
           salaryGrade: formData.salaryGrade,
           
-          // Process Expertise (for Workers)
-          processExpertise: formData.processExpertise?.[0]?.operation || 'N/A',
-          machine: formData.processExpertise?.[0]?.machine || 'N/A',
+          // Process Expertise (for Workers) - Save as array to match EmployeeDashboard
+          processExpertise: formData.processExpertise || [],
           
           // Address Information
           presentAddress: formData.presentAddress,
@@ -1154,17 +1279,34 @@ export default function AddEmployee() {
         employeeLogService.logEmployeeCreated(newEmployee.id, employeeData)
         
         console.log('Employee Data:', employeeData)
+        console.log('New Employee Created:', newEmployee)
         console.log('Employee Type:', employeeType)
         console.log('Level of Work:', formData.levelOfWork)
         console.log('Salary Components:', formData.salaryComponents)
         console.log('Picture:', formData.picture ? formData.picture.name : 'No picture uploaded')
         
+        // Verify the employee was saved by checking localStorage
+        const savedEmployees = JSON.parse(localStorage.getItem('hr_employees_data') || '[]')
+        console.log('All saved employees:', savedEmployees)
+        console.log('New employee found in storage:', savedEmployees.find(emp => emp.id === newEmployee.id))
+        
+        console.log('=== EMPLOYEE SUCCESSFULLY ADDED ===')
+        console.log('New Employee ID:', newEmployee.id)
+        console.log('Employee Name:', newEmployee.name)
+        
         alert(`${employeeType} added successfully!`)
         
-        // Navigate to Employee Dashboard after successful submission
+        // Dispatch event to refresh Employee Dashboard
+        window.dispatchEvent(new CustomEvent('employeeAdded'))
+        
+        // Set the newly created employee ID in localStorage for Employee Details
+        localStorage.setItem('selectedEmployeeId', newEmployee.id)
+        
+        // Navigate to Employee Details to show the newly created employee
         setTimeout(() => {
-          window.location.href = '#Employee Dashboard'
-          window.location.reload()
+          // Use the app's navigation system instead of window.location
+          const event = new CustomEvent('navigateTo', { detail: 'Employee Details' })
+          window.dispatchEvent(event)
         }, 1000)
         
       } catch (error) {
@@ -1196,8 +1338,8 @@ export default function AddEmployee() {
         workExperience: [{ companyName: '', department: '', designation: '', salary: '', duration: '' }],
         processExpertise: [{ operation: '', machine: '', duration: '' }],
         processEfficiency: [{ itemDescription: '', processDeliveryPerHour: '', remarks: '' }],
-        children: [{ name: '', age: '', gender: '', education: '' }],
-        nominee: [{ name: '', relation: '', mobile: '', nid: '' }],
+        children: [{ name: '', age: '', education: '', institute: '' }],
+        nominee: [{ name: '', mobile: '', nidBirthCertificate: '' }],
         // Work Information
         employeeId: '',
         dateOfJoining: '',
@@ -1778,11 +1920,37 @@ export default function AddEmployee() {
         {/* Children Information - Only for Workers */}
         {employeeType === 'Worker' && (
           <div className="rounded border border-gray-200 bg-white p-6">
-            <h2 className="text-xl font-semibold mb-6">Children Information <span className="text-sm font-normal text-gray-500">(Optional)</span></h2>
+            <div className="flex justify-between items-center mb-6">
+              <h2 className="text-xl font-semibold">Children Information <span className="text-sm font-normal text-gray-500">(Optional)</span></h2>
+              <button
+                type="button"
+                onClick={addMoreChildren}
+                className="px-4 py-2 bg-gradient-to-r from-orange-300 to-orange-400 text-white rounded hover:from-orange-400 hover:to-orange-500 flex items-center space-x-2"
+              >
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
+                </svg>
+                <span>Add More Children</span>
+              </button>
+            </div>
             <p className="text-sm text-gray-600 mb-4">You can add children information if available. This section is completely optional.</p>
             <div className="space-y-4">
               {formData.children.map((child, index) => (
-                <div key={index} className="grid grid-cols-1 md:grid-cols-4 gap-4 p-4 border border-gray-200 rounded">
+                <div key={index} className="relative grid grid-cols-1 md:grid-cols-4 gap-4 p-4 border border-gray-200 rounded">
+                  {/* Remove button */}
+                  {formData.children.length > 1 && (
+                    <button
+                      type="button"
+                      onClick={() => removeChild(index)}
+                      className="absolute top-2 right-2 text-red-500 hover:text-red-700 p-1"
+                      title="Remove this child"
+                    >
+                      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                      </svg>
+                    </button>
+                  )}
+                  
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-2">Name</label>
                     <input
@@ -1790,6 +1958,7 @@ export default function AddEmployee() {
                       value={child.name}
                       onChange={(e) => updateArrayField('children', index, 'name', e.target.value)}
                       className="w-full h-10 rounded border border-gray-300 px-3 focus:outline-none focus:ring-2"
+                      placeholder="Child's name"
                     />
                   </div>
                   <div>
@@ -1799,6 +1968,7 @@ export default function AddEmployee() {
                       value={child.age}
                       onChange={(e) => updateArrayField('children', index, 'age', e.target.value)}
                       className="w-full h-10 rounded border border-gray-300 px-3 focus:outline-none focus:ring-2"
+                      placeholder="Age"
                     />
                   </div>
                   <div>
@@ -1808,6 +1978,7 @@ export default function AddEmployee() {
                       value={child.education}
                       onChange={(e) => updateArrayField('children', index, 'education', e.target.value)}
                       className="w-full h-10 rounded border border-gray-300 px-3 focus:outline-none focus:ring-2"
+                      placeholder="Education level"
                     />
                   </div>
                   <div>
@@ -1817,6 +1988,7 @@ export default function AddEmployee() {
                       value={child.institute}
                       onChange={(e) => updateArrayField('children', index, 'institute', e.target.value)}
                       className="w-full h-10 rounded border border-gray-300 px-3 focus:outline-none focus:ring-2"
+                      placeholder="School/College name"
                     />
                   </div>
                 </div>
@@ -1833,7 +2005,7 @@ export default function AddEmployee() {
               <label className="block text-sm font-medium text-gray-700 mb-2">House Number/ House Name</label>
               <input
                 type="text"
-                value={formData.presentAddress.houseOwnerName}
+                value={formData.presentAddress?.houseOwnerName || ''}
                 onChange={(e) => updateNestedField('presentAddress', 'houseOwnerName', e.target.value)}
                 className="w-full h-10 rounded border border-gray-300 px-3 focus:outline-none focus:ring-2"
               />
@@ -1842,7 +2014,7 @@ export default function AddEmployee() {
               <label className="block text-sm font-medium text-gray-700 mb-2">Village/Area</label>
               <input
                 type="text"
-                value={formData.presentAddress.village}
+                value={formData.presentAddress?.village || ''}
                 onChange={(e) => updateNestedField('presentAddress', 'village', e.target.value)}
                 className="w-full h-10 rounded border border-gray-300 px-3 focus:outline-none focus:ring-2"
               />
@@ -1851,7 +2023,7 @@ export default function AddEmployee() {
               <label className="block text-sm font-medium text-gray-700 mb-2">Post Office</label>
               <input
                 type="text"
-                value={formData.presentAddress.postOffice}
+                value={formData.presentAddress?.postOffice || ''}
                 onChange={(e) => updateNestedField('presentAddress', 'postOffice', e.target.value)}
                 className="w-full h-10 rounded border border-gray-300 px-3 focus:outline-none focus:ring-2"
               />
@@ -1860,7 +2032,7 @@ export default function AddEmployee() {
               <label className="block text-sm font-medium text-gray-700 mb-2">Upazilla/City Corporation</label>
               <input
                 type="text"
-                value={formData.presentAddress.upazilla}
+                value={formData.presentAddress?.upazilla || ''}
                 onChange={(e) => updateNestedField('presentAddress', 'upazilla', e.target.value)}
                 className="w-full h-10 rounded border border-gray-300 px-3 focus:outline-none focus:ring-2"
               />
@@ -1869,7 +2041,7 @@ export default function AddEmployee() {
               <label className="block text-sm font-medium text-gray-700 mb-2">District</label>
               <input
                 type="text"
-                value={formData.presentAddress.district}
+                value={formData.presentAddress?.district || ''}
                 onChange={(e) => updateNestedField('presentAddress', 'district', e.target.value)}
                 className="w-full h-10 rounded border border-gray-300 px-3 focus:outline-none focus:ring-2"
               />
@@ -1880,12 +2052,21 @@ export default function AddEmployee() {
         {/* Permanent Address */}
         <div className="rounded border border-gray-200 bg-white p-6">
           <h2 className="text-xl font-semibold mb-6">Permanent Address</h2>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">House Number/ House Name</label>
+              <input
+                type="text"
+                value={formData.permanentAddress?.houseOwnerName || ''}
+                onChange={(e) => updateNestedField('permanentAddress', 'houseOwnerName', e.target.value)}
+                className="w-full h-10 rounded border border-gray-300 px-3 focus:outline-none focus:ring-2"
+              />
+            </div>
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">Village/Area</label>
               <input
                 type="text"
-                value={formData.permanentAddress.village}
+                value={formData.permanentAddress?.village || ''}
                 onChange={(e) => updateNestedField('permanentAddress', 'village', e.target.value)}
                 className="w-full h-10 rounded border border-gray-300 px-3 focus:outline-none focus:ring-2"
               />
@@ -1894,7 +2075,7 @@ export default function AddEmployee() {
               <label className="block text-sm font-medium text-gray-700 mb-2">Post Office</label>
               <input
                 type="text"
-                value={formData.permanentAddress.postOffice}
+                value={formData.permanentAddress?.postOffice || ''}
                 onChange={(e) => updateNestedField('permanentAddress', 'postOffice', e.target.value)}
                 className="w-full h-10 rounded border border-gray-300 px-3 focus:outline-none focus:ring-2"
               />
@@ -1903,7 +2084,7 @@ export default function AddEmployee() {
               <label className="block text-sm font-medium text-gray-700 mb-2">Upazilla/City Corporation</label>
               <input
                 type="text"
-                value={formData.permanentAddress.upazilla}
+                value={formData.permanentAddress?.upazilla || ''}
                 onChange={(e) => updateNestedField('permanentAddress', 'upazilla', e.target.value)}
                 className="w-full h-10 rounded border border-gray-300 px-3 focus:outline-none focus:ring-2"
               />
@@ -1912,7 +2093,7 @@ export default function AddEmployee() {
               <label className="block text-sm font-medium text-gray-700 mb-2">District</label>
               <input
                 type="text"
-                value={formData.permanentAddress.district}
+                value={formData.permanentAddress?.district || ''}
                 onChange={(e) => updateNestedField('permanentAddress', 'district', e.target.value)}
                 className="w-full h-10 rounded border border-gray-300 px-3 focus:outline-none focus:ring-2"
               />
@@ -2208,7 +2389,7 @@ export default function AddEmployee() {
               <label className="block text-sm font-medium text-gray-700 mb-2">Name</label>
               <input
                 type="text"
-                value={formData.emergencyContact.name}
+                value={formData.emergencyContact?.name || ''}
                 onChange={(e) => updateNestedField('emergencyContact', 'name', e.target.value)}
                 className="w-full h-10 rounded border border-gray-300 px-3 focus:outline-none focus:ring-2"
               />
@@ -2217,7 +2398,7 @@ export default function AddEmployee() {
               <label className="block text-sm font-medium text-gray-700 mb-2">Mobile</label>
               <input
                 type="tel"
-                value={formData.emergencyContact.mobile}
+                value={formData.emergencyContact?.mobile || ''}
                 onChange={(e) => updateNestedField('emergencyContact', 'mobile', e.target.value)}
                 className="w-full h-10 rounded border border-gray-300 px-3 focus:outline-none focus:ring-2"
               />
@@ -2226,7 +2407,7 @@ export default function AddEmployee() {
               <label className="block text-sm font-medium text-gray-700 mb-2">Relation</label>
               <input
                 type="text"
-                value={formData.emergencyContact.relation}
+                value={formData.emergencyContact?.relation || ''}
                 onChange={(e) => updateNestedField('emergencyContact', 'relation', e.target.value)}
                 className="w-full h-10 rounded border border-gray-300 px-3 focus:outline-none focus:ring-2"
               />
@@ -2538,7 +2719,7 @@ export default function AddEmployee() {
                 return
               }
               // If preview has been shown, allow direct submission
-              document.querySelector('form').requestSubmit()
+              handleSubmit(new Event('submit'))
             }}
             className="px-8 py-3 text-white rounded font-medium transition-colors"
             style={{ backgroundColor: 'rgb(255,185,125)' }}
@@ -2661,6 +2842,10 @@ export default function AddEmployee() {
                     <h4 className="font-bold text-green-700 mb-2">Present Address</h4>
                     <div className="space-y-2 text-sm">
                       <div className="flex">
+                        <span className="font-bold w-24">House:</span>
+                        <span className="border-b border-gray-400 flex-1 px-2">{formData.presentAddress.houseOwnerName || '_________________'}</span>
+                      </div>
+                      <div className="flex">
                         <span className="font-bold w-24">Village:</span>
                         <span className="border-b border-gray-400 flex-1 px-2">{formData.presentAddress.village || '_________________'}</span>
                       </div>
@@ -2681,6 +2866,10 @@ export default function AddEmployee() {
                   <div>
                     <h4 className="font-bold text-green-700 mb-2">Permanent Address</h4>
                     <div className="space-y-2 text-sm">
+                      <div className="flex">
+                        <span className="font-bold w-24">House:</span>
+                        <span className="border-b border-gray-400 flex-1 px-2">{formData.permanentAddress.houseOwnerName || '_________________'}</span>
+                      </div>
                       <div className="flex">
                         <span className="font-bold w-24">Village:</span>
                         <span className="border-b border-gray-400 flex-1 px-2">{formData.permanentAddress.village || '_________________'}</span>
@@ -3318,7 +3507,7 @@ export default function AddEmployee() {
                     onClick={() => {
                       setShowPreview(false)
                       // Submit the form
-                      document.querySelector('form').requestSubmit()
+                      handleSubmit(new Event('submit'))
                     }}
                     className="px-6 py-2 text-white rounded font-medium transition-colors"
                     style={{ backgroundColor: 'rgb(255,185,125)' }}

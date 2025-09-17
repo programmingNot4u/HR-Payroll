@@ -406,7 +406,13 @@ export default function Appraisals() {
                   </div>
                   <div>
                     <p className="text-sm text-gray-500">Review Date</p>
-                    <p className="text-sm font-medium text-gray-900">{new Date(appraisal.reviewDate).toLocaleDateString('en-GB')}</p>
+                    <p className="text-sm font-medium text-gray-900">{(() => {
+                      const date = new Date(appraisal.reviewDate)
+                      const day = String(date.getDate()).padStart(2, '0')
+                      const month = String(date.getMonth() + 1).padStart(2, '0')
+                      const year = date.getFullYear()
+                      return `${day}/${month}/${year}`
+                    })()}</p>
                   </div>
                 </div>
 

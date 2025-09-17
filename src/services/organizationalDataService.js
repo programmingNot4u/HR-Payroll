@@ -38,6 +38,30 @@ class OrganizationalDataService {
       { id: 6, operation: 'Collar Joint', machine: 'Flatlock', isActive: true }
     ]
 
+    this.operations = [
+      { id: 1, name: 'Rob Joint', isActive: true },
+      { id: 2, name: 'Neck Joint', isActive: true },
+      { id: 3, name: 'Collar Joint', isActive: true }
+    ]
+
+    this.machines = [
+      { id: 1, name: 'Overlock', isActive: true },
+      { id: 2, name: 'Flatlock', isActive: true }
+    ]
+
+    this.skillMetrics = [
+      { id: 1, name: 'Technical Skills', description: 'Programming languages, frameworks, tools', category: 'Technical', isActive: true },
+      { id: 2, name: 'Communication', description: 'Verbal and written communication abilities', category: 'Soft Skills', isActive: true },
+      { id: 3, name: 'Leadership', description: 'Team management and leadership capabilities', category: 'Management', isActive: true },
+      { id: 4, name: 'Problem Solving', description: 'Analytical thinking and problem resolution', category: 'Cognitive', isActive: true }
+    ]
+
+    this.staffSalaryGrades = [
+      { id: 1, name: 'Staff Grade-1', basicSalary: 25000, houseRent: 12500, medicalAllowance: 2000, conveyance: 1500, mobileBill: 1000, grossSalary: 42000, isActive: true },
+      { id: 2, name: 'Staff Grade-2', basicSalary: 35000, houseRent: 17500, medicalAllowance: 2500, conveyance: 2000, mobileBill: 1500, grossSalary: 58500, isActive: true },
+      { id: 3, name: 'Staff Grade-3', basicSalary: 45000, houseRent: 22500, medicalAllowance: 3000, conveyance: 2500, mobileBill: 2000, grossSalary: 75000, isActive: true }
+    ]
+
     // Listen for storage events to sync data across tabs
     window.addEventListener('storage', this.handleStorageChange.bind(this))
   }
@@ -54,12 +78,16 @@ class OrganizationalDataService {
 
   // Get department names for dropdowns
   getDepartmentNames() {
-    return this.getDepartments().map(dept => dept.name)
+    const names = this.getDepartments().map(dept => dept.name)
+    // Remove duplicates and return unique names
+    return [...new Set(names)]
   }
 
   // Get designation names for dropdowns
   getDesignationNames() {
-    return this.getDesignations().map(designation => designation.name)
+    const names = this.getDesignations().map(designation => designation.name)
+    // Remove duplicates and return unique names
+    return [...new Set(names)]
   }
 
   // Get all active process expertise
@@ -67,14 +95,38 @@ class OrganizationalDataService {
     return this.processExpertise.filter(expertise => expertise.isActive)
   }
 
+  // Get all active operations
+  getOperations() {
+    return this.operations.filter(operation => operation.isActive)
+  }
+
+  // Get all active machines
+  getMachines() {
+    return this.machines.filter(machine => machine.isActive)
+  }
+
+  // Get all active skill metrics
+  getSkillMetrics() {
+    return this.skillMetrics.filter(skill => skill.isActive)
+  }
+
+  // Get all active staff salary grades
+  getStaffSalaryGrades() {
+    return this.staffSalaryGrades.filter(grade => grade.isActive)
+  }
+
   // Get process expertise operations for dropdowns
   getProcessExpertiseOperations() {
-    return this.getProcessExpertise().map(expertise => expertise.operation)
+    const operations = this.getProcessExpertise().map(expertise => expertise.operation)
+    // Remove duplicates and return unique operations
+    return [...new Set(operations)]
   }
 
   // Get process expertise machines for dropdowns
   getProcessExpertiseMachines() {
-    return this.getProcessExpertise().map(expertise => expertise.machine)
+    const machines = this.getProcessExpertise().map(expertise => expertise.machine)
+    // Remove duplicates and return unique machines
+    return [...new Set(machines)]
   }
 
   // Get unique operations from process expertise
@@ -197,6 +249,102 @@ class OrganizationalDataService {
     return false
   }
 
+  // Add new operation
+  addOperation(operationData) {
+    const newId = Math.max(...this.operations.map(o => o.id), 0) + 1
+    const newOperation = {
+      id: newId,
+      ...operationData,
+      isActive: true
+    }
+    this.operations.push(newOperation)
+    this.saveToStorage()
+    return newOperation
+  }
+
+  // Delete operation (soft delete)
+  deleteOperation(id) {
+    const index = this.operations.findIndex(o => o.id === id)
+    if (index !== -1) {
+      this.operations[index].isActive = false
+      this.saveToStorage()
+      return true
+    }
+    return false
+  }
+
+  // Add new machine
+  addMachine(machineData) {
+    const newId = Math.max(...this.machines.map(m => m.id), 0) + 1
+    const newMachine = {
+      id: newId,
+      ...machineData,
+      isActive: true
+    }
+    this.machines.push(newMachine)
+    this.saveToStorage()
+    return newMachine
+  }
+
+  // Delete machine (soft delete)
+  deleteMachine(id) {
+    const index = this.machines.findIndex(m => m.id === id)
+    if (index !== -1) {
+      this.machines[index].isActive = false
+      this.saveToStorage()
+      return true
+    }
+    return false
+  }
+
+  // Add new skill metric
+  addSkillMetric(skillData) {
+    const newId = Math.max(...this.skillMetrics.map(s => s.id), 0) + 1
+    const newSkill = {
+      id: newId,
+      ...skillData,
+      isActive: true
+    }
+    this.skillMetrics.push(newSkill)
+    this.saveToStorage()
+    return newSkill
+  }
+
+  // Delete skill metric (soft delete)
+  deleteSkillMetric(id) {
+    const index = this.skillMetrics.findIndex(s => s.id === id)
+    if (index !== -1) {
+      this.skillMetrics[index].isActive = false
+      this.saveToStorage()
+      return true
+    }
+    return false
+  }
+
+  // Add new staff salary grade
+  addStaffSalaryGrade(gradeData) {
+    const newId = Math.max(...this.staffSalaryGrades.map(g => g.id), 0) + 1
+    const newGrade = {
+      id: newId,
+      ...gradeData,
+      isActive: true
+    }
+    this.staffSalaryGrades.push(newGrade)
+    this.saveToStorage()
+    return newGrade
+  }
+
+  // Delete staff salary grade (soft delete)
+  deleteStaffSalaryGrade(id) {
+    const index = this.staffSalaryGrades.findIndex(g => g.id === id)
+    if (index !== -1) {
+      this.staffSalaryGrades[index].isActive = false
+      this.saveToStorage()
+      return true
+    }
+    return false
+  }
+
   // Add new process expertise
   addProcessExpertise(expertiseData) {
     const newId = Math.max(...this.processExpertise.map(e => e.id), 0) + 1
@@ -237,8 +385,15 @@ class OrganizationalDataService {
     localStorage.setItem('organizationalData', JSON.stringify({
       departments: this.departments,
       designations: this.designations,
-      processExpertise: this.processExpertise
+      processExpertise: this.processExpertise,
+      operations: this.operations,
+      machines: this.machines,
+      skillMetrics: this.skillMetrics,
+      staffSalaryGrades: this.staffSalaryGrades
     }))
+    
+    // Emit custom event to notify components of data changes
+    window.dispatchEvent(new CustomEvent('organizationalDataChanged'))
   }
 
   // Load data from localStorage
@@ -250,6 +405,10 @@ class OrganizationalDataService {
         this.departments = data.departments || this.departments
         this.designations = data.designations || this.designations
         this.processExpertise = data.processExpertise || this.processExpertise
+        this.operations = data.operations || this.operations
+        this.machines = data.machines || this.machines
+        this.skillMetrics = data.skillMetrics || this.skillMetrics
+        this.staffSalaryGrades = data.staffSalaryGrades || this.staffSalaryGrades
       } catch (error) {
         console.error('Error loading organizational data:', error)
       }
@@ -263,9 +422,53 @@ class OrganizationalDataService {
     }
   }
 
+  // Clean up duplicate data
+  cleanupDuplicates() {
+    // Remove duplicate designations by name
+    const uniqueDesignations = []
+    const seenNames = new Set()
+    
+    this.designations.forEach(designation => {
+      if (!seenNames.has(designation.name)) {
+        seenNames.add(designation.name)
+        uniqueDesignations.push(designation)
+      }
+    })
+    this.designations = uniqueDesignations
+
+    // Remove duplicate departments by name
+    const uniqueDepartments = []
+    const seenDeptNames = new Set()
+    
+    this.departments.forEach(department => {
+      if (!seenDeptNames.has(department.name)) {
+        seenDeptNames.add(department.name)
+        uniqueDepartments.push(department)
+      }
+    })
+    this.departments = uniqueDepartments
+
+    // Remove duplicate process expertise by operation + machine combination
+    const uniqueProcessExpertise = []
+    const seenExpertise = new Set()
+    
+    this.processExpertise.forEach(expertise => {
+      const key = `${expertise.operation}-${expertise.machine}`
+      if (!seenExpertise.has(key)) {
+        seenExpertise.add(key)
+        uniqueProcessExpertise.push(expertise)
+      }
+    })
+    this.processExpertise = uniqueProcessExpertise
+
+    // Save cleaned data
+    this.saveToStorage()
+  }
+
   // Initialize the service
   init() {
     this.loadFromStorage()
+    this.cleanupDuplicates()
   }
 }
 

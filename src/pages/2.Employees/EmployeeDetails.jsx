@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback, useMemo } from 'react'
+import { useState, useEffect, useCallback, useMemo, useRef } from 'react'
 import employeeService from '../../services/employeeService'
 import organizationalDataService from '../../services/organizationalDataService'
 
@@ -49,32 +49,89 @@ function SuccessAnimation({ show, onClose }) {
 }
 
 // Activity Log Modal Component
-function ActivityLogModal({ show, onClose, logs, employeeName }) {
+function ActivityLogModal({ show, onClose, logs, employeeName, onClearLogs, onClearAllLogs }) {
   if (!show) return null
 
   const formatDateTime = (date) => {
-    return new Intl.DateTimeFormat('en-GB', {
-      year: 'numeric',
-      month: '2-digit',
-      day: '2-digit',
-      hour: '2-digit',
-      minute: '2-digit',
-      second: '2-digit'
-    }).format(date)
+    const d = new Date(date)
+    const day = String(d.getDate()).padStart(2, '0')
+    const month = String(d.getMonth() + 1).padStart(2, '0')
+    const year = d.getFullYear()
+    const hours = String(d.getHours()).padStart(2, '0')
+    const minutes = String(d.getMinutes()).padStart(2, '0')
+    const seconds = String(d.getSeconds()).padStart(2, '0')
+    return `${day}/${month}/${year} ${hours}:${minutes}:${seconds}`
+  }
+
+  const getActionIcon = (action) => {
+    switch (action) {
+      case 'Employee Created':
+        return (
+          <svg className="w-5 h-5 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
+          </svg>
+        )
+      case 'Field Updated':
+        return (
+          <svg className="w-5 h-5 text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+          </svg>
+        )
+      case 'Array Updated':
+        return (
+          <svg className="w-5 h-5 text-purple-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 10h16M4 14h16M4 18h16" />
+          </svg>
+        )
+      case 'Object Updated':
+        return (
+          <svg className="w-5 h-5 text-orange-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" />
+          </svg>
+        )
+      default:
+        return (
+          <svg className="w-5 h-5 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+          </svg>
+        )
+    }
+  }
+
+  const getActionColor = (action) => {
+    switch (action) {
+      case 'Employee Created':
+        return 'bg-green-100 text-green-800 border-green-200'
+      case 'Field Updated':
+        return 'bg-blue-100 text-blue-800 border-blue-200'
+      case 'Array Updated':
+        return 'bg-purple-100 text-purple-800 border-purple-200'
+      case 'Object Updated':
+        return 'bg-orange-100 text-orange-800 border-orange-200'
+      default:
+        return 'bg-gray-100 text-gray-800 border-gray-200'
+    }
   }
 
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-      <div className="bg-white rounded-lg max-w-4xl w-full max-h-[90vh] flex flex-col">
+      <div className="bg-white rounded-xl max-w-6xl w-full max-h-[95vh] flex flex-col shadow-2xl">
         {/* Header */}
-        <div className="flex items-center justify-between p-6 border-b border-gray-200">
-          <div>
-            <h3 className="text-xl font-semibold text-gray-900">Activity Log</h3>
-            <p className="text-sm text-gray-500">Employee: {employeeName}</p>
+        <div className="flex items-center justify-between p-6 border-b border-gray-200 bg-gradient-to-r from-orange-50 to-orange-100">
+          <div className="flex items-center space-x-3">
+            <div className="p-2 bg-orange-500 rounded-lg">
+              <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01" />
+              </svg>
+            </div>
+            <div>
+              <h3 className="text-2xl font-bold text-gray-900">Activity Log</h3>
+              <p className="text-sm text-gray-600">Employee: <span className="font-semibold text-orange-600">{employeeName}</span></p>
+            </div>
           </div>
           <button
             onClick={onClose}
-            className="text-gray-400 hover:text-gray-600 transition-colors"
+            className="p-2 text-gray-400 hover:text-gray-600 hover:bg-white rounded-lg transition-colors"
           >
             <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
@@ -82,60 +139,177 @@ function ActivityLogModal({ show, onClose, logs, employeeName }) {
           </button>
         </div>
 
+        {/* Stats Bar */}
+        {logs && logs.length > 0 && (
+          <div className="px-6 py-4 bg-gray-50 border-b border-gray-200">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center space-x-6">
+                <div className="text-center">
+                  <div className="text-2xl font-bold text-gray-900">{logs.length}</div>
+                  <div className="text-xs text-gray-500">Total Changes</div>
+                </div>
+                <div className="text-center">
+                  <div className="text-2xl font-bold text-blue-600">
+                    {logs.filter(log => log.action === 'Field Updated').length}
+                  </div>
+                  <div className="text-xs text-gray-500">Field Updates</div>
+                </div>
+                <div className="text-center">
+                  <div className="text-2xl font-bold text-purple-600">
+                    {logs.filter(log => log.action === 'Array Updated').length}
+                  </div>
+                  <div className="text-xs text-gray-500">Array Changes</div>
+                </div>
+              </div>
+              <div className="text-sm text-gray-500">
+                Last updated: {logs.length > 0 ? formatDateTime(logs[0].timestamp) : 'Never'}
+              </div>
+            </div>
+          </div>
+        )}
+
         {/* Content */}
         <div className="flex-1 overflow-y-auto p-6">
-          {logs.length > 0 ? (
+          {logs && logs.length > 0 ? (
             <div className="space-y-4">
-              {logs.map((log) => (
-                <div key={log.id} className="bg-gray-50 rounded-lg p-4 border border-gray-200">
-                  <div className="flex items-start justify-between">
-                    <div className="flex-1">
-                      <div className="flex items-center space-x-2 mb-2">
-                        <span className={`px-2 py-1 text-xs font-semibold rounded-full ${
-                          log.action === 'Employee Created' ? 'bg-green-100 text-green-800' :
-                          log.action === 'Field Updated' ? 'bg-blue-100 text-blue-800' :
-                          'bg-gray-100 text-gray-800'
-                        }`}>
-                          {log.action}
-                        </span>
-                        <span className="text-sm text-gray-500">{log.field}</span>
+              {logs.map((log, index) => (
+                <div key={log.id || index} className="border border-gray-200 rounded-xl p-5 hover:shadow-md transition-all duration-200 bg-white">
+                  <div className="flex items-start space-x-4">
+                    {/* Icon */}
+                    <div className="flex-shrink-0 mt-1">
+                      {getActionIcon(log.action)}
+                    </div>
+                    
+                    {/* Content */}
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center justify-between mb-3">
+                        <div className="flex items-center space-x-3">
+                          <span className={`inline-flex items-center px-3 py-1 rounded-full text-sm font-medium border ${getActionColor(log.action)}`}>
+                            {log.action}
+                          </span>
+                          <span className="text-sm text-gray-500 font-mono">
+                            {formatDateTime(log.timestamp)}
+                          </span>
+                        </div>
+                        <div className="text-xs text-gray-400">
+                          #{log.id ? log.id.toString().slice(-6) : index + 1}
+                        </div>
                       </div>
-                      <p className="text-sm text-gray-700 mb-2">{log.description}</p>
-                      {log.oldValue && log.newValue && (
-                        <div className="text-xs text-gray-600">
-                          <span className="font-medium">Changed from:</span> {log.oldValue} 
-                          <span className="mx-2">→</span>
-                          <span className="font-medium">to:</span> {log.newValue}
+                      
+                      <div className="mb-3">
+                        <h4 className="text-lg font-semibold text-gray-900 mb-1">
+                          {log.field}
+                        </h4>
+                        <p className="text-gray-700 leading-relaxed">
+                          {log.description}
+                        </p>
+                      </div>
+                      
+                      {(log.oldValue !== null && log.oldValue !== undefined && log.newValue !== null && log.newValue !== undefined) && (
+                        <div className="bg-gray-50 rounded-lg p-4 border">
+                          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <div>
+                              <div className="text-xs font-semibold text-red-600 uppercase tracking-wide mb-2">Previous Value</div>
+                              <div className="text-sm text-gray-700 bg-red-50 p-2 rounded border-l-4 border-red-200">
+                                {log.oldValue === '' ? <span className="italic text-gray-500">Empty</span> : log.oldValue}
+                              </div>
+                            </div>
+                            <div>
+                              <div className="text-xs font-semibold text-green-600 uppercase tracking-wide mb-2">New Value</div>
+                              <div className="text-sm text-gray-700 bg-green-50 p-2 rounded border-l-4 border-green-200">
+                                {log.newValue === '' ? <span className="italic text-gray-500">Empty</span> : log.newValue}
+                              </div>
+                            </div>
+                          </div>
                         </div>
                       )}
-                    </div>
-                    <div className="text-right text-xs text-gray-500 ml-4">
-                      <div>{formatDateTime(log.timestamp)}</div>
-                      <div className="font-medium">{log.changedBy}</div>
+                      
+                      <div className="flex items-center justify-between mt-4 pt-3 border-t border-gray-100">
+                        <div className="flex items-center space-x-2 text-sm text-gray-500">
+                          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                          </svg>
+                          <span>Changed by: <span className="font-medium text-gray-700">{log.changedBy}</span></span>
+                        </div>
+                        <div className="text-xs text-gray-400">
+                          {Math.floor((new Date() - new Date(log.timestamp)) / (1000 * 60))} minutes ago
+                        </div>
+                      </div>
                     </div>
                   </div>
                 </div>
               ))}
             </div>
           ) : (
-            <div className="text-center py-8">
-              <svg className="mx-auto h-12 w-12 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01" />
-              </svg>
-              <h3 className="mt-2 text-sm font-medium text-gray-900">No activity logs</h3>
-              <p className="mt-1 text-sm text-gray-500">No changes have been recorded for this employee yet.</p>
+            <div className="text-center py-12">
+              <div className="mx-auto w-24 h-24 bg-gray-100 rounded-full flex items-center justify-center mb-6">
+                <svg className="w-12 h-12 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01" />
+                </svg>
+              </div>
+              <h3 className="text-xl font-semibold text-gray-900 mb-2">No Activity Logs</h3>
+              <p className="text-gray-500 max-w-md mx-auto">
+                No changes have been recorded for this employee yet. Activity logs will appear here when changes are made to the employee record.
+              </p>
             </div>
           )}
         </div>
 
         {/* Footer */}
-        <div className="flex items-center justify-end space-x-3 p-6 border-t border-gray-200">
-          <button
-            onClick={onClose}
-            className="px-4 py-2 bg-gray-300 text-gray-700 rounded hover:bg-gray-400 transition-colors"
-          >
-            Close
-          </button>
+        <div className="flex items-center justify-between p-6 border-t border-gray-200 bg-gray-50">
+          <div className="text-sm text-gray-500">
+            Showing {logs ? logs.length : 0} activity log{logs && logs.length !== 1 ? 's' : ''}
+          </div>
+          <div className="flex items-center space-x-3">
+            <button
+              onClick={() => {
+                // Refresh logs
+                window.location.reload()
+              }}
+              className="px-4 py-2 text-gray-600 hover:text-gray-800 hover:bg-gray-200 rounded-lg transition-colors flex items-center space-x-2"
+            >
+              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+              </svg>
+              <span>Refresh</span>
+            </button>
+            {logs && logs.length > 0 && (
+              <>
+                <button
+                  onClick={() => {
+                    if (window.confirm('Are you sure you want to clear all activity logs for this employee? This action cannot be undone.')) {
+                      onClearLogs()
+                    }
+                  }}
+                  className="px-4 py-2 text-red-600 hover:text-red-800 hover:bg-red-50 rounded-lg transition-colors flex items-center space-x-2"
+                >
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                  </svg>
+                  <span>Clear Logs</span>
+                </button>
+                <button
+                  onClick={() => {
+                    if (window.confirm('Are you sure you want to clear ALL activity logs for ALL employees? This action cannot be undone and will free up localStorage space.')) {
+                      onClearAllLogs()
+                    }
+                  }}
+                  className="px-4 py-2 text-red-700 hover:text-red-900 hover:bg-red-100 rounded-lg transition-colors flex items-center space-x-2 font-semibold"
+                >
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v3m0 0v3m0-3h3m-3 0H9m12 0a9 9 0 11-18 0 9 9 0 0118 0z" />
+                  </svg>
+                  <span>Clear All</span>
+                </button>
+              </>
+            )}
+            <button
+              onClick={onClose}
+              className="px-6 py-2 bg-orange-500 text-white rounded-lg hover:bg-orange-600 transition-colors font-medium"
+            >
+              Close
+            </button>
+          </div>
         </div>
       </div>
     </div>
@@ -162,7 +336,11 @@ export default function EmployeeDetails() {
         const employeeId = localStorage.getItem('selectedEmployeeId')
         if (employeeId) {
           const employeeData = await employeeService.getEmployeeById(employeeId)
-          setEmployee(employeeData)
+          if (employeeData) {
+            setEmployee(employeeData)
+            // Set the search ID to match the loaded employee
+            setSearchId(employeeData.employeeId || employeeData.id)
+          }
         }
       } catch (error) {
         console.error('Error loading employee:', error)
@@ -174,9 +352,71 @@ export default function EmployeeDetails() {
     loadEmployee()
   }, [])
 
-  // Log activity changes
+  // Check if localStorage has space
+  const hasLocalStorageSpace = () => {
+    try {
+      const testKey = 'test_storage_space'
+      const testData = 'x'.repeat(1024) // 1KB test data
+      localStorage.setItem(testKey, testData)
+      localStorage.removeItem(testKey)
+      return true
+    } catch {
+      return false
+    }
+  }
+
+  // Aggressive cleanup of localStorage
+  const aggressiveCleanup = () => {
+    try {
+      // Get all localStorage keys
+      const keys = Object.keys(localStorage)
+      const logKeys = keys.filter(key => key.startsWith('employee_activity_logs_'))
+      
+      // For each employee, keep only the last 10 logs
+      logKeys.forEach(key => {
+        try {
+          const logs = JSON.parse(localStorage.getItem(key) || '[]')
+          const cleanedLogs = logs.slice(0, 10)
+          localStorage.setItem(key, JSON.stringify(cleanedLogs))
+        } catch {
+          // If we can't parse or save, remove the key entirely
+          localStorage.removeItem(key)
+        }
+      })
+      
+      // Also clean up any other large keys if needed
+      keys.forEach(key => {
+        if (!key.startsWith('employee_activity_logs_') && !key.startsWith('test_')) {
+          try {
+            const value = localStorage.getItem(key)
+            if (value && value.length > 10000) { // Remove keys larger than 10KB
+              localStorage.removeItem(key)
+            }
+          } catch {
+            localStorage.removeItem(key)
+          }
+        }
+      })
+    } catch (error) {
+      console.error('Error during aggressive cleanup:', error)
+    }
+  }
+
+  // Log activity changes with aggressive quota management
   const logActivity = (field, oldValue, newValue, action = 'Field Updated') => {
     if (!employee || !employee.id) return
+
+    // Check if we have space before attempting to log
+    if (!hasLocalStorageSpace()) {
+      console.warn('localStorage is full, performing aggressive cleanup')
+      aggressiveCleanup()
+      
+      // If still no space, skip logging
+      if (!hasLocalStorageSpace()) {
+        console.warn('localStorage still full after cleanup, skipping log')
+        return
+      }
+    }
 
     // Format field name for display
     const formatFieldName = (fieldName) => {
@@ -196,6 +436,10 @@ export default function EmployeeDetails() {
       } else {
         description = `${formatFieldName(field)} was changed from "${oldValue || 'empty'}" to "${newValue || 'empty'}"`
       }
+    } else if (action === 'Array Updated') {
+      description = `${formatFieldName(field)} was updated (${oldValue} → ${newValue})`
+    } else if (action === 'Object Updated') {
+      description = `${formatFieldName(field)} was modified (${oldValue} → ${newValue})`
     } else {
       description = `${formatFieldName(field)}: ${action}`
     }
@@ -213,21 +457,126 @@ export default function EmployeeDetails() {
 
     console.log('Creating activity log:', newLog)
 
-    // Get existing logs
-    const storedLogs = localStorage.getItem(`employee_activity_logs_${employee.id}`)
-    const existingLogs = storedLogs ? JSON.parse(storedLogs) : []
-    
-    // Add new log
-    const updatedLogs = [newLog, ...existingLogs]
-    
-    // Save to localStorage
-    localStorage.setItem(`employee_activity_logs_${employee.id}`, JSON.stringify(updatedLogs))
-    
-    // Update state
-    setActivityLogs(updatedLogs.map(log => ({
-      ...log,
-      timestamp: new Date(log.timestamp)
-    })))
+    try {
+      // Get existing logs
+      const storedLogs = localStorage.getItem(`employee_activity_logs_${employee.id}`)
+      const existingLogs = storedLogs ? JSON.parse(storedLogs) : []
+      
+      // Add new log
+      const updatedLogs = [newLog, ...existingLogs]
+      
+      // Limit logs to prevent quota exceeded (keep only last 20 logs)
+      const limitedLogs = updatedLogs.slice(0, 20)
+      
+      // Save to localStorage with error handling
+      localStorage.setItem(`employee_activity_logs_${employee.id}`, JSON.stringify(limitedLogs))
+      
+      // Update state
+      setActivityLogs(limitedLogs.map(log => ({
+        ...log,
+        timestamp: new Date(log.timestamp)
+      })))
+    } catch (error) {
+      console.error('Error saving activity log:', error)
+      
+      // If quota exceeded, perform aggressive cleanup
+      if (error.name === 'QuotaExceededError') {
+        console.warn('Quota exceeded, performing aggressive cleanup')
+        aggressiveCleanup()
+        
+        try {
+          // Try again with even fewer logs (only 5)
+          const storedLogs = localStorage.getItem(`employee_activity_logs_${employee.id}`)
+          const existingLogs = storedLogs ? JSON.parse(storedLogs) : []
+          const cleanedLogs = existingLogs.slice(0, 5)
+          localStorage.setItem(`employee_activity_logs_${employee.id}`, JSON.stringify(cleanedLogs))
+          
+          // Try to add the new log again
+          const updatedLogs = [newLog, ...cleanedLogs]
+          localStorage.setItem(`employee_activity_logs_${employee.id}`, JSON.stringify(updatedLogs))
+          
+          setActivityLogs(updatedLogs.map(log => ({
+            ...log,
+            timestamp: new Date(log.timestamp)
+          })))
+        } catch (cleanupError) {
+          console.error('Error during cleanup:', cleanupError)
+          // If still failing, just update the state without persisting
+          setActivityLogs(prev => [newLog, ...prev.slice(0, 9)])
+        }
+      }
+    }
+  }
+
+  // Debounced logging to prevent too many logs
+  const debouncedLogs = useRef({})
+  
+  // Real-time field change logging with debouncing
+  const logFieldChange = (field, oldValue, newValue) => {
+    if (oldValue !== newValue) {
+      // Clear existing timeout for this field
+      if (debouncedLogs.current[field]) {
+        clearTimeout(debouncedLogs.current[field])
+      }
+      
+      // Set a new timeout to log the change after 1 second of inactivity
+      debouncedLogs.current[field] = setTimeout(() => {
+        logActivity(field, oldValue, newValue, 'Field Updated')
+        delete debouncedLogs.current[field]
+      }, 1000)
+    }
+  }
+
+  // Enhanced setEditedEmployee with real-time logging
+  const handleEmployeeUpdate = (updater) => {
+    if (typeof updater === 'function') {
+      setEditedEmployee(prev => {
+        const newEmployee = updater(prev)
+        
+        // Log individual field changes
+        if (prev && newEmployee) {
+          Object.keys(newEmployee).forEach(field => {
+            if (prev[field] !== newEmployee[field]) {
+              logFieldChange(field, prev[field], newEmployee[field])
+            }
+          })
+        }
+        
+        return newEmployee
+      })
+    } else {
+      setEditedEmployee(updater)
+    }
+  }
+
+  // Clear all activity logs for current employee
+  const clearActivityLogs = () => {
+    if (employee && employee.id) {
+      try {
+        localStorage.removeItem(`employee_activity_logs_${employee.id}`)
+        setActivityLogs([])
+        console.log('Activity logs cleared for employee:', employee.id)
+      } catch (error) {
+        console.error('Error clearing activity logs:', error)
+      }
+    }
+  }
+
+  // Clear ALL activity logs from localStorage (nuclear option)
+  const clearAllActivityLogs = () => {
+    try {
+      const keys = Object.keys(localStorage)
+      const logKeys = keys.filter(key => key.startsWith('employee_activity_logs_'))
+      
+      logKeys.forEach(key => {
+        localStorage.removeItem(key)
+      })
+      
+      setActivityLogs([])
+      console.log('All activity logs cleared from localStorage')
+    } catch (error) {
+      console.error('Error clearing all activity logs:', error)
+    }
   }
 
   // Compare and log changes between original and edited employee data
@@ -265,18 +614,26 @@ export default function EmployeeDetails() {
           if (field === 'workExperience') {
             const oldSummary = oldValue?.length > 0 ? `${oldValue.length} experience(s)` : 'No experience'
             const newSummary = newValue?.length > 0 ? `${newValue.length} experience(s)` : 'No experience'
-            logActivity(field, oldSummary, newSummary)
+            logActivity(field, oldSummary, newSummary, 'Array Updated')
           } else if (field === 'processExpertise') {
             const oldSummary = oldValue?.length > 0 ? `${oldValue.length} expertise(s)` : 'No expertise'
             const newSummary = newValue?.length > 0 ? `${newValue.length} expertise(s)` : 'No expertise'
-            logActivity(field, oldSummary, newSummary)
+            logActivity(field, oldSummary, newSummary, 'Array Updated')
           } else if (field === 'processEfficiency') {
             const oldSummary = oldValue?.length > 0 ? `${oldValue.length} efficiency record(s)` : 'No efficiency records'
             const newSummary = newValue?.length > 0 ? `${newValue.length} efficiency record(s)` : 'No efficiency records'
-            logActivity(field, oldSummary, newSummary)
+            logActivity(field, oldSummary, newSummary, 'Array Updated')
+          } else if (field === 'children') {
+            const oldSummary = oldValue?.length > 0 ? `${oldValue.length} child(ren)` : 'No children'
+            const newSummary = newValue?.length > 0 ? `${newValue.length} child(ren)` : 'No children'
+            logActivity(field, oldSummary, newSummary, 'Array Updated')
+          } else if (field === 'nominee') {
+            const oldSummary = oldValue?.length > 0 ? `${oldValue.length} nominee(s)` : 'No nominees'
+            const newSummary = newValue?.length > 0 ? `${newValue.length} nominee(s)` : 'No nominees'
+            logActivity(field, oldSummary, newSummary, 'Array Updated')
           } else {
             // Generic array handling
-            logActivity(field, `${oldValue?.length || 0} items`, `${newValue?.length || 0} items`)
+            logActivity(field, `${oldValue?.length || 0} items`, `${newValue?.length || 0} items`, 'Array Updated')
           }
           changesCount++
         }
@@ -292,7 +649,7 @@ export default function EmployeeDetails() {
             const formatAddress = (addr) => {
               if (!addr || typeof addr !== 'object') return 'Not provided'
               const parts = []
-              if (addr.houseNumber) parts.push(addr.houseNumber)
+              if (addr.houseOwnerName) parts.push(addr.houseOwnerName)
               if (addr.village) parts.push(addr.village)
               if (addr.upazilla) parts.push(addr.upazilla)
               if (addr.district) parts.push(addr.district)
@@ -301,19 +658,23 @@ export default function EmployeeDetails() {
             
             const oldAddr = formatAddress(oldValue)
             const newAddr = formatAddress(newValue)
-            logActivity(field, oldAddr, newAddr)
+            logActivity(field, oldAddr, newAddr, 'Object Updated')
+          } else if (field === 'emergencyContact') {
+            const oldContact = oldValue?.name ? `${oldValue.name} (${oldValue.mobile})` : 'Not provided'
+            const newContact = newValue?.name ? `${newValue.name} (${newValue.mobile})` : 'Not provided'
+            logActivity(field, oldContact, newContact, 'Object Updated')
           } else {
             // For other objects, show a summary of the change
             const oldSummary = Object.keys(oldValue).length > 0 ? `${Object.keys(oldValue).length} properties` : 'Empty object'
             const newSummary = Object.keys(newValue).length > 0 ? `${Object.keys(newValue).length} properties` : 'Empty object'
-            logActivity(field, oldSummary, newSummary)
+            logActivity(field, oldSummary, newSummary, 'Object Updated')
           }
           changesCount++
         }
       } else if (normalizedOldValue !== normalizedNewValue) {
         // For primitive values
         console.log(`Primitive change detected in ${field}:`, normalizedOldValue, '->', normalizedNewValue)
-        logActivity(field, normalizedOldValue, normalizedNewValue)
+        logActivity(field, normalizedOldValue, normalizedNewValue, 'Field Updated')
         changesCount++
       }
     })
@@ -321,7 +682,7 @@ export default function EmployeeDetails() {
     console.log(`Total changes detected: ${changesCount}`)
   }
 
-  // Load activity logs for the employee
+  // Load activity logs for the employee with aggressive cleanup
   const loadActivityLogs = async () => {
     try {
       // Check if employee exists and has activity logs
@@ -330,12 +691,28 @@ export default function EmployeeDetails() {
         return
       }
 
+      // Perform aggressive cleanup first
+      aggressiveCleanup()
+
       // Try to get activity logs from localStorage or employee data
       const storedLogs = localStorage.getItem(`employee_activity_logs_${employee.id}`)
       if (storedLogs) {
         const logs = JSON.parse(storedLogs)
+        
+        // Clean up old logs (keep only last 10)
+        const cleanedLogs = logs.slice(0, 10)
+        
+        // If we cleaned up logs, save the cleaned version
+        if (cleanedLogs.length < logs.length) {
+          try {
+            localStorage.setItem(`employee_activity_logs_${employee.id}`, JSON.stringify(cleanedLogs))
+          } catch (error) {
+            console.warn('Could not save cleaned logs:', error)
+          }
+        }
+        
         // Convert timestamp strings back to Date objects
-        const parsedLogs = logs.map(log => ({
+        const parsedLogs = cleanedLogs.map(log => ({
           ...log,
           timestamp: new Date(log.timestamp)
         }))
@@ -369,11 +746,15 @@ export default function EmployeeDetails() {
     const formatDate = (dateString) => {
       if (!dateString) return 'Not provided'
       const date = new Date(dateString)
-      return date.toLocaleDateString('en-GB', {
-        day: '2-digit',
-        month: '2-digit',
-        year: 'numeric'
-      })
+      const day = String(date.getDate()).padStart(2, '0')
+      const month = String(date.getMonth() + 1).padStart(2, '0')
+      const year = date.getFullYear()
+      return `${day}/${month}/${year}`
+    }
+
+    const formatCurrency = (amount) => {
+      if (!amount) return 'Not provided'
+      return `৳${amount.toLocaleString()}`
     }
 
     return `
@@ -382,90 +763,244 @@ export default function EmployeeDetails() {
       <head>
         <title>Employee Details - ${employee.name || employee.nameEnglish || 'Unknown'}</title>
         <style>
-          body { font-family: Arial, sans-serif; margin: 20px; color: #333; }
-          .header { text-align: center; margin-bottom: 30px; border-bottom: 2px solid #333; padding-bottom: 20px; }
-          .header h1 { margin: 0; font-size: 24px; }
-          .header p { margin: 5px 0; color: #666; }
-          .section { margin-bottom: 25px; }
-          .section h2 { background: #f5f5f5; padding: 10px; margin: 0 0 15px 0; border-left: 4px solid #ff6b35; }
-          .field { margin-bottom: 10px; }
-          .field-label { font-weight: bold; display: inline-block; width: 200px; }
-          .field-value { display: inline-block; }
-          .photo-section { text-align: center; margin-bottom: 20px; }
-          .photo-placeholder { width: 120px; height: 120px; border: 2px dashed #ccc; display: inline-block; line-height: 120px; color: #666; }
-          .status-badge { padding: 4px 8px; border-radius: 12px; font-size: 12px; font-weight: bold; }
+          body { font-family: Arial, sans-serif; margin: 15px; color: #333; font-size: 12px; }
+          .header { text-align: center; margin-bottom: 20px; border-bottom: 2px solid #333; padding-bottom: 15px; }
+          .header h1 { margin: 0; font-size: 20px; }
+          .header p { margin: 3px 0; color: #666; font-size: 11px; }
+          .print-date { text-align: right; font-size: 10px; color: #666; margin-bottom: 15px; }
+          
+          /* Two-column layout */
+          .main-content { display: flex; gap: 20px; }
+          .column { flex: 1; }
+          .section { margin-bottom: 20px; break-inside: avoid; }
+          .section h2 { background: #f5f5f5; padding: 8px; margin: 0 0 10px 0; border-left: 4px solid #ff6b35; font-size: 14px; }
+          .section h3 { background: #f8f9fa; padding: 6px; margin: 8px 0 6px 0; border-left: 3px solid #ff6b35; font-size: 12px; }
+          
+          .field { margin-bottom: 6px; display: flex; }
+          .field-label { font-weight: bold; min-width: 120px; font-size: 11px; }
+          .field-value { flex: 1; font-size: 11px; }
+          
+          .photo-section { text-align: center; margin-bottom: 15px; }
+          .photo-placeholder { width: 80px; height: 80px; border: 2px dashed #ccc; display: inline-block; line-height: 80px; color: #666; font-size: 10px; }
+          
+          .status-badge { padding: 2px 6px; border-radius: 8px; font-size: 10px; font-weight: bold; }
           .status-active { background: #d4edda; color: #155724; }
           .status-inactive { background: #f8d7da; color: #721c24; }
-          .print-date { text-align: right; font-size: 12px; color: #666; margin-bottom: 20px; }
-          @media print { body { margin: 0; } }
+          .status-terminated { background: #f8d7da; color: #721c24; }
+          
+          .table { width: 100%; border-collapse: collapse; margin-bottom: 10px; font-size: 10px; }
+          .table th, .table td { border: 1px solid #ddd; padding: 4px; text-align: left; }
+          .table th { background-color: #f5f5f5; font-weight: bold; font-size: 10px; }
+          
+          .list-item { margin-bottom: 6px; padding: 6px; background: #f9f9f9; border-left: 3px solid #ff6b35; font-size: 10px; }
+          .list-item h3 { margin: 0 0 4px 0; font-size: 11px; }
+          
+          /* Full-width sections that should span both columns */
+          .full-width { flex-basis: 100%; }
+          
+          @media print { 
+            body { margin: 0; }
+            .main-content { display: flex; }
+            .column { flex: 1; }
+          }
         </style>
       </head>
       <body>
-        <div class="print-date">Printed on: ${new Date().toLocaleDateString('en-GB')} at ${new Date().toLocaleTimeString('en-GB')}</div>
+        <div class="print-date">Printed on: ${new Date().toLocaleDateString('en-GB').split('/').reverse().join('/')} at ${new Date().toLocaleTimeString('en-GB')}</div>
         
         <div class="header">
           <h1>Employee Details</h1>
           <p>Employee ID: ${employee.employeeId || employee.id || 'N/A'}</p>
-          <p>Status: <span class="status-badge status-${employee.status?.toLowerCase() === 'active' ? 'active' : 'inactive'}">${employee.status || 'Unknown'}</span></p>
+          <p>Status: <span class="status-badge status-${employee.status?.toLowerCase() || 'unknown'}">${employee.status || 'Unknown'}</span></p>
         </div>
 
         <div class="photo-section">
           ${employee.picture ? 
-            `<img src="${employee.picture}" alt="Employee Photo" style="width: 120px; height: 120px; object-fit: cover; border-radius: 8px;">` :
+            `<img src="${employee.picture}" alt="Employee Photo" style="width: 80px; height: 80px; object-fit: cover; border-radius: 8px;">` :
             `<div class="photo-placeholder">No Photo</div>`
           }
         </div>
 
-        <div class="section">
-          <h2>Personal Information</h2>
-          <div class="field"><span class="field-label">Name (English):</span> <span class="field-value">${employee.name || employee.nameEnglish || 'Not provided'}</span></div>
-          <div class="field"><span class="field-label">Name (Bangla):</span> <span class="field-value">${employee.nameBangla || 'Not provided'}</span></div>
-          <div class="field"><span class="field-label">Mobile Number:</span> <span class="field-value">${employee.phone || employee.mobileNumber || 'Not provided'}</span></div>
-          <div class="field"><span class="field-label">Email:</span> <span class="field-value">${employee.email || employee.emailAddress || 'Not provided'}</span></div>
-          <div class="field"><span class="field-label">Date of Birth:</span> <span class="field-value">${formatDate(employee.dateOfBirth)}</span></div>
-          <div class="field"><span class="field-label">Gender:</span> <span class="field-value">${employee.gender || 'Not provided'}</span></div>
-          <div class="field"><span class="field-label">NID Number:</span> <span class="field-value">${employee.nidNumber || 'Not provided'}</span></div>
-          <div class="field"><span class="field-label">Blood Group:</span> <span class="field-value">${employee.bloodGroup || 'Not provided'}</span></div>
-          <div class="field"><span class="field-label">Religion:</span> <span class="field-value">${employee.religion || 'Not provided'}</span></div>
-          <div class="field"><span class="field-label">Marital Status:</span> <span class="field-value">${employee.maritalStatus || 'Not provided'}</span></div>
+        <div class="main-content">
+          <div class="column">
+            <div class="section">
+              <h2>Personal Information</h2>
+              <div class="field"><span class="field-label">Name (English):</span> <span class="field-value">${employee.nameEnglish || employee.name || 'Not provided'}</span></div>
+              <div class="field"><span class="field-label">Name (Bangla):</span> <span class="field-value">${employee.nameBangla || 'Not provided'}</span></div>
+              <div class="field"><span class="field-label">Mobile Number:</span> <span class="field-value">${employee.phone || employee.mobileNumber || 'Not provided'}</span></div>
+              <div class="field"><span class="field-label">Email:</span> <span class="field-value">${employee.email || employee.emailAddress || 'Not provided'}</span></div>
+              <div class="field"><span class="field-label">Date of Birth:</span> <span class="field-value">${formatDate(employee.dateOfBirth)}</span></div>
+              <div class="field"><span class="field-label">Gender:</span> <span class="field-value">${employee.gender || 'Not provided'}</span></div>
+              <div class="field"><span class="field-label">NID Number:</span> <span class="field-value">${employee.nidNumber || 'Not provided'}</span></div>
+              <div class="field"><span class="field-label">Blood Group:</span> <span class="field-value">${employee.bloodGroup || 'Not provided'}</span></div>
+              <div class="field"><span class="field-label">Religion:</span> <span class="field-value">${employee.religion || 'Not provided'}</span></div>
+              <div class="field"><span class="field-label">Marital Status:</span> <span class="field-value">${employee.maritalStatus || 'Not provided'}</span></div>
+              <div class="field"><span class="field-label">Last Educational Status:</span> <span class="field-value">${employee.educationLevel || 'Not provided'}</span></div>
+              <div class="field"><span class="field-label">Subject:</span> <span class="field-value">${employee.subject || 'Not provided'}</span></div>
+              <div class="field"><span class="field-label">Height:</span> <span class="field-value">${employee.height ? `${employee.height} cm` : 'Not provided'}</span></div>
+              <div class="field"><span class="field-label">Weight:</span> <span class="field-value">${employee.weight ? `${employee.weight} kg` : 'Not provided'}</span></div>
+              <div class="field"><span class="field-label">Birth Certificate Number:</span> <span class="field-value">${employee.birthCertificateNumber || 'Not provided'}</span></div>
+              <div class="field"><span class="field-label">Father's Name:</span> <span class="field-value">${employee.fathersName || 'Not provided'}</span></div>
+              <div class="field"><span class="field-label">Mother's Name:</span> <span class="field-value">${employee.mothersName || 'Not provided'}</span></div>
+              <div class="field"><span class="field-label">Spouse Name:</span> <span class="field-value">${employee.spouseName || 'Not provided'}</span></div>
+              <div class="field"><span class="field-label">Nationality:</span> <span class="field-value">${employee.nationality || 'Not provided'}</span></div>
+            </div>
+
+            <div class="section">
+              <h2>Administrative Information</h2>
+              <div class="field"><span class="field-label">Employee ID:</span> <span class="field-value">${employee.employeeId || employee.id || 'Not provided'}</span></div>
+              <div class="field"><span class="field-label">Designation:</span> <span class="field-value">${employee.designation || 'Not provided'}</span></div>
+              <div class="field"><span class="field-label">Department:</span> <span class="field-value">${employee.department || 'Not provided'}</span></div>
+              <div class="field"><span class="field-label">Level of Work:</span> <span class="field-value">${employee.levelOfWork || 'Not provided'}</span></div>
+              <div class="field"><span class="field-label">Work Salary Grade:</span> <span class="field-value">${employee.salaryGrade || 'Not provided'}</span></div>
+              <div class="field"><span class="field-label">Gross Salary:</span> <span class="field-value">${formatCurrency(employee.grossSalary)}</span></div>
+              <div class="field"><span class="field-label">Date of Joining:</span> <span class="field-value">${formatDate(employee.dateOfJoining || employee.joiningDate)}</span></div>
+              <div class="field"><span class="field-label">Date of Issue:</span> <span class="field-value">${formatDate(employee.dateOfIssue)}</span></div>
+              <div class="field"><span class="field-label">Off-Day:</span> <span class="field-value">${employee.offDay || 'Not provided'}</span></div>
+              <div class="field"><span class="field-label">Unit:</span> <span class="field-value">${employee.unit || 'Not provided'}</span></div>
+              ${employee.levelOfWork === 'Worker' ? `<div class="field"><span class="field-label">Line:</span> <span class="field-value">${employee.line || 'Not provided'}</span></div>` : ''}
+              <div class="field"><span class="field-label">Supervisor:</span> <span class="field-value">${employee.supervisorName || 'Not provided'}</span></div>
+            </div>
+          </div>
+
+          <div class="column">
+
+            ${employee.salaryComponents && employee.salaryComponents.length > 0 ? `
+            <div class="section">
+              <h2>Salary Components</h2>
+              <table class="table">
+                <thead>
+                  <tr>
+                    <th>Component</th>
+                    <th>Amount (৳)</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  ${employee.salaryComponents.map(component => `
+                    <tr>
+                      <td>${component.name || 'N/A'}</td>
+                      <td>${component.amount ? component.amount.toLocaleString() : '0'}</td>
+                    </tr>
+                  `).join('')}
+                </tbody>
+              </table>
+            </div>
+            ` : ''}
+
+            ${employee.children && employee.children.length > 0 && employee.children.some(child => child.name && child.name.trim() !== '') ? `
+            <div class="section">
+              <h2>Children Information</h2>
+              ${employee.children.filter(child => child.name && child.name.trim() !== '').map((child, index) => `
+                <div class="list-item">
+                  <h3>Child ${index + 1}</h3>
+                  <div class="field"><span class="field-label">Name:</span> <span class="field-value">${child.name || 'Not provided'}</span></div>
+                  <div class="field"><span class="field-label">Age:</span> <span class="field-value">${child.age || 'Not provided'}</span></div>
+                  <div class="field"><span class="field-label">Education:</span> <span class="field-value">${child.education || 'Not provided'}</span></div>
+                  <div class="field"><span class="field-label">Institute:</span> <span class="field-value">${child.institute || 'Not provided'}</span></div>
+                </div>
+              `).join('')}
+            </div>
+            ` : ''}
+
+            <div class="section">
+              <h2>Address Information</h2>
+              <h3>Present Address</h3>
+              <div class="field"><span class="field-label">House Number/Name:</span> <span class="field-value">${employee.presentAddress?.houseOwnerName || 'Not provided'}</span></div>
+              <div class="field"><span class="field-label">Village/Area:</span> <span class="field-value">${employee.presentAddress?.village || 'Not provided'}</span></div>
+              <div class="field"><span class="field-label">Post Office:</span> <span class="field-value">${employee.presentAddress?.postOffice || 'Not provided'}</span></div>
+              <div class="field"><span class="field-label">Upazilla/City Corporation:</span> <span class="field-value">${employee.presentAddress?.upazilla || 'Not provided'}</span></div>
+              <div class="field"><span class="field-label">District:</span> <span class="field-value">${employee.presentAddress?.district || 'Not provided'}</span></div>
+              
+              <h3>Permanent Address</h3>
+              <div class="field"><span class="field-label">House Number/Name:</span> <span class="field-value">${employee.permanentAddress?.houseOwnerName || 'Not provided'}</span></div>
+              <div class="field"><span class="field-label">Village/Area:</span> <span class="field-value">${employee.permanentAddress?.village || 'Not provided'}</span></div>
+              <div class="field"><span class="field-label">Post Office:</span> <span class="field-value">${employee.permanentAddress?.postOffice || 'Not provided'}</span></div>
+              <div class="field"><span class="field-label">Upazilla/City Corporation:</span> <span class="field-value">${employee.permanentAddress?.upazilla || 'Not provided'}</span></div>
+              <div class="field"><span class="field-label">District:</span> <span class="field-value">${employee.permanentAddress?.district || 'Not provided'}</span></div>
+            </div>
+          </div>
         </div>
 
-        <div class="section">
-          <h2>Administrative Information</h2>
-          <div class="field"><span class="field-label">Designation:</span> <span class="field-value">${employee.designation || 'Not provided'}</span></div>
-          <div class="field"><span class="field-label">Department:</span> <span class="field-value">${employee.department || 'Not provided'}</span></div>
-          <div class="field"><span class="field-label">Level of Work:</span> <span class="field-value">${employee.levelOfWork || 'Not provided'}</span></div>
-          <div class="field"><span class="field-label">Salary Grade:</span> <span class="field-value">${employee.salaryGrade || 'Not provided'}</span></div>
-          <div class="field"><span class="field-label">Gross Salary:</span> <span class="field-value">${employee.grossSalary ? `৳${employee.grossSalary.toLocaleString()}` : 'Not provided'}</span></div>
-          <div class="field"><span class="field-label">Date of Joining:</span> <span class="field-value">${formatDate(employee.dateOfJoining || employee.joiningDate)}</span></div>
-          <div class="field"><span class="field-label">Supervisor:</span> <span class="field-value">${employee.supervisorName || 'Not provided'}</span></div>
-        </div>
+        <div class="main-content full-width">
+          <div class="column">
 
-        ${employee.emergencyContact ? `
-        <div class="section">
-          <h2>Emergency Contact</h2>
-          <div class="field"><span class="field-label">Name:</span> <span class="field-value">${employee.emergencyContact.name || 'Not provided'}</span></div>
-          <div class="field"><span class="field-label">Mobile:</span> <span class="field-value">${employee.emergencyContact.mobile || 'Not provided'}</span></div>
-          <div class="field"><span class="field-label">Relation:</span> <span class="field-value">${employee.emergencyContact.relation || 'Not provided'}</span></div>
-          <div class="field"><span class="field-label">Address:</span> <span class="field-value">${employee.emergencyContact.address || 'Not provided'}</span></div>
-        </div>
-        ` : ''}
+            ${employee.workExperience && employee.workExperience.length > 0 ? `
+            <div class="section">
+              <h2>Working Experience</h2>
+              ${employee.workExperience.map((exp, index) => `
+                <div class="list-item">
+                  <h3>Experience ${index + 1}</h3>
+                  <div class="field"><span class="field-label">Company Name:</span> <span class="field-value">${exp.companyName || 'Not provided'}</span></div>
+                  <div class="field"><span class="field-label">Department:</span> <span class="field-value">${exp.department || 'Not provided'}</span></div>
+                  <div class="field"><span class="field-label">Designation:</span> <span class="field-value">${exp.designation || 'Not provided'}</span></div>
+                  <div class="field"><span class="field-label">Salary:</span> <span class="field-value">${exp.salary ? `৳${exp.salary}` : 'Not provided'}</span></div>
+                  <div class="field"><span class="field-label">Duration:</span> <span class="field-value">${exp.duration || 'Not provided'}</span></div>
+                </div>
+              `).join('')}
+            </div>
+            ` : ''}
 
-        <div class="section">
-          <h2>Address Information</h2>
-          <h3>Present Address</h3>
-          <div class="field"><span class="field-label">House Number/Name:</span> <span class="field-value">${employee.presentAddress?.houseOwnerName || 'Not provided'}</span></div>
-          <div class="field"><span class="field-label">Village/Area:</span> <span class="field-value">${employee.presentAddress?.village || 'Not provided'}</span></div>
-          <div class="field"><span class="field-label">Post Office:</span> <span class="field-value">${employee.presentAddress?.postOffice || 'Not provided'}</span></div>
-          <div class="field"><span class="field-label">Upazilla/City Corporation:</span> <span class="field-value">${employee.presentAddress?.upazilla || 'Not provided'}</span></div>
-          <div class="field"><span class="field-label">District:</span> <span class="field-value">${employee.presentAddress?.district || 'Not provided'}</span></div>
-          
-          <h3>Permanent Address</h3>
-          <div class="field"><span class="field-label">House Number/Name:</span> <span class="field-value">${employee.permanentAddress?.houseOwnerName || 'Not provided'}</span></div>
-          <div class="field"><span class="field-label">Village/Area:</span> <span class="field-value">${employee.permanentAddress?.village || 'Not provided'}</span></div>
-          <div class="field"><span class="field-label">Post Office:</span> <span class="field-value">${employee.permanentAddress?.postOffice || 'Not provided'}</span></div>
-          <div class="field"><span class="field-label">Upazilla/City Corporation:</span> <span class="field-value">${employee.permanentAddress?.upazilla || 'Not provided'}</span></div>
-          <div class="field"><span class="field-label">District:</span> <span class="field-value">${employee.permanentAddress?.district || 'Not provided'}</span></div>
+            ${employee.processExpertise && employee.processExpertise.length > 0 ? `
+            <div class="section">
+              <h2>Process Expertise</h2>
+              <table class="table">
+                <thead>
+                  <tr>
+                    <th>Operation</th>
+                    <th>Machine</th>
+                    <th>Duration</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  ${employee.processExpertise.map(expertise => `
+                    <tr>
+                      <td>${expertise.operation || 'N/A'}</td>
+                      <td>${expertise.machine || 'N/A'}</td>
+                      <td>${expertise.duration || 'N/A'}</td>
+                    </tr>
+                  `).join('')}
+                </tbody>
+              </table>
+            </div>
+            ` : ''}
+
+            ${employee.processEfficiency && employee.processEfficiency.length > 0 ? `
+            <div class="section">
+              <h2>Process Efficiency</h2>
+              ${employee.processEfficiency.map((efficiency, index) => `
+                <div class="list-item">
+                  <h3>Efficiency ${index + 1}</h3>
+                  <div class="field"><span class="field-label">Item Description:</span> <span class="field-value">${efficiency.itemDescription || 'Not provided'}</span></div>
+                  <div class="field"><span class="field-label">Process/Delivery Per Hour:</span> <span class="field-value">${efficiency.processDeliveryPerHour || 'Not provided'}</span></div>
+                  <div class="field"><span class="field-label">Remarks:</span> <span class="field-value">${efficiency.remarks || 'Not provided'}</span></div>
+                </div>
+              `).join('')}
+            </div>
+            ` : ''}
+
+            ${employee.emergencyContact ? `
+            <div class="section">
+              <h2>Emergency Contact</h2>
+              <div class="field"><span class="field-label">Name:</span> <span class="field-value">${employee.emergencyContact.name || 'Not provided'}</span></div>
+              <div class="field"><span class="field-label">Mobile:</span> <span class="field-value">${employee.emergencyContact.mobile || 'Not provided'}</span></div>
+              <div class="field"><span class="field-label">Relation:</span> <span class="field-value">${employee.emergencyContact.relation || 'Not provided'}</span></div>
+            </div>
+            ` : ''}
+
+            ${employee.nominee && employee.nominee.length > 0 && employee.nominee.some(nominee => nominee.name && nominee.name.trim() !== '') ? `
+            <div class="section">
+              <h2>Nominee Information</h2>
+              ${employee.nominee.filter(nominee => nominee.name && nominee.name.trim() !== '').map((nominee, index) => `
+                <div class="list-item">
+                  <h3>Nominee ${index + 1}</h3>
+                  <div class="field"><span class="field-label">Name:</span> <span class="field-value">${nominee.name || 'Not provided'}</span></div>
+                  <div class="field"><span class="field-label">Mobile:</span> <span class="field-value">${nominee.mobile || 'Not provided'}</span></div>
+                  <div class="field"><span class="field-label">NID/Birth Certificate:</span> <span class="field-value">${nominee.nidBirthCertificate || 'Not provided'}</span></div>
+                </div>
+              `).join('')}
+            </div>
+            ` : ''}
+          </div>
         </div>
       </body>
       </html>
@@ -620,11 +1155,10 @@ export default function EmployeeDetails() {
   const formatDate = (dateString) => {
     if (!dateString) return 'Not provided'
     const date = new Date(dateString)
-    return date.toLocaleDateString('en-GB', {
-      day: '2-digit',
-      month: '2-digit',
-      year: 'numeric'
-    })
+    const day = String(date.getDate()).padStart(2, '0')
+    const month = String(date.getMonth() + 1).padStart(2, '0')
+    const year = date.getFullYear()
+    return `${day}/${month}/${year}`
   }
 
   const tabs = [
@@ -651,6 +1185,8 @@ export default function EmployeeDetails() {
         onClose={() => setShowActivityLog(false)}
         logs={activityLogs}
         employeeName={employee?.name || employee?.nameEnglish || 'Unknown Employee'}
+        onClearLogs={clearActivityLogs}
+        onClearAllLogs={clearAllActivityLogs}
       />
       
       {SearchBar}
@@ -780,7 +1316,7 @@ export default function EmployeeDetails() {
               </div>
             <div className="flex-1">
               <h2 className="text-xl font-semibold text-gray-900">
-                {employee.name || employee.nameEnglish || 'Name not provided'}
+                {employee.nameEnglish || employee.name || 'Name not provided'}
               </h2>
               <p className="text-gray-600">{employee.nameBangla || 'Name in Bangla not provided'}</p>
               <div className="mt-2 flex items-center space-x-4 text-sm text-gray-500">
@@ -842,6 +1378,8 @@ export default function EmployeeDetails() {
                     // Enter edit mode
                     setEditedEmployee({ ...employee })
                     setIsEditMode(true)
+                    // Log entering edit mode
+                    logActivity('Edit Mode', 'View Mode', 'Edit Mode', 'Edit Mode Entered')
                   } else {
                     // Save changes and exit edit mode
                     try {
@@ -919,13 +1457,13 @@ export default function EmployeeDetails() {
 
           {/* Tab Content */}
           <div className="p-6">
-            {activeTab === 'personal' && <PersonalInformationSection employee={isEditMode ? editedEmployee : employee} formatDate={formatDate} isEditMode={isEditMode} onUpdate={setEditedEmployee} />}
-            {activeTab === 'children' && <ChildrenInformationSection employee={isEditMode ? editedEmployee : employee} isEditMode={isEditMode} onUpdate={setEditedEmployee} />}
-            {activeTab === 'address' && <AddressInformationSection employee={isEditMode ? editedEmployee : employee} isEditMode={isEditMode} onUpdate={setEditedEmployee} />}
-            {activeTab === 'experience' && <WorkingExperienceSection employee={isEditMode ? editedEmployee : employee} isEditMode={isEditMode} onUpdate={setEditedEmployee} />}
-            {activeTab === 'emergency' && <EmergencyContactSection employee={isEditMode ? editedEmployee : employee} isEditMode={isEditMode} onUpdate={setEditedEmployee} />}
-            {activeTab === 'administrative' && <AdministrativeInfoSection employee={isEditMode ? editedEmployee : employee} formatDate={formatDate} isEditMode={isEditMode} onUpdate={setEditedEmployee} />}
-            {activeTab === 'nominee' && <NomineeInformationSection employee={isEditMode ? editedEmployee : employee} isEditMode={isEditMode} onUpdate={setEditedEmployee} />}
+            {activeTab === 'personal' && <PersonalInformationSection employee={isEditMode ? editedEmployee : employee} formatDate={formatDate} isEditMode={isEditMode} onUpdate={handleEmployeeUpdate} />}
+            {activeTab === 'children' && <ChildrenInformationSection employee={isEditMode ? editedEmployee : employee} isEditMode={isEditMode} onUpdate={handleEmployeeUpdate} />}
+            {activeTab === 'address' && <AddressInformationSection employee={isEditMode ? editedEmployee : employee} isEditMode={isEditMode} onUpdate={handleEmployeeUpdate} />}
+            {activeTab === 'experience' && <WorkingExperienceSection employee={isEditMode ? editedEmployee : employee} isEditMode={isEditMode} onUpdate={handleEmployeeUpdate} />}
+            {activeTab === 'emergency' && <EmergencyContactSection employee={isEditMode ? editedEmployee : employee} isEditMode={isEditMode} onUpdate={handleEmployeeUpdate} />}
+            {activeTab === 'administrative' && <AdministrativeInfoSection employee={isEditMode ? editedEmployee : employee} formatDate={formatDate} isEditMode={isEditMode} onUpdate={handleEmployeeUpdate} />}
+            {activeTab === 'nominee' && <NomineeInformationSection employee={isEditMode ? editedEmployee : employee} isEditMode={isEditMode} onUpdate={handleEmployeeUpdate} />}
           </div>
         </div>
       )}
@@ -973,14 +1511,14 @@ function PersonalInformationSection({ employee, formatDate, isEditMode, onUpdate
           {isEditMode ? (
             <input
               type="text"
-              value={employee.name || employee.nameEnglish || ''}
+              value={employee.nameEnglish || employee.name || ''}
               onChange={(e) => handleFieldChange('nameEnglish', e.target.value)}
               className="w-full p-3 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
               placeholder="Enter name in English"
             />
           ) : (
             <div className="p-3 bg-gray-50 rounded-md border">
-              <p className="text-gray-900">{employee.name || employee.nameEnglish || 'Not provided'}</p>
+              <p className="text-gray-900">{employee.nameEnglish || employee.name || 'Not provided'}</p>
             </div>
           )}
         </div>
@@ -1300,6 +1838,42 @@ function PersonalInformationSection({ employee, formatDate, isEditMode, onUpdate
             </div>
           )}
         </div>
+
+        {/* Subject */}
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-1">Subject</label>
+          {isEditMode ? (
+            <input
+              type="text"
+              value={employee.subject || ''}
+              onChange={(e) => handleFieldChange('subject', e.target.value)}
+              className="w-full p-3 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+              placeholder="Enter subject"
+            />
+          ) : (
+            <div className="p-3 bg-gray-50 rounded-md border">
+              <p className="text-gray-900">{employee.subject || 'Not provided'}</p>
+            </div>
+          )}
+        </div>
+
+        {/* Birth Certificate Number */}
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-1">Birth Certificate Number</label>
+          {isEditMode ? (
+            <input
+              type="text"
+              value={employee.birthCertificateNumber || ''}
+              onChange={(e) => handleFieldChange('birthCertificateNumber', e.target.value)}
+              className="w-full p-3 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+              placeholder="Enter birth certificate number"
+            />
+          ) : (
+            <div className="p-3 bg-gray-50 rounded-md border">
+              <p className="text-gray-900">{employee.birthCertificateNumber || 'Not provided'}</p>
+            </div>
+          )}
+        </div>
       </div>
     </div>
   )
@@ -1330,7 +1904,7 @@ function ChildrenInformationSection({ employee, isEditMode, onUpdate }) {
     if (isEditMode && onUpdate) {
       onUpdate(prev => ({
         ...prev,
-        children: [...(prev.children || []), { name: '', age: '', relation: '' }]
+        children: [...(prev.children || []), { name: '', age: '', education: '', institute: '' }]
       }))
     }
   }
@@ -1402,25 +1976,6 @@ function ChildrenInformationSection({ employee, isEditMode, onUpdate }) {
                   ) : (
                     <div className="p-3 bg-gray-50 rounded-md border">
                       <p className="text-gray-900">{child.age || 'Not provided'}</p>
-                    </div>
-                  )}
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Gender</label>
-                  {isEditMode ? (
-                    <select
-                      value={child.gender || ''}
-                      onChange={(e) => handleChildrenChange(index, 'gender', e.target.value)}
-                      className="w-full p-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                    >
-                      <option value="">Select Gender</option>
-                      <option value="Male">Male</option>
-                      <option value="Female">Female</option>
-                      <option value="Other">Other</option>
-                    </select>
-                  ) : (
-                    <div className="p-3 bg-gray-50 rounded-md border">
-                      <p className="text-gray-900">{child.gender || 'Not provided'}</p>
                     </div>
                   )}
                 </div>
@@ -1674,19 +2229,40 @@ function AddressInformationSection({ employee, isEditMode, onUpdate }) {
 function WorkingExperienceSection({ employee, isEditMode, onUpdate }) {
   const [operations, setOperations] = useState([])
   const [machines, setMachines] = useState([])
+  const [departments, setDepartments] = useState([])
+  const [designations, setDesignations] = useState([])
 
-  // Load operations and machines from organizational data
+  // Load operations, machines, departments, and designations from organizational data
   useEffect(() => {
     const loadOrganizationalData = () => {
-      const processExpertiseData = organizationalDataService.getProcessExpertise()
-      const uniqueOperations = [...new Set(processExpertiseData.map(item => item.operation))]
-      const uniqueMachines = [...new Set(processExpertiseData.map(item => item.machine))]
+      // Get operations and machines from service
+      const opsData = organizationalDataService.getOperations()
+      const machData = organizationalDataService.getMachines()
+      const deptData = organizationalDataService.getDepartments()
+      const desigData = organizationalDataService.getDesignations()
       
-      setOperations(uniqueOperations)
-      setMachines(uniqueMachines)
+      setOperations(opsData.map(op => op.name))
+      setMachines(machData.map(machine => machine.name))
+      setDepartments(deptData.map(dept => dept.name))
+      setDesignations(desigData.map(desig => desig.name))
     }
     
     loadOrganizationalData()
+
+    // Listen for organizational data changes
+    const handleStorageChange = (event) => {
+      if (event.key === 'organizationalData') {
+        loadOrganizationalData()
+      }
+    }
+
+    window.addEventListener('storage', handleStorageChange)
+    window.addEventListener('organizationalDataChanged', loadOrganizationalData)
+    
+    return () => {
+      window.removeEventListener('storage', handleStorageChange)
+      window.removeEventListener('organizationalDataChanged', loadOrganizationalData)
+    }
   }, [])
 
   const handleFieldChange = (field, value) => {
@@ -1773,8 +2349,7 @@ function WorkingExperienceSection({ employee, isEditMode, onUpdate }) {
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-1">Department</label>
                     {isEditMode ? (
-                      <input
-                        type="text"
+                      <select
                         value={exp.department || ''}
                         onChange={(e) => {
                           const newWorkExperience = [...workExperience]
@@ -1782,8 +2357,12 @@ function WorkingExperienceSection({ employee, isEditMode, onUpdate }) {
                           handleFieldChange('workExperience', newWorkExperience)
                         }}
                         className="w-full p-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                        placeholder="Enter department"
-                      />
+                      >
+                        <option value="">Select Department</option>
+                        {departments.map(dept => (
+                          <option key={dept} value={dept}>{dept}</option>
+                        ))}
+                      </select>
                     ) : (
                       <div className="p-3 bg-gray-50 rounded-md border">
                         <p className="text-gray-900">{exp.department || 'Not provided'}</p>
@@ -1793,8 +2372,7 @@ function WorkingExperienceSection({ employee, isEditMode, onUpdate }) {
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-1">Designation</label>
                     {isEditMode ? (
-                      <input
-                        type="text"
+                      <select
                         value={exp.designation || ''}
                         onChange={(e) => {
                           const newWorkExperience = [...workExperience]
@@ -1802,8 +2380,12 @@ function WorkingExperienceSection({ employee, isEditMode, onUpdate }) {
                           handleFieldChange('workExperience', newWorkExperience)
                         }}
                         className="w-full p-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                        placeholder="Enter designation"
-                      />
+                      >
+                        <option value="">Select Designation</option>
+                        {designations.map(desig => (
+                          <option key={desig} value={desig}>{desig}</option>
+                        ))}
+                      </select>
                     ) : (
                       <div className="p-3 bg-gray-50 rounded-md border">
                         <p className="text-gray-900">{exp.designation || 'Not provided'}</p>
@@ -2227,22 +2809,6 @@ function EmergencyContactSection({ employee, isEditMode, onUpdate }) {
               </div>
             )}
           </div>
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Address</label>
-            {isEditMode ? (
-              <textarea
-                value={emergencyContact.address || ''}
-                onChange={(e) => handleFieldChange('emergencyContact', { ...emergencyContact, address: e.target.value })}
-                className="w-full p-3 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                placeholder="Enter emergency contact address"
-                rows={3}
-              />
-            ) : (
-              <div className="p-3 bg-gray-50 rounded-md border">
-                <p className="text-gray-900">{emergencyContact.address || 'Not provided'}</p>
-              </div>
-            )}
-          </div>
         </div>
       </div>
     </div>
@@ -2251,16 +2817,58 @@ function EmergencyContactSection({ employee, isEditMode, onUpdate }) {
 
 // Administrative Info Section Component
 function AdministrativeInfoSection({ employee, formatDate, isEditMode, onUpdate }) {
-  // Salary grade data from Organizational Metrics
-  const salaryGrades = {
-    'Worker Grade-1': { basicSalary: 8390, houseRent: 4195, medicalAllowance: 750, conveyance: 450, foodAllowance: 1250, grossSalary: 15035 },
-    'Worker Grade-2': { basicSalary: 7882, houseRent: 3941, medicalAllowance: 750, conveyance: 450, foodAllowance: 1250, grossSalary: 14273 },
-    'Worker Grade-3': { basicSalary: 7400, houseRent: 3700, medicalAllowance: 750, conveyance: 450, foodAllowance: 1250, grossSalary: 13550 },
-    'Worker Grade-4': { basicSalary: 6700, houseRent: 3350, medicalAllowance: 750, conveyance: 450, foodAllowance: 1250, grossSalary: 12500 },
-    'Staff Grade-1': { basicSalary: 25000, houseRent: 12500, medicalAllowance: 2000, conveyance: 1500, mobileBill: 1000, grossSalary: 42000 },
-    'Staff Grade-2': { basicSalary: 35000, houseRent: 17500, medicalAllowance: 2500, conveyance: 2000, mobileBill: 1500, grossSalary: 58500 },
-    'Staff Grade-3': { basicSalary: 45000, houseRent: 22500, medicalAllowance: 3000, conveyance: 2500, mobileBill: 2000, grossSalary: 75000 }
-  }
+  const [salaryGrades, setSalaryGrades] = useState({})
+
+  // Load organizational data and listen for changes
+  useEffect(() => {
+    const loadOrganizationalData = () => {
+      // Load salary grades from service
+      const workerGrades = organizationalDataService.getSalaryGrades()
+      const staffGrades = organizationalDataService.getStaffSalaryGrades()
+      
+      // Convert to the format expected by the component
+      const gradesObject = {}
+      workerGrades.forEach(grade => {
+        gradesObject[grade.name] = {
+          basicSalary: grade.basicSalary,
+          houseRent: grade.houseRent,
+          medicalAllowance: grade.medicalAllowance,
+          conveyance: grade.conveyance,
+          foodAllowance: grade.foodAllowance,
+          grossSalary: grade.grossSalary
+        }
+      })
+      staffGrades.forEach(grade => {
+        gradesObject[grade.name] = {
+          basicSalary: grade.basicSalary,
+          houseRent: grade.houseRent,
+          medicalAllowance: grade.medicalAllowance,
+          conveyance: grade.conveyance,
+          mobileBill: grade.mobileBill,
+          grossSalary: grade.grossSalary
+        }
+      })
+      
+      setSalaryGrades(gradesObject)
+    }
+
+    loadOrganizationalData()
+
+    // Listen for organizational data changes
+    const handleStorageChange = (event) => {
+      if (event.key === 'organizationalData') {
+        loadOrganizationalData()
+      }
+    }
+
+    window.addEventListener('storage', handleStorageChange)
+    window.addEventListener('organizationalDataChanged', loadOrganizationalData)
+    
+    return () => {
+      window.removeEventListener('storage', handleStorageChange)
+      window.removeEventListener('organizationalDataChanged', loadOrganizationalData)
+    }
+  }, [])
 
   const handleFieldChange = (field, value) => {
     if (isEditMode && onUpdate) {
@@ -2385,23 +2993,25 @@ function AdministrativeInfoSection({ employee, formatDate, isEditMode, onUpdate 
           )}
         </div>
 
-        {/* Line */}
-        <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">Line</label>
-          {isEditMode ? (
-            <input
-              type="text"
-              value={employee.line || ''}
-              onChange={(e) => handleFieldChange('line', e.target.value)}
-              className="w-full p-3 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-              placeholder="Enter line"
-            />
-          ) : (
-            <div className="p-3 bg-gray-50 rounded-md border">
-              <p className="text-gray-900">{employee.line || 'Not provided'}</p>
-            </div>
-          )}
-        </div>
+        {/* Line - Only for Workers */}
+        {employee.levelOfWork === 'Worker' && (
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">Line</label>
+            {isEditMode ? (
+              <input
+                type="text"
+                value={employee.line || ''}
+                onChange={(e) => handleFieldChange('line', e.target.value)}
+                className="w-full p-3 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                placeholder="Enter line"
+              />
+            ) : (
+              <div className="p-3 bg-gray-50 rounded-md border">
+                <p className="text-gray-900">{employee.line || 'Not provided'}</p>
+              </div>
+            )}
+          </div>
+        )}
 
         {/* Designation */}
         <div>
@@ -2635,34 +3245,6 @@ function NomineeInformationSection({ employee, isEditMode, onUpdate }) {
                   )}
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Relation</label>
-                  {isEditMode ? (
-                    <select
-                      value={nominee.relation || ''}
-                      onChange={(e) => {
-                        const newNominees = [...nominees]
-                        newNominees[index] = { ...nominee, relation: e.target.value }
-                        handleFieldChange('nominee', newNominees)
-                      }}
-                      className="w-full p-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                    >
-                      <option value="">Select Relation</option>
-                      <option value="Father">Father</option>
-                      <option value="Mother">Mother</option>
-                      <option value="Spouse">Spouse</option>
-                      <option value="Son">Son</option>
-                      <option value="Daughter">Daughter</option>
-                      <option value="Brother">Brother</option>
-                      <option value="Sister">Sister</option>
-                      <option value="Other">Other</option>
-                    </select>
-                  ) : (
-                    <div className="p-3 bg-gray-50 rounded-md border">
-                      <p className="text-gray-900">{nominee.relation || 'Not provided'}</p>
-                    </div>
-                  )}
-                </div>
-                <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">Mobile</label>
                   {isEditMode ? (
                     <input
@@ -2683,22 +3265,22 @@ function NomineeInformationSection({ employee, isEditMode, onUpdate }) {
                   )}
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">NID</label>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">NID/Birth Certificate</label>
                   {isEditMode ? (
                     <input
                       type="text"
-                      value={nominee.nid || ''}
+                      value={nominee.nidBirthCertificate || ''}
                       onChange={(e) => {
                         const newNominees = [...nominees]
-                        newNominees[index] = { ...nominee, nid: e.target.value }
+                        newNominees[index] = { ...nominee, nidBirthCertificate: e.target.value }
                         handleFieldChange('nominee', newNominees)
                       }}
-                      className="w-full p-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                      placeholder="Enter NID number"
+                      className="w-full  p-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      placeholder="Enter NID/Birth Certificate number"
                     />
                   ) : (
                     <div className="p-3 bg-gray-50 rounded-md border">
-                      <p className="text-gray-900">{nominee.nid || 'Not provided'}</p>
+                      <p className="text-gray-900">{nominee.nidBirthCertificate || 'Not provided'}</p>
                     </div>
                   )}
                 </div>
