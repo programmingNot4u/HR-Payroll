@@ -118,19 +118,15 @@ const sections = [
     title: 'Assets',
     items: ['Asset Inventory', 'Assign Asset', 'Asset Return', 'Asset Tracker', 'Maintenance'],
   },
-  {
-    title: 'Audit Log',
-    items: ['Audit Log'],
-  },
 
 
   {
     title: 'Company Policies',
-    items: ['Policies', 'Notices & Announcements', 'Events', 'Training Sessions'],
+    items: ['Events'],
   },
   {
     title: 'Settings',
-    items: ['Notification Settings', 'Templates', 'Organizational Metrics'],
+    items: ['Notification Settings', 'Templates', 'Organizational Metrics', 'Audit Log', 'Policies', 'Notices & Announcements'],
   },
 ]
 

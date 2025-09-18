@@ -34,11 +34,10 @@ import AssetTracker from './pages/7.Assets/AssetTracker'
 import AssetMaintenance from './pages/7.Assets/AssetMaintenance'
 import CompanyInfo from './pages/10.CompanyPolicies/CompanyInfo'
 import Events from './pages/10.CompanyPolicies/Events'
-import NoticesAnnouncements from './pages/10.CompanyPolicies/NoticesAnnouncements'
+import NoticesAnnouncements from './pages/11.Settings/NoticesAnnouncements'
 import PayrollPolicies from './pages/10.CompanyPolicies/PayrollPolicies'
-import Policies from './pages/10.CompanyPolicies/Policies'
-import TrainingSessions from './pages/10.CompanyPolicies/TrainingSessions'
-import AuditLog from './pages/9.AuditLog/AuditLog'
+import Policies from './pages/11.Settings/Policies'
+import AuditLog from './pages/11.Settings/AuditLog'
 import NotificationSettings from './pages/11.Settings/NotificationSettings'
 import Templates from './pages/11.Settings/Templates'
 import OrganizationalMetrics from './pages/11.Settings/OrganizationalMetrics'
@@ -159,8 +158,6 @@ function App() {
         return <NoticesAnnouncements />
       case 'Events':
         return <Events />
-      case 'Training Sessions':
-        return <TrainingSessions />
       case 'Company Info':
         return <CompanyInfo />
       case 'Payroll Policies':
