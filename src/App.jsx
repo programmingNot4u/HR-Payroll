@@ -33,7 +33,6 @@ import AssetReturn from './pages/7.Assets/AssetReturn'
 import AssetTracker from './pages/7.Assets/AssetTracker'
 import AssetMaintenance from './pages/7.Assets/AssetMaintenance'
 import CompanyInfo from './pages/10.CompanyPolicies/CompanyInfo'
-import Events from './pages/10.CompanyPolicies/Events'
 import NoticesAnnouncements from './pages/11.Settings/NoticesAnnouncements'
 import PayrollPolicies from './pages/10.CompanyPolicies/PayrollPolicies'
 import Policies from './pages/11.Settings/Policies'
@@ -156,8 +155,6 @@ function App() {
         return <AssetMaintenance />
       case 'Notices & Announcements':
         return <NoticesAnnouncements />
-      case 'Events':
-        return <Events />
       case 'Company Info':
         return <CompanyInfo />
       case 'Payroll Policies':

@@ -70,12 +70,6 @@ const SectionIcon = ({ name, selected = false, highlighted = false }) => {
           <path d="M19.14 12.936a7.963 7.963 0 000-1.872l2.036-1.58-1.5-2.598-2.41.97a7.994 7.994 0 00-1.62-.94l-.36-2.56h-3l-.36 2.56c-.57.22-1.11.52-1.62.94l-2.41-.97-1.5 2.598 2.04 1.58c-.05.31-.08.62-.08.936s.03.626.08.936l-2.04 1.58 1.5 2.598 2.41-.97c.51.42 1.05.72 1.62.94l.36 2.56h3l.36-2.56c.57-.22 1.11-.52 1.62-.94l2.41.97 1.5-2.598-2.04-1.58zM12 15.5a3.5 3.5 0 110-7 3.5 3.5 0 010 7z" />
         </svg>
       )
-    case 'Company Policies':
-      return (
-        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" className={common}>
-          <path d="M6 2h7l5 5v15H6V2zm7 1.5V8h4.5L13 3.5z" />
-        </svg>
-      )
     default:
       return (
         <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" className={common}>
@@ -120,10 +114,6 @@ const sections = [
   },
 
 
-  {
-    title: 'Company Policies',
-    items: ['Events'],
-  },
   {
     title: 'Settings',
     items: ['Notification Settings', 'Templates', 'Organizational Metrics', 'Audit Log', 'Policies', 'Notices & Announcements'],
