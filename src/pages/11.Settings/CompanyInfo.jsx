@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 
 const CompanyInfo = () => {
   const [companyInfo, setCompanyInfo] = useState({
@@ -14,14 +14,50 @@ const CompanyInfo = () => {
     employeeCount: '500-1000',
     complianceMode: true
   })
+  const [showSuccessMessage, setShowSuccessMessage] = useState(false)
+
+  // Load company info from localStorage on component mount
+  useEffect(() => {
+    const savedCompanyInfo = localStorage.getItem('companyInfo')
+    if (savedCompanyInfo) {
+      setCompanyInfo(JSON.parse(savedCompanyInfo))
+    }
+  }, [])
 
   const handleSave = () => {
+    // Save to localStorage
+    localStorage.setItem('companyInfo', JSON.stringify(companyInfo))
+    
+    // Dispatch custom event to notify navbar of company name change
+    window.dispatchEvent(new CustomEvent('companyNameChanged', { 
+      detail: { companyName: companyInfo.name } 
+    }))
+    
+    // Show success message
+    setShowSuccessMessage(true)
+    setTimeout(() => setShowSuccessMessage(false), 3000)
+    
     console.log('Saving company info...', companyInfo)
     // In a real app, this would make an API call
   }
 
   return (
     <div className="space-y-6">
+      {/* Success Message */}
+      {showSuccessMessage && (
+        <div className="bg-green-50 border border-green-200 rounded-lg p-4 flex items-center gap-3">
+          <div className="w-5 h-5 bg-green-500 rounded-full flex items-center justify-center">
+            <svg className="w-3 h-3 text-white" fill="currentColor" viewBox="0 0 20 20">
+              <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+            </svg>
+          </div>
+          <div>
+            <p className="text-green-800 font-medium">Company information saved successfully!</p>
+            <p className="text-green-600 text-sm">The company name has been updated in the navbar.</p>
+          </div>
+        </div>
+      )}
+
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-2xl font-semibold">Company Information</h1>

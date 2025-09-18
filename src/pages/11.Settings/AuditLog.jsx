@@ -2,7 +2,7 @@ import { useState, useEffect, useMemo, useCallback } from 'react'
 import { 
   Search, 
   Filter, 
-  Download, 
+  Printer, 
   RefreshCw, 
   Eye, 
   Trash2, 
@@ -238,27 +238,27 @@ const getLogTypeConfig = (category) => {
   const configs = {
     [LOG_TYPES.SYSTEM]: {
       icon: Settings,
-      color: 'from-blue-600 to-blue-800',
-      bgColor: 'bg-blue-100',
-      textColor: 'text-blue-800'
+      color: 'from-orange-400 to-orange-600',
+      bgColor: 'bg-orange-100',
+      textColor: 'text-orange-800'
     },
     [LOG_TYPES.USER]: {
       icon: User,
-      color: 'from-green-600 to-green-800',
-      bgColor: 'bg-green-100',
-      textColor: 'text-green-800'
+      color: 'from-orange-400 to-orange-600',
+      bgColor: 'bg-orange-100',
+      textColor: 'text-orange-800'
     },
     [LOG_TYPES.SECURITY]: {
       icon: Shield,
-      color: 'from-red-600 to-red-800',
-      bgColor: 'bg-red-100',
-      textColor: 'text-red-800'
+      color: 'from-orange-400 to-orange-600',
+      bgColor: 'bg-orange-100',
+      textColor: 'text-orange-800'
     },
     [LOG_TYPES.PAYROLL]: {
       icon: DollarSign,
-      color: 'from-purple-600 to-purple-800',
-      bgColor: 'bg-purple-100',
-      textColor: 'text-purple-800'
+      color: 'from-orange-400 to-orange-600',
+      bgColor: 'bg-orange-100',
+      textColor: 'text-orange-800'
     }
   }
   return configs[category] || configs[LOG_TYPES.SYSTEM]
@@ -266,34 +266,34 @@ const getLogTypeConfig = (category) => {
 
 const getLevelColor = (level) => {
   const colors = {
-    [LOG_LEVELS.ERROR]: 'bg-red-100 text-red-800 border-red-200',
-    [LOG_LEVELS.WARNING]: 'bg-yellow-100 text-yellow-800 border-yellow-200',
-    [LOG_LEVELS.INFO]: 'bg-green-100 text-green-800 border-green-200',
-    [LOG_LEVELS.DEBUG]: 'bg-gray-100 text-gray-800 border-gray-200'
+    [LOG_LEVELS.ERROR]: 'bg-orange-100 text-orange-800 border-orange-200',
+    [LOG_LEVELS.WARNING]: 'bg-orange-100 text-orange-800 border-orange-200',
+    [LOG_LEVELS.INFO]: 'bg-orange-100 text-orange-800 border-orange-200',
+    [LOG_LEVELS.DEBUG]: 'bg-orange-100 text-orange-800 border-orange-200'
   }
   return colors[level] || colors[LOG_LEVELS.INFO]
 }
 
 const getSeverityColor = (severity) => {
   const colors = {
-    [SEVERITY_LEVELS.HIGH]: 'bg-red-100 text-red-800 border-red-200',
-    [SEVERITY_LEVELS.MEDIUM]: 'bg-yellow-100 text-yellow-800 border-yellow-200',
-    [SEVERITY_LEVELS.LOW]: 'bg-blue-100 text-blue-800 border-blue-200'
+    [SEVERITY_LEVELS.HIGH]: 'bg-orange-100 text-orange-800 border-orange-200',
+    [SEVERITY_LEVELS.MEDIUM]: 'bg-orange-100 text-orange-800 border-orange-200',
+    [SEVERITY_LEVELS.LOW]: 'bg-orange-100 text-orange-800 border-orange-200'
   }
-  return colors[severity] || 'bg-gray-100 text-gray-800 border-gray-200'
+  return colors[severity] || 'bg-orange-100 text-orange-800 border-orange-200'
 }
 
 const getStatusColor = (status) => {
   const colors = {
-    [STATUS_TYPES.SUCCESS]: 'bg-green-100 text-green-800 border-green-200',
-    [STATUS_TYPES.FAILED]: 'bg-red-100 text-red-800 border-red-200',
-    [STATUS_TYPES.PENDING]: 'bg-yellow-100 text-yellow-800 border-yellow-200',
-    [STATUS_TYPES.APPROVED]: 'bg-green-100 text-green-800 border-green-200',
-    [STATUS_TYPES.PROCESSING]: 'bg-blue-100 text-blue-800 border-blue-200',
-    [STATUS_TYPES.ACTIVE]: 'bg-purple-100 text-purple-800 border-purple-200',
-    [STATUS_TYPES.COMPLETED]: 'bg-green-100 text-green-800 border-green-200'
+    [STATUS_TYPES.SUCCESS]: 'bg-orange-100 text-orange-800 border-orange-200',
+    [STATUS_TYPES.FAILED]: 'bg-orange-100 text-orange-800 border-orange-200',
+    [STATUS_TYPES.PENDING]: 'bg-orange-100 text-orange-800 border-orange-200',
+    [STATUS_TYPES.APPROVED]: 'bg-orange-100 text-orange-800 border-orange-200',
+    [STATUS_TYPES.PROCESSING]: 'bg-orange-100 text-orange-800 border-orange-200',
+    [STATUS_TYPES.ACTIVE]: 'bg-orange-100 text-orange-800 border-orange-200',
+    [STATUS_TYPES.COMPLETED]: 'bg-orange-100 text-orange-800 border-orange-200'
   }
-  return colors[status] || 'bg-gray-100 text-gray-800 border-gray-200'
+  return colors[status] || 'bg-orange-100 text-orange-800 border-orange-200'
 }
 
 // Components
@@ -321,22 +321,18 @@ const LogTypeCard = ({ type, count, isSelected, onClick }) => {
   )
 }
 
-const LogRow = ({ log, onView, onDelete, isAdmin }) => {
+const LogRow = ({ log, onView }) => {
   const config = getLogTypeConfig(log.category)
-  const Icon = config.icon
 
   return (
     <tr className="hover:bg-gray-50 transition-colors">
       <td className="px-6 py-4 whitespace-nowrap">
-        <div className="flex items-center gap-2">
-          <Icon className="w-4 h-4 text-gray-500" />
-          <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${config.bgColor} ${config.textColor}`}>
-            {log.type}
-          </span>
-        </div>
+        <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${config.bgColor} ${config.textColor}`}>
+          {log.type}
+        </span>
       </td>
       <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-700">
-        {new Date(log.timestamp).toLocaleString()}
+        {new Date(log.timestamp).toLocaleDateString('en-GB')} {new Date(log.timestamp).toLocaleTimeString()}
       </td>
       <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-700">
         {log.component || log.user || log.event || log.action || '-'}
@@ -374,15 +370,7 @@ const LogRow = ({ log, onView, onDelete, isAdmin }) => {
           >
             <Eye className="w-4 h-4" />
           </button>
-          {isAdmin && (
-            <button
-              onClick={() => onDelete(log.id)}
-              className="p-1 text-gray-500 hover:text-red-500 transition-colors"
-              title="Delete log"
-            >
-              <Trash2 className="w-4 h-4" />
-            </button>
-          )}
+          <span className="text-xs text-gray-400 italic">Read-only</span>
         </div>
       </td>
     </tr>
@@ -433,6 +421,61 @@ const Pagination = ({ currentPage, totalPages, onPageChange, totalItems, pageSiz
         </button>
       </div>
     </div>
+  )
+}
+
+// Custom Date Input Component for DD/MM/YYYY format
+const CustomDateInput = ({ value, onChange, placeholder }) => {
+  const formatDateToDDMMYYYY = (dateString) => {
+    if (!dateString) return ''
+    const date = new Date(dateString)
+    if (isNaN(date.getTime())) return ''
+    const day = String(date.getDate()).padStart(2, '0')
+    const month = String(date.getMonth() + 1).padStart(2, '0')
+    const year = date.getFullYear()
+    return `${day}/${month}/${year}`
+  }
+
+  const handleChange = (e) => {
+    const inputValue = e.target.value
+    // Allow only numbers and forward slashes
+    const cleanValue = inputValue.replace(/[^0-9/]/g, '')
+    
+    // Auto-format as user types
+    let formatted = cleanValue
+    if (cleanValue.length >= 2 && !cleanValue.includes('/')) {
+      formatted = cleanValue.substring(0, 2) + '/' + cleanValue.substring(2)
+    }
+    if (cleanValue.length >= 5 && cleanValue.split('/').length === 2) {
+      const parts = cleanValue.split('/')
+      if (parts[1].length >= 2) {
+        formatted = parts[0] + '/' + parts[1].substring(0, 2) + '/' + parts[1].substring(2)
+      }
+    }
+    
+    // Convert to ISO format for the parent component
+    if (formatted.length === 10 && formatted.includes('/')) {
+      const [day, month, year] = formatted.split('/')
+      if (day && month && year && day.length === 2 && month.length === 2 && year.length === 4) {
+        const isoDate = `${year}-${month}-${day}`
+        onChange(isoDate)
+      } else {
+        onChange('')
+      }
+    } else {
+      onChange('')
+    }
+  }
+
+  return (
+    <input
+      type="text"
+      value={formatDateToDDMMYYYY(value)}
+      onChange={handleChange}
+      placeholder={placeholder || "DD/MM/YYYY"}
+      maxLength={10}
+      className="px-4 py-2 bg-white border border-gray-300 rounded-lg text-gray-900 focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
+    />
   )
 }
 
@@ -535,18 +578,59 @@ export default function AuditLog() {
     }
   }
 
-  const handleExportLogs = async () => {
-    try {
-      const filters = {
-        category: selectedLogType,
-        searchQuery,
-        dateFrom,
-        dateTo
-      }
-      await auditLogService.exportLogs('csv', filters)
-    } catch (error) {
-      console.error('Error exporting logs:', error)
-    }
+  const handlePrintLogs = () => {
+    const printWindow = window.open('', '_blank')
+    const printContent = `
+      <html>
+        <head>
+          <title>Audit Logs - ${new Date().toLocaleDateString()}</title>
+          <style>
+            body { font-family: Arial, sans-serif; margin: 20px; }
+            table { width: 100%; border-collapse: collapse; margin-top: 20px; }
+            th, td { border: 1px solid #ddd; padding: 8px; text-align: left; }
+            th { background-color: #f5f5f5; font-weight: bold; }
+            .header { text-align: center; margin-bottom: 20px; }
+            .filters { margin-bottom: 20px; font-size: 14px; }
+          </style>
+        </head>
+        <body>
+          <div class="header">
+            <h1>Audit Logs Report</h1>
+            <p>Generated on: ${new Date().toLocaleString()}</p>
+            <p>Filtered by: ${selectedLogType === 'all' ? 'All Categories' : selectedLogType}</p>
+          </div>
+          <div class="filters">
+            <p><strong>Search Query:</strong> ${searchQuery || 'None'}</p>
+            <p><strong>Date Range:</strong> ${dateFrom ? new Date(dateFrom).toLocaleDateString('en-GB') : 'No start date'} - ${dateTo ? new Date(dateTo).toLocaleDateString('en-GB') : 'No end date'}</p>
+          </div>
+          <table>
+            <thead>
+              <tr>
+                <th>Type</th>
+                <th>Timestamp</th>
+                <th>Category</th>
+                <th>Details</th>
+                <th>Status/Level</th>
+              </tr>
+            </thead>
+            <tbody>
+              ${logs.map(log => `
+                <tr>
+                  <td>${log.type}</td>
+                  <td>${new Date(log.timestamp).toLocaleString()}</td>
+                  <td>${log.component || log.user || log.event || log.action || '-'}</td>
+                  <td>${log.message || log.description || log.reason || log.details}</td>
+                  <td>${log.level || log.severity || log.status || '-'}</td>
+                </tr>
+              `).join('')}
+            </tbody>
+          </table>
+        </body>
+      </html>
+    `
+    printWindow.document.write(printContent)
+    printWindow.document.close()
+    printWindow.print()
   }
 
   const handleRefresh = () => {
@@ -625,20 +709,16 @@ export default function AuditLog() {
                 ))}
               </select>
               
-              <input
-                type="date"
+              <CustomDateInput
                 value={dateFrom}
-                onChange={handleDateFromChange}
-                className="px-4 py-2 bg-white border border-gray-300 rounded-lg text-gray-900 focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
-                placeholder="From Date"
+                onChange={setDateFrom}
+                placeholder="From Date (DD/MM/YYYY)"
               />
               
-              <input
-                type="date"
+              <CustomDateInput
                 value={dateTo}
-                onChange={handleDateToChange}
-                className="px-4 py-2 bg-white border border-gray-300 rounded-lg text-gray-900 focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
-                placeholder="To Date"
+                onChange={setDateTo}
+                placeholder="To Date (DD/MM/YYYY)"
               />
               
               <button
@@ -652,11 +732,11 @@ export default function AuditLog() {
               
               {isAdmin && (
                 <button
-                  onClick={handleExportLogs}
+                  onClick={handlePrintLogs}
                   className="px-4 py-2 bg-orange-600 hover:bg-orange-700 text-white rounded-lg transition-colors flex items-center gap-2"
                 >
-                  <Download className="w-4 h-4" />
-                  Export
+                  <Printer className="w-4 h-4" />
+                  Print
                 </button>
               )}
             </div>
@@ -739,7 +819,7 @@ export default function AuditLog() {
               <div className="grid grid-cols-2 gap-4">
                 <div>
                   <label className="text-sm text-gray-600">Timestamp</label>
-                  <p className="text-gray-900">{new Date(selectedLog.timestamp).toLocaleString()}</p>
+                  <p className="text-gray-900">{new Date(selectedLog.timestamp).toLocaleDateString('en-GB')} {new Date(selectedLog.timestamp).toLocaleTimeString()}</p>
                 </div>
                 <div>
                   <label className="text-sm text-gray-600">Type</label>

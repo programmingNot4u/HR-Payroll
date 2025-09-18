@@ -14,6 +14,7 @@ import EmployeePortal from './pages/2.Employees/EmployeePortal'
 import SalaryPayslips from './pages/3.Payroll/SalaryPayslips'
 import Payslip from './pages/3.Payroll/Payslip'
 import DeductionsBenefits from './pages/3.Payroll/DeductionsBenefits'
+import AdvanceFromAccounts from './pages/3.Payroll/AdvanceFromAccounts'
 import DailyAttendance from './pages/4.Attendance/DailyAttendance'
 import Timesheet from './pages/4.Attendance/Timesheet'
 import LeaveRequest from './pages/4.Attendance/LeaveRequest'
@@ -32,13 +33,12 @@ import AssignAsset from './pages/7.Assets/AssignAsset'
 import AssetReturn from './pages/7.Assets/AssetReturn'
 import AssetTracker from './pages/7.Assets/AssetTracker'
 import AssetMaintenance from './pages/7.Assets/AssetMaintenance'
-import CompanyInfo from './pages/10.CompanyPolicies/CompanyInfo'
+import CompanyInfo from './pages/11.Settings/CompanyInfo'
+import LegalDocuments from './pages/11.Settings/LegalDocuments'
 import NoticesAnnouncements from './pages/11.Settings/NoticesAnnouncements'
-import PayrollPolicies from './pages/10.CompanyPolicies/PayrollPolicies'
 import Policies from './pages/11.Settings/Policies'
 import AuditLog from './pages/11.Settings/AuditLog'
 import NotificationSettings from './pages/11.Settings/NotificationSettings'
-import Templates from './pages/11.Settings/Templates'
 import OrganizationalMetrics from './pages/11.Settings/OrganizationalMetrics'
 
 function App() {
@@ -117,6 +117,8 @@ function App() {
         return <SalaryPayslips />
       case 'Bonuses & Penalties':
         return <DeductionsBenefits />
+      case 'Advance From Accounts':
+        return <AdvanceFromAccounts />
       case 'Daily Attendance':
         return <DailyAttendance />
       case 'Timesheets':
@@ -157,8 +159,8 @@ function App() {
         return <NoticesAnnouncements />
       case 'Company Info':
         return <CompanyInfo />
-      case 'Payroll Policies':
-        return <PayrollPolicies />
+      case 'Legal Documents':
+        return <LegalDocuments />
       case 'Policies':
         return <Policies />
       case 'Audit Log':
@@ -166,8 +168,6 @@ function App() {
 
       case 'Notification Settings':
         return <NotificationSettings />
-      case 'Templates':
-        return <Templates />
       case 'Organizational Metrics':
         return <OrganizationalMetrics />
       default:

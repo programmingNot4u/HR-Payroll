@@ -448,6 +448,170 @@ export default function LeaveRequest() {
         </div>
       </div>
 
+      {/* Leave Requests from Employee Portal */}
+      <div className="bg-white rounded-lg border border-gray-200 overflow-hidden">
+        <div className="px-6 py-4 border-b border-gray-200">
+          <h2 className="text-lg font-medium text-gray-900">Leave Request</h2>
+          <p className="text-sm text-gray-500">All leave requests submitted from employee portal</p>
+        </div>
+        <div className="overflow-x-auto">
+          <table className="min-w-full divide-y divide-gray-200">
+            <thead className="bg-gray-50">
+              <tr>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Employee</th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Leave Type</th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Duration</th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Reason</th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Submitted Date</th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
+              </tr>
+            </thead>
+            <tbody className="bg-white divide-y divide-gray-200">
+              {/* Mock data for employee portal requests */}
+              <tr className="hover:bg-gray-50">
+                <td className="px-6 py-4 whitespace-nowrap">
+                  <div className="flex items-center">
+                    <div className="h-10 w-10 rounded-full bg-green-600 flex items-center justify-center">
+                      <span className="text-sm font-medium text-white">001</span>
+                    </div>
+                    <div className="ml-4">
+                      <div className="text-sm font-medium text-gray-900">Ahmed Khan</div>
+                      <div className="text-sm text-gray-500">EMP001</div>
+                    </div>
+                  </div>
+                </td>
+                <td className="px-6 py-4 whitespace-nowrap">
+                  <span className="inline-flex px-2 py-1 text-xs font-semibold rounded-full bg-blue-100 text-blue-800">
+                    Casual Leave
+                  </span>
+                </td>
+                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                  15/01/2024 - 17/01/2024
+                  <br />
+                  <span className="text-xs text-gray-400">3 days</span>
+                </td>
+                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">Family emergency</td>
+                <td className="px-6 py-4 whitespace-nowrap">
+                  <span className="inline-flex px-2 py-1 text-xs font-semibold rounded-full bg-yellow-100 text-yellow-800">
+                    Pending
+                  </span>
+                </td>
+                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">14/01/2024</td>
+                <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                  <div className="flex space-x-2">
+                    <button className="text-green-600 hover:text-green-900">Approve</button>
+                    <button className="text-red-600 hover:text-red-900">Reject</button>
+                  </div>
+                </td>
+              </tr>
+              <tr className="hover:bg-gray-50">
+                <td className="px-6 py-4 whitespace-nowrap">
+                  <div className="flex items-center">
+                    <div className="h-10 w-10 rounded-full bg-pink-600 flex items-center justify-center">
+                      <span className="text-sm font-medium text-white">002</span>
+                    </div>
+                    <div className="ml-4">
+                      <div className="text-sm font-medium text-gray-900">Fatima Begum</div>
+                      <div className="text-sm text-gray-500">EMP002</div>
+                    </div>
+                  </div>
+                </td>
+                <td className="px-6 py-4 whitespace-nowrap">
+                  <span className="inline-flex px-2 py-1 text-xs font-semibold rounded-full bg-red-100 text-red-800">
+                    Sick Leave
+                  </span>
+                </td>
+                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                  20/01/2024 - 22/01/2024
+                  <br />
+                  <span className="text-xs text-gray-400">3 days</span>
+                </td>
+                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">Medical treatment</td>
+                <td className="px-6 py-4 whitespace-nowrap">
+                  <span className="inline-flex px-2 py-1 text-xs font-semibold rounded-full bg-green-100 text-green-800">
+                    Approved
+                  </span>
+                </td>
+                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">19/01/2024</td>
+                <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                  <span className="text-gray-400">Completed</span>
+                </td>
+              </tr>
+              <tr className="hover:bg-gray-50">
+                <td className="px-6 py-4 whitespace-nowrap">
+                  <div className="flex items-center">
+                    <div className="h-10 w-10 rounded-full bg-blue-600 flex items-center justify-center">
+                      <span className="text-sm font-medium text-white">003</span>
+                    </div>
+                    <div className="ml-4">
+                      <div className="text-sm font-medium text-gray-900">Mohammad Hassan</div>
+                      <div className="text-sm text-gray-500">EMP003</div>
+                    </div>
+                  </div>
+                </td>
+                <td className="px-6 py-4 whitespace-nowrap">
+                  <span className="inline-flex px-2 py-1 text-xs font-semibold rounded-full bg-green-100 text-green-800">
+                    Annual Leave
+                  </span>
+                </td>
+                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                  25/01/2024 - 30/01/2024
+                  <br />
+                  <span className="text-xs text-gray-400">6 days</span>
+                </td>
+                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">Vacation with family</td>
+                <td className="px-6 py-4 whitespace-nowrap">
+                  <span className="inline-flex px-2 py-1 text-xs font-semibold rounded-full bg-yellow-100 text-yellow-800">
+                    Pending
+                  </span>
+                </td>
+                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">23/01/2024</td>
+                <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                  <div className="flex space-x-2">
+                    <button className="text-green-600 hover:text-green-900">Approve</button>
+                    <button className="text-red-600 hover:text-red-900">Reject</button>
+                  </div>
+                </td>
+              </tr>
+              <tr className="hover:bg-gray-50">
+                <td className="px-6 py-4 whitespace-nowrap">
+                  <div className="flex items-center">
+                    <div className="h-10 w-10 rounded-full bg-purple-600 flex items-center justify-center">
+                      <span className="text-sm font-medium text-white">004</span>
+                    </div>
+                    <div className="ml-4">
+                      <div className="text-sm font-medium text-gray-900">Salma Khatun</div>
+                      <div className="text-sm text-gray-500">EMP004</div>
+                    </div>
+                  </div>
+                </td>
+                <td className="px-6 py-4 whitespace-nowrap">
+                  <span className="inline-flex px-2 py-1 text-xs font-semibold rounded-full bg-pink-100 text-pink-800">
+                    Maternity Leave
+                  </span>
+                </td>
+                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                  01/02/2024 - 30/05/2024
+                  <br />
+                  <span className="text-xs text-gray-400">120 days</span>
+                </td>
+                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">Maternity leave</td>
+                <td className="px-6 py-4 whitespace-nowrap">
+                  <span className="inline-flex px-2 py-1 text-xs font-semibold rounded-full bg-green-100 text-green-800">
+                    Approved
+                  </span>
+                </td>
+                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">30/01/2024</td>
+                <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                  <span className="text-gray-400">Completed</span>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
       {/* Leave Requests History */}
       {leaveRequests.length > 0 && (
         <div className="bg-white rounded-lg border border-gray-200 overflow-hidden">

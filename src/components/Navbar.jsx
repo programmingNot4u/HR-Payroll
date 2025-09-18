@@ -3,11 +3,30 @@ import { useState, useEffect } from 'react'
 export default function Navbar({ onLogout }) {
   const [user, setUser] = useState(null)
   const [showUserMenu, setShowUserMenu] = useState(false)
+  const [companyName, setCompanyName] = useState('RP Creations & Apparels Limited')
 
   useEffect(() => {
     const userData = localStorage.getItem('adminUser')
     if (userData) {
       setUser(JSON.parse(userData))
+    }
+
+    // Load company name from localStorage
+    const companyInfo = localStorage.getItem('companyInfo')
+    if (companyInfo) {
+      const parsed = JSON.parse(companyInfo)
+      setCompanyName(parsed.name)
+    }
+
+    // Listen for company name changes
+    const handleCompanyNameChange = (event) => {
+      setCompanyName(event.detail.companyName)
+    }
+
+    window.addEventListener('companyNameChanged', handleCompanyNameChange)
+
+    return () => {
+      window.removeEventListener('companyNameChanged', handleCompanyNameChange)
     }
   }, [])
 
@@ -27,7 +46,7 @@ export default function Navbar({ onLogout }) {
     <header className="fixed inset-x-0 top-0 z-50 h-14 border-b border-gray-200 bg-white">
       <div className="h-full px-4 flex items-center justify-between">
         <div className="flex items-center gap-3">
-          <span className="text-lg font-semibold">RP Creations & Apparels Limited</span>
+          <span className="text-lg font-semibold">{companyName}</span>
           <span className="hidden sm:inline-block text-gray-400">|</span>
           <span className="hidden sm:inline-block text-sm text-gray-500">Admin Panel</span>
         </div>
