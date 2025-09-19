@@ -104,7 +104,7 @@ const sections = [
   },
   {
     title: 'Attendance',
-    items: ['Daily Attendance', 'Timesheets', 'Leave Requests', 'Holidays', 'Leave Policies'],
+    items: ['Daily Attendance', 'Timesheets', 'Leave Management', 'Holidays', 'Leave Policies'],
   },
   {
     title: 'Recruitment',

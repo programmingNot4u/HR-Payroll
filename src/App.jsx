@@ -123,7 +123,7 @@ function App() {
         return <DailyAttendance />
       case 'Timesheets':
         return <Timesheet />
-      case 'Leave Requests':
+      case 'Leave Management':
         return <LeaveRequest />
       case 'Holidays':
         return <Holidays />

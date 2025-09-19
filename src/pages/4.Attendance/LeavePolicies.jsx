@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 
 const LeavePolicies = () => {
   const [leavePolicies, setLeavePolicies] = useState({
@@ -10,10 +10,40 @@ const LeavePolicies = () => {
     leaveWithoutPay: '0',
     maxCarryForward: '15'
   })
+  const [showSuccessMessage, setShowSuccessMessage] = useState(false)
+
+  // Load leave policies from localStorage on component mount
+  useEffect(() => {
+    const savedPolicies = localStorage.getItem('leavePolicies')
+    if (savedPolicies) {
+      try {
+        const parsedPolicies = JSON.parse(savedPolicies)
+        setLeavePolicies(parsedPolicies)
+      } catch (error) {
+        console.error('Error loading leave policies:', error)
+      }
+    }
+  }, [])
 
   const handleSave = () => {
-    console.log('Saving leave policies...', leavePolicies)
-    // In a real app, this would make an API call
+    try {
+      // Save to localStorage
+      localStorage.setItem('leavePolicies', JSON.stringify(leavePolicies))
+      
+      // Dispatch custom event to notify other components
+      window.dispatchEvent(new CustomEvent('leavePoliciesChanged'))
+      
+      // Show success message
+      setShowSuccessMessage(true)
+      setTimeout(() => {
+        setShowSuccessMessage(false)
+      }, 3000)
+      
+      console.log('Leave policies saved successfully:', leavePolicies)
+    } catch (error) {
+      console.error('Error saving leave policies:', error)
+      alert('Error saving leave policies. Please try again.')
+    }
   }
 
   return (
@@ -22,6 +52,22 @@ const LeavePolicies = () => {
         <h1 className="text-2xl font-semibold">Leave Policies</h1>
         <p className="text-sm text-gray-500">Configure employee leave entitlements and rules</p>
       </div>
+
+      {/* Success Message */}
+      {showSuccessMessage && (
+        <div className="bg-green-50 border border-green-200 text-green-700 px-4 py-3 rounded-md">
+          <div className="flex">
+            <div className="flex-shrink-0">
+              <svg className="h-5 w-5 text-green-400" viewBox="0 0 20 20" fill="currentColor">
+                <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
+              </svg>
+            </div>
+            <div className="ml-3">
+              <p className="text-sm font-medium">Leave policies saved successfully!</p>
+            </div>
+          </div>
+        </div>
+      )}
 
       <div className="bg-white rounded-lg border border-gray-200 p-6">
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
