@@ -108,11 +108,11 @@ const sections = [
   },
   {
     title: 'Recruitment',
-    items: ['Job Openings', 'Candidates', 'Interview Schedule', 'Onboarding', 'Appraisals'],
+    items: ['Job Openings', 'Candidates', 'Onboarding'],
   },
   {
     title: 'Performance',
-    items: ['Goals & KPIs', 'Feedback', 'Promotions'],
+    items: ['Goals & KPIs', 'Promotions'],
   },
   {
     title: 'Assets',
