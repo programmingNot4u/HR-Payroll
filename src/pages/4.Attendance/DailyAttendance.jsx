@@ -9,7 +9,6 @@ const sampleAttendance = [
     department: 'Sewing',
     levelOfWork: 'Worker',
     checkIn: '08:00',
-    lunchBreak: '13:00-14:00',
     checkOut: '17:30',
     workingHours: 8.25,
     overtime: 0.5,
@@ -28,7 +27,6 @@ const sampleAttendance = [
     department: 'Quality Control',
     levelOfWork: 'Staff',
     checkIn: '08:00',
-    lunchBreak: '13:00-14:00',
     checkOut: '18:00',
     workingHours: 9.0,
     overtime: 1.0,
@@ -47,7 +45,6 @@ const sampleAttendance = [
     department: 'Cutting',
     levelOfWork: 'Worker',
     checkIn: '08:30',
-    lunchBreak: '13:00-14:00',
     checkOut: '17:00',
     workingHours: 7.5,
     overtime: 0.0,
@@ -66,7 +63,6 @@ const sampleAttendance = [
     department: 'Finishing',
     levelOfWork: 'Staff',
     checkIn: '08:45',
-    lunchBreak: '13:00-14:00',
     checkOut: '19:30',
     workingHours: 9.75,
     overtime: 2.0,
@@ -86,7 +82,6 @@ const sampleAttendance = [
     department: 'Management',
     levelOfWork: 'Staff',
     checkIn: '08:00',
-    lunchBreak: '13:00-14:00',
     checkOut: '18:30',
     workingHours: 9.5,
     overtime: 1.5,
@@ -105,7 +100,6 @@ const sampleAttendance = [
     department: 'Sewing',
     levelOfWork: 'Worker',
     checkIn: '08:20',
-    lunchBreak: '13:00-14:00',
     checkOut: '16:45',
     workingHours: 7.42,
     overtime: 0.0,
@@ -124,7 +118,6 @@ const sampleAttendance = [
     department: 'Sewing',
     levelOfWork: 'Worker',
     checkIn: '08:10',
-    lunchBreak: '13:00-14:00',
     checkOut: '20:00',
     workingHours: 10.83,
     overtime: 2.0,
@@ -145,7 +138,6 @@ const sampleAttendance = [
     department: 'Quality Control',
     levelOfWork: 'Staff',
     checkIn: '08:25',
-    lunchBreak: '13:00-14:00',
     checkOut: '17:15',
     workingHours: 7.83,
     overtime: 0.25,
@@ -164,7 +156,6 @@ const sampleAttendance = [
     department: 'Sewing',
     levelOfWork: 'Worker',
     checkIn: '08:00',
-    lunchBreak: '13:00-14:00',
     checkOut: '00:00',
     workingHours: 15.0,
     overtime: 2.0,
@@ -183,7 +174,6 @@ const sampleAttendance = [
     department: 'Quality Control',
     levelOfWork: 'Worker',
     checkIn: '08:00',
-    lunchBreak: '13:00-14:00',
     checkOut: '02:00',
     workingHours: 17.0,
     overtime: 2.0,
@@ -194,6 +184,96 @@ const sampleAttendance = [
       { time: '08:00', type: 'Check In' },
       { time: '02:00', type: 'Check Out' }
     ]
+  },
+  {
+    id: 'EMP013',
+    name: 'Leave Employee 1',
+    designation: 'Leave Role',
+    department: 'Leave Department',
+    levelOfWork: 'Staff',
+    checkIn: null,
+    checkOut: null,
+    workingHours: 0,
+    overtime: 0,
+    extraOvertime: 0,
+    status: 'Leave-Earn',
+    attendanceCount: 0,
+    scans: []
+  },
+  {
+    id: 'EMP014',
+    name: 'Leave Employee 2',
+    designation: 'Leave Role',
+    department: 'Leave Department',
+    levelOfWork: 'Staff',
+    checkIn: null,
+    checkOut: null,
+    workingHours: 0,
+    overtime: 0,
+    extraOvertime: 0,
+    status: 'Leave-Maternity',
+    attendanceCount: 0,
+    scans: []
+  },
+  {
+    id: 'EMP015',
+    name: 'Leave Employee 3',
+    designation: 'Leave Role',
+    department: 'Leave Department',
+    levelOfWork: 'Staff',
+    checkIn: null,
+    checkOut: null,
+    workingHours: 0,
+    overtime: 0,
+    extraOvertime: 0,
+    status: 'Leave-Casual',
+    attendanceCount: 0,
+    scans: []
+  },
+  {
+    id: 'EMP016',
+    name: 'Leave Employee 4',
+    designation: 'Leave Role',
+    department: 'Leave Department',
+    levelOfWork: 'Staff',
+    checkIn: null,
+    checkOut: null,
+    workingHours: 0,
+    overtime: 0,
+    extraOvertime: 0,
+    status: 'Leave-Sick',
+    attendanceCount: 0,
+    scans: []
+  },
+  {
+    id: 'EMP017',
+    name: 'Leave Employee 5',
+    designation: 'Leave Role',
+    department: 'Leave Department',
+    levelOfWork: 'Staff',
+    checkIn: null,
+    checkOut: null,
+    workingHours: 0,
+    overtime: 0,
+    extraOvertime: 0,
+    status: 'Leave-WithOutPay',
+    attendanceCount: 0,
+    scans: []
+  },
+  {
+    id: 'EMP018',
+    name: 'Absent Employee',
+    designation: 'Absent Role',
+    department: 'Absent Department',
+    levelOfWork: 'Staff',
+    checkIn: null,
+    checkOut: null,
+    workingHours: 0,
+    overtime: 0,
+    extraOvertime: 0,
+    status: 'Absent',
+    attendanceCount: 0,
+    scans: []
   }
 ]
 
@@ -527,12 +607,26 @@ export default function DailyAttendance() {
 
   const totalEmployees = filteredAttendance.length
   const presentEmployees = filteredAttendance.filter(emp => emp.status === 'Present').length
-  const absentEmployees = filteredAttendance.filter(emp => emp.status === 'Absent').length
-  const informedEmployees = filteredAttendance.filter(emp => emp.status === 'Informed').length
-  const uninformedEmployees = filteredAttendance.filter(emp => emp.status === 'Uninformed').length
-  const lateLoginEmployees = filteredAttendance.filter(emp => 
+  const presentOnTimeEmployees = filteredAttendance.filter(emp => 
+    emp.checkIn && getCheckInStatus(emp.checkIn) === 'On Time'
+  ).length
+  const presentConsideredEmployees = filteredAttendance.filter(emp => 
+    emp.checkIn && getCheckInStatus(emp.checkIn) === 'Considered'
+  ).length
+  const presentLateEmployees = filteredAttendance.filter(emp => 
     emp.checkIn && getCheckInStatus(emp.checkIn) === 'Late Login'
   ).length
+  const onLeaveEmployees = filteredAttendance.filter(emp => 
+    emp.status === 'Leave-Earn' || emp.status === 'Leave-Maternity' || 
+    emp.status === 'Leave-Casual' || emp.status === 'Leave-Sick' || 
+    emp.status === 'Leave-WithOutPay'
+  ).length
+  const leaveEarnEmployees = filteredAttendance.filter(emp => emp.status === 'Leave-Earn').length
+  const leaveMaternityEmployees = filteredAttendance.filter(emp => emp.status === 'Leave-Maternity').length
+  const leaveCasualEmployees = filteredAttendance.filter(emp => emp.status === 'Leave-Casual').length
+  const leaveSickEmployees = filteredAttendance.filter(emp => emp.status === 'Leave-Sick').length
+  const leaveWithoutPayEmployees = filteredAttendance.filter(emp => emp.status === 'Leave-WithOutPay').length
+  const absentEmployees = filteredAttendance.filter(emp => emp.status === 'Absent').length
   const totalWorkingHours = filteredAttendance.reduce((sum, emp) => 
     sum + calculateWorkingHours(emp.checkIn, emp.checkOut), 0)
   // Only calculate overtime for Workers
@@ -556,31 +650,59 @@ export default function DailyAttendance() {
         <h1 className="text-2xl font-semibold">Daily Attendance</h1>
       </div>
 
-      {/* Statistics Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-6 gap-6">
-        <div className="rounded border border-gray-200 bg-white p-6">
+      {/* Statistics Cards - Top Row */}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-6 gap-4">
+        <div className="rounded border border-gray-200 bg-white p-4">
           <div className="text-sm text-gray-500">Active Employees</div>
-          <div className="mt-1 text-2xl font-semibold">{totalEmployees}</div>
+          <div className="mt-1 text-xl font-semibold">{totalEmployees}</div>
         </div>
-        <div className="rounded border border-gray-200 bg-white p-6">
-          <div className="text-sm text-gray-500">Total Present</div>
-          <div className="mt-1 text-2xl font-semibold text-green-600">{presentEmployees}</div>
+        <div className="rounded border border-gray-200 bg-white p-4">
+          <div className="text-sm text-gray-500">Present Employee</div>
+          <div className="mt-1 text-xl font-semibold text-green-600">{presentEmployees}</div>
         </div>
-        <div className="rounded border border-gray-200 bg-white p-6">
-          <div className="text-sm text-gray-500">Total Absent</div>
-          <div className="mt-1 text-2xl font-semibold text-red-600">{absentEmployees}</div>
+        <div className="rounded border border-gray-200 bg-white p-4">
+          <div className="text-sm text-gray-500">Present-OnTime</div>
+          <div className="mt-1 text-xl font-semibold text-green-600">{presentOnTimeEmployees}</div>
         </div>
-        <div className="rounded border border-gray-200 bg-white p-6">
-          <div className="text-sm text-gray-500">Informed</div>
-          <div className="mt-1 text-2xl font-semibold text-blue-600">{informedEmployees}</div>
+        <div className="rounded border border-gray-200 bg-white p-4">
+          <div className="text-sm text-gray-500">Present-Considered</div>
+          <div className="mt-1 text-xl font-semibold text-yellow-600">{presentConsideredEmployees}</div>
         </div>
-        <div className="rounded border border-gray-200 bg-white p-6">
-          <div className="text-sm text-gray-500">Uninformed</div>
-          <div className="mt-1 text-2xl font-semibold text-orange-600">{uninformedEmployees}</div>
+        <div className="rounded border border-gray-200 bg-white p-4">
+          <div className="text-sm text-gray-500">Present-Late</div>
+          <div className="mt-1 text-xl font-semibold text-orange-600">{presentLateEmployees}</div>
         </div>
-        <div className="rounded border border-gray-200 bg-white p-6">
-          <div className="text-sm text-gray-500">Late Login</div>
-          <div className="mt-1 text-2xl font-semibold text-yellow-600">{lateLoginEmployees}</div>
+        <div className="rounded border border-gray-200 bg-white p-4">
+          <div className="text-sm text-gray-500">OnLeave Employee</div>
+          <div className="mt-1 text-xl font-semibold text-blue-600">{onLeaveEmployees}</div>
+        </div>
+      </div>
+
+      {/* Statistics Cards - Bottom Row */}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-6 gap-4">
+        <div className="rounded border border-gray-200 bg-white p-4">
+          <div className="text-sm text-gray-500">Leave-Earn</div>
+          <div className="mt-1 text-xl font-semibold text-blue-600">{leaveEarnEmployees}</div>
+        </div>
+        <div className="rounded border border-gray-200 bg-white p-4">
+          <div className="text-sm text-gray-500">Leave-Maternity</div>
+          <div className="mt-1 text-xl font-semibold text-purple-600">{leaveMaternityEmployees}</div>
+        </div>
+        <div className="rounded border border-gray-200 bg-white p-4">
+          <div className="text-sm text-gray-500">Leave-Casual</div>
+          <div className="mt-1 text-xl font-semibold text-indigo-600">{leaveCasualEmployees}</div>
+        </div>
+        <div className="rounded border border-gray-200 bg-white p-4">
+          <div className="text-sm text-gray-500">Leave-Sick</div>
+          <div className="mt-1 text-xl font-semibold text-pink-600">{leaveSickEmployees}</div>
+        </div>
+        <div className="rounded border border-gray-200 bg-white p-4">
+          <div className="text-sm text-gray-500">Leave-WithOutPay</div>
+          <div className="mt-1 text-xl font-semibold text-gray-600">{leaveWithoutPayEmployees}</div>
+        </div>
+        <div className="rounded border border-gray-200 bg-white p-4">
+          <div className="text-sm text-gray-500">Absent Employee</div>
+          <div className="mt-1 text-xl font-semibold text-red-600">{absentEmployees}</div>
         </div>
       </div>
 
@@ -711,7 +833,6 @@ export default function DailyAttendance() {
                 <th className="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">Attendance Count</th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Check In</th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Lunch Break</th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Check Out</th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">R. CheckOut</th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Working Hours</th>
@@ -762,7 +883,6 @@ export default function DailyAttendance() {
                       {getCheckInStatus(attendance.checkIn)}
                     </span>
                   </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{attendance.lunchBreak}</td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{attendance.checkOut}</td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 font-medium text-blue-600">{getRoundedCheckOut(attendance.checkOut)}</td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{formatWorkingHours(calculateWorkingHours(attendance.checkIn, attendance.checkOut))}</td>
