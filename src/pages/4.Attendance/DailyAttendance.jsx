@@ -354,12 +354,12 @@ export default function DailyAttendance() {
     const [hours, minutes] = checkInTime.split(':').map(Number)
     const totalMinutes = hours * 60 + minutes
     const onTimeMinutes = 8 * 60 // 8:00 AM
-    const acceptedMinutes = 8 * 60 + 5 // 8:05 AM
+    const consideredMinutes = 8 * 60 + 5 // 8:05 AM
     
     if (totalMinutes <= onTimeMinutes) {
-      return 'On-time'
-    } else if (totalMinutes <= acceptedMinutes) {
-      return 'Accepted'
+      return 'On Time'
+    } else if (totalMinutes <= consideredMinutes) {
+      return 'Considered'
     } else {
       return 'Late Login'
     }
@@ -375,10 +375,21 @@ export default function DailyAttendance() {
     const checkInMinutes = inHour * 60 + inMinute
     let checkOutMinutes = outHour * 60 + outMinute
     
-    // Handle midnight rollover (if check-out is before check-in, it's next day)
-    if (checkOutMinutes < checkInMinutes) {
-      checkOutMinutes += 24 * 60 // Add 24 hours (1440 minutes) for next day
+    // Working day: 6:00 AM to 4:00 AM (next day) - 22 hour window
+    const workDayStart = 6 * 60 // 6:00 AM
+    const workDayEnd = 4 * 60   // 4:00 AM next day
+    
+    // Handle midnight rollover - if check-out is between 00:00 and 04:00, it's next day
+    let isNextDay = false
+    if (checkOutMinutes >= 0 && checkOutMinutes <= workDayEnd) {
+      checkOutMinutes += 24 * 60 // Add 24 hours for next day
+      isNextDay = true
     }
+    
+    // Check if check-in is within working hours (6:00 AM to 4:00 AM next day)
+    if (checkInMinutes < workDayStart) return 0 // Check-in before 6:00 AM
+    if (isNextDay && checkOutMinutes > workDayEnd + 24 * 60) return 0 // Check-out after 4:00 AM next day
+    if (!isNextDay && checkOutMinutes > 24 * 60) return 0 // Check-out after midnight same day
     
     // Calculate total minutes worked
     let totalMinutes = checkOutMinutes - checkInMinutes
@@ -393,6 +404,7 @@ export default function DailyAttendance() {
   }
 
   // Calculate overtime based on check-out time (5:00 PM to 7:00 PM)
+  // Working day: 6:00 AM to 4:00 AM (next day)
   const calculateOvertime = (checkOut) => {
     if (!checkOut) return 0
     
@@ -400,10 +412,11 @@ export default function DailyAttendance() {
     let checkOutMinutes = outHour * 60 + outMinute
     const overtimeStartMinutes = 17 * 60 // 5:00 PM = 17:00
     const overtimeEndMinutes = 19 * 60   // 7:00 PM = 19:00
+    const workDayEnd = 4 * 60 // 4:00 AM next day
     
-    // Handle midnight rollover - if check-out is between 00:00 and 17:00, it's next day
+    // Handle midnight rollover - if check-out is between 00:00 and 04:00, it's next day
     let isNextDay = false
-    if (checkOutMinutes >= 0 && checkOutMinutes < overtimeStartMinutes) {
+    if (checkOutMinutes >= 0 && checkOutMinutes <= workDayEnd) {
       checkOutMinutes += 24 * 60 // Add 24 hours for next day
       isNextDay = true
     }
@@ -440,16 +453,18 @@ export default function DailyAttendance() {
   }
 
   // Calculate extra overtime for workers (after 7:00 PM)
+  // Working day: 6:00 AM to 4:00 AM (next day)
   const calculateExtraOvertime = (checkOut) => {
     if (!checkOut) return 0
     
     const [outHour, outMinute] = checkOut.split(':').map(Number)
     let checkOutMinutes = outHour * 60 + outMinute
     const extraOvertimeStartMinutes = 19 * 60 // 7:00 PM = 19:00
+    const workDayEnd = 4 * 60 // 4:00 AM next day
     
-    // Handle midnight rollover - if check-out is between 00:00 and 19:00, it's next day
+    // Handle midnight rollover - if check-out is between 00:00 and 04:00, it's next day
     let isNextDay = false
-    if (checkOutMinutes >= 0 && checkOutMinutes < extraOvertimeStartMinutes) {
+    if (checkOutMinutes >= 0 && checkOutMinutes <= workDayEnd) {
       checkOutMinutes += 24 * 60 // Add 24 hours for next day
       isNextDay = true
     }
@@ -739,8 +754,8 @@ export default function DailyAttendance() {
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{attendance.checkIn}</td>
                   <td className="px-6 py-4 whitespace-nowrap">
                     <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${
-                      getCheckInStatus(attendance.checkIn) === 'On-time' ? 'bg-green-100 text-green-800' :
-                      getCheckInStatus(attendance.checkIn) === 'Accepted' ? 'bg-yellow-100 text-yellow-800' :
+                      getCheckInStatus(attendance.checkIn) === 'On Time' ? 'bg-green-100 text-green-800' :
+                      getCheckInStatus(attendance.checkIn) === 'Considered' ? 'bg-yellow-100 text-yellow-800' :
                       getCheckInStatus(attendance.checkIn) === 'Late Login' ? 'bg-red-100 text-red-800' :
                       'bg-gray-100 text-gray-800'
                     }`}>
