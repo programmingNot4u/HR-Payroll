@@ -31,10 +31,24 @@ const generateEmployeeAttendanceData = (month, year) => {
     // Generate attendance data for each day of the month
     for (let day = 1; day <= daysInMonth; day++) {
       const date = new Date(year, month - 1, day)
+      const dayOfWeek = date.getDay() // 0 = Sunday, 1 = Monday, ..., 5 = Friday, 6 = Saturday
       
-      // Random attendance status with realistic patterns
-      const random = Math.random()
+      // Check if it's a weekend (Friday = 5)
+      const isWeekend = dayOfWeek === 5
+      
       let status, checkIn, checkOut, workingHours, overtime, extraOvertime
+      
+      if (isWeekend) {
+        // Weekend days - mark as weekend
+        status = 'Weekend'
+        checkIn = null
+        checkOut = null
+        workingHours = 0
+        overtime = 0
+        extraOvertime = 0
+      } else {
+        // Weekday - generate normal attendance patterns
+        const random = Math.random()
       
       if (random < 0.70) { // 70% present on time
         status = 'Present-OnTime'
@@ -95,6 +109,7 @@ const generateEmployeeAttendanceData = (month, year) => {
         workingHours = 0
         overtime = 0
         extraOvertime = 0
+      }
       }
 
       employeeAttendance.days.push({
@@ -223,6 +238,8 @@ export default function Timesheet() {
         return 'bg-gray-100 text-gray-800'
       case 'Absent':
         return 'bg-red-100 text-red-800'
+      case 'Weekend':
+        return 'bg-slate-100 text-slate-600'
       default:
         return 'bg-gray-100 text-gray-800'
     }
@@ -249,6 +266,8 @@ export default function Timesheet() {
         return 'W'
       case 'Absent':
         return 'A'
+      case 'Weekend':
+        return 'WE'
       default:
         return '-'
     }
@@ -266,6 +285,7 @@ export default function Timesheet() {
     let totalLeaveSickDays = 0
     let totalLeaveWithoutPayDays = 0
     let totalAbsentDays = 0
+    let totalWeekendDays = 0
     let totalWorkingHours = 0
     let totalOvertime = 0
 
@@ -280,6 +300,7 @@ export default function Timesheet() {
         else if (day.status === 'Leave-Sick') totalLeaveSickDays++
         else if (day.status === 'Leave-WithOutPay') totalLeaveWithoutPayDays++
         else if (day.status === 'Absent') totalAbsentDays++
+        else if (day.status === 'Weekend') totalWeekendDays++
         
         totalWorkingHours += day.workingHours
         totalOvertime += day.overtime
@@ -297,6 +318,7 @@ export default function Timesheet() {
       totalLeaveSickDays,
       totalLeaveWithoutPayDays,
       totalAbsentDays,
+      totalWeekendDays,
       totalWorkingHours: Math.round(totalWorkingHours * 10) / 10,
       totalOvertime: Math.round(totalOvertime * 10) / 10
     }
@@ -363,6 +385,10 @@ export default function Timesheet() {
               <div className="text-sm text-gray-500">Absent Days</div>
               <div className="text-2xl font-bold text-red-600">{summaryStats.totalAbsentDays}</div>
             </div>
+            <div className="bg-white rounded-lg border border-gray-200 p-4">
+              <div className="text-sm text-gray-500">Weekend Days</div>
+              <div className="text-2xl font-bold text-slate-600">{summaryStats.totalWeekendDays}</div>
+            </div>
           </div>
         </div>
 
@@ -404,6 +430,10 @@ export default function Timesheet() {
             <div className="flex items-center">
               <span className="inline-block w-4 h-4 bg-red-100 text-red-800 rounded-full text-xs font-semibold text-center mr-2">A</span>
               <span className="text-gray-600">Absent</span>
+            </div>
+            <div className="flex items-center">
+              <span className="inline-block w-6 h-4 bg-slate-100 text-slate-600 rounded-full text-xs font-semibold text-center mr-2">WE</span>
+              <span className="text-gray-600">Weekend</span>
             </div>
           </div>
         </div>
@@ -516,6 +546,18 @@ export default function Timesheet() {
                   </th>
                 ))}
                 <th className="px-1 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider min-w-[50px] border-l-4 border-black whitespace-nowrap">
+                  Total Days
+                </th>
+                <th className="px-1 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider min-w-[50px] whitespace-nowrap">
+                  Weekend
+                </th>
+                <th className="px-1 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider min-w-[50px] whitespace-nowrap">
+                  Holidays
+                </th>
+                <th className="px-1 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider min-w-[50px] whitespace-nowrap">
+                  Present Day
+                </th>
+                <th className="px-1 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider min-w-[50px] whitespace-nowrap">
                   P-OnTime
                 </th>
                 <th className="px-1 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider min-w-[50px] whitespace-nowrap">
@@ -542,12 +584,23 @@ export default function Timesheet() {
                 <th className="px-1 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider min-w-[50px] whitespace-nowrap">
                   Absent
                 </th>
+                <th className="px-1 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider min-w-[50px] whitespace-nowrap">
+                  Weekend
+                </th>
               </tr>
             </thead>
             <tbody className="bg-white divide-y divide-gray-200">
               {filteredAttendance.map((employee) => {
                 // Calculate legend counts for this employee
                 const legendCounts = {
+                  totalDays: employee.days.length,
+                  weekend: employee.days.filter(day => day.status === 'Weekend').length,
+                  holidays: employee.days.filter(day => day.status === 'Holiday').length, // Will be 0 for now as we don't have holiday logic
+                  presentDay: employee.days.filter(day => 
+                    day.status === 'Present-OnTime' || 
+                    day.status === 'Present-Considered' || 
+                    day.status === 'Present-Late'
+                  ).length,
                   presentOnTime: employee.days.filter(day => day.status === 'Present-OnTime').length,
                   presentConsidered: employee.days.filter(day => day.status === 'Present-Considered').length,
                   presentLate: employee.days.filter(day => day.status === 'Present-Late').length,
@@ -587,6 +640,26 @@ export default function Timesheet() {
                       )
                     })}
                     <td className="px-1 py-4 text-center min-w-[50px] border-l-4 border-black">
+                      <span className="text-blue-600 font-semibold text-sm">
+                        {legendCounts.totalDays}
+                      </span>
+                    </td>
+                    <td className="px-1 py-4 text-center min-w-[50px]">
+                      <span className="text-slate-600 font-semibold text-sm">
+                        {legendCounts.weekend}
+                      </span>
+                    </td>
+                    <td className="px-1 py-4 text-center min-w-[50px]">
+                      <span className="text-purple-600 font-semibold text-sm">
+                        {legendCounts.holidays}
+                      </span>
+                    </td>
+                    <td className="px-1 py-4 text-center min-w-[50px]">
+                      <span className="text-green-600 font-semibold text-sm">
+                        {legendCounts.presentDay}
+                      </span>
+                    </td>
+                    <td className="px-1 py-4 text-center min-w-[50px]">
                       <span className="text-green-600 font-semibold text-sm">
                         {legendCounts.presentOnTime}
                       </span>
@@ -629,6 +702,11 @@ export default function Timesheet() {
                     <td className="px-1 py-4 text-center min-w-[50px]">
                       <span className="text-red-600 font-semibold text-sm">
                         {legendCounts.absent}
+                      </span>
+                    </td>
+                    <td className="px-1 py-4 text-center min-w-[50px]">
+                      <span className="text-slate-600 font-semibold text-sm">
+                        {legendCounts.weekend}
                       </span>
                     </td>
                   </tr>

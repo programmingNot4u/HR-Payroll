@@ -21,6 +21,13 @@ export default function BonusesPenalties() {
     voucherNumber: ''
   })
   
+  const [bonusAmounts, setBonusAmounts] = useState({
+    attendanceBonus: 775,
+    festivalBonus: 5000
+  })
+  
+  const [applyFestivalBonus, setApplyFestivalBonus] = useState(true)
+  
   const [penalties, setPenalties] = useState([])
   const [showPenaltyModal, setShowPenaltyModal] = useState(false)
   const [editingPenalty, setEditingPenalty] = useState(null)
@@ -117,6 +124,10 @@ export default function BonusesPenalties() {
 
   const handleFilterChange = (field, value) => {
     setFilters(prev => ({ ...prev, [field]: value }))
+  }
+
+  const handleBonusAmountChange = (field, value) => {
+    setBonusAmounts(prev => ({ ...prev, [field]: parseFloat(value) || 0 }))
   }
 
   const clearFilters = () => {
@@ -243,6 +254,21 @@ export default function BonusesPenalties() {
     }
   }
 
+  // Calculate festival bonus as 50% of basic salary
+  const calculateFestivalBonus = (employee) => {
+    if (!applyFestivalBonus) {
+      return 0
+    }
+    
+    // Get basic salary from employee data
+    const basicSalary = employee.salaryComponents?.basicSalary?.amount || 
+                       employee.grossSalary || 
+                       employee.salary || 
+                       25000 // fallback amount
+    
+    return Math.round(basicSalary * 0.5) // 50% of basic salary
+  }
+
   // Calculate job age in years and months
   const calculateJobAge = (joiningDate) => {
     if (!joiningDate) return '0 months'
@@ -295,14 +321,14 @@ export default function BonusesPenalties() {
 
   // Calculate totals based on active tab and filters
   const totalFestivalBonuses = filteredEmployees.reduce((sum, emp) => {
-    // Calculate festival bonus based on job tenure (1 year = 5000 BDT)
-    const festivalBonus = isEligibleForFestivalBonus(emp.joiningDate || emp.dateOfJoining) ? 5000 : 0
+    // Calculate festival bonus as 50% of basic salary
+    const festivalBonus = calculateFestivalBonus(emp)
     return sum + festivalBonus
   }, 0)
   
   const totalAttendanceBonuses = filteredEmployees.reduce((sum, emp) => {
-    // Calculate attendance bonus for workers (775 BDT per month)
-    const attendanceBonus = emp.levelOfWork === 'Worker' ? 775 : 0
+    // Calculate attendance bonus for workers using editable amount
+    const attendanceBonus = emp.levelOfWork === 'Worker' ? bonusAmounts.attendanceBonus : 0
     return sum + attendanceBonus
   }, 0)
   
@@ -321,8 +347,8 @@ export default function BonusesPenalties() {
 
   // Show loading state
   if (loading) {
-    return (
-      <div className="space-y-6">
+  return (
+    <div className="space-y-6">
         <div className="flex items-center justify-center py-12">
           <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-orange-600"></div>
           <span className="ml-2 text-gray-600">Loading employee data...</span>
@@ -413,7 +439,8 @@ export default function BonusesPenalties() {
 
       {/* Statistics Cards */}
       <div className={`grid grid-cols-1 gap-6 no-print ${
-        activeTab === 'penalties' ? 'md:grid-cols-5' : 'md:grid-cols-3'
+        activeTab === 'penalties' ? 'md:grid-cols-5' : 
+        activeTab === 'bonuses' ? 'md:grid-cols-4' : 'md:grid-cols-3'
       }`}>
         {activeTab === 'timeline' && (
           <>
@@ -459,6 +486,25 @@ export default function BonusesPenalties() {
               <div className="text-sm text-gray-500">Total Festival Bonuses</div>
               <div className="mt-1 text-2xl font-semibold text-green-600">৳{totalFestivalBonuses.toLocaleString()}</div>
               <div className="text-xs text-gray-500">{eligibleForFestivalBonus} eligible employees</div>
+              <div className="text-xs text-gray-400 mt-1">
+                {filters.department !== 'All' && `Dept: ${filters.department}`} 
+                {filters.levelOfWork !== 'All' && ` • Level: ${filters.levelOfWork}`}
+                {filters.salaryMonth !== 'All' && ` • Month: ${filters.salaryMonth}`}
+                {filters.year !== 'All' && ` • Year: ${filters.year}`}
+              </div>
+            </div>
+            <div className="rounded border border-gray-200 bg-white p-6">
+              <div className="text-sm text-gray-500">Attendance Bonus Amount</div>
+              <div className="mt-2 flex items-center space-x-2">
+                <span className="text-2xl font-semibold text-blue-600">৳</span>
+                <input
+                  type="number"
+                  value={bonusAmounts.attendanceBonus}
+                  onChange={(e) => handleBonusAmountChange('attendanceBonus', e.target.value)}
+                  className="text-2xl font-semibold text-blue-600 bg-transparent border-none outline-none w-24"
+                  style={{ width: 'auto', minWidth: '60px' }}
+                />
+              </div>
               <div className="text-xs text-gray-400 mt-1">
                 {filters.department !== 'All' && `Dept: ${filters.department}`} 
                 {filters.levelOfWork !== 'All' && ` • Level: ${filters.levelOfWork}`}
@@ -632,17 +678,17 @@ export default function BonusesPenalties() {
           {activeTab === 'penalties' && (
             <>
               <div className="flex-1 min-w-0">
-                <label className="block text-sm font-medium text-gray-700 mb-1">Status</label>
-                <select
-                  value={filters.status}
-                  onChange={(e) => handleFilterChange('status', e.target.value)}
+              <label className="block text-sm font-medium text-gray-700 mb-1">Status</label>
+              <select
+                value={filters.status}
+                onChange={(e) => handleFilterChange('status', e.target.value)}
                   className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                >
-                  <option value="All">All</option>
+              >
+                <option value="All">All</option>
                   <option value="Activated">Activated</option>
                   <option value="Deactivated">Deactivated</option>
-                </select>
-              </div>
+              </select>
+            </div>
               <div className="flex-1 min-w-0">
                 <label className="block text-sm font-medium text-gray-700 mb-1">Salary Month</label>
                 <select
@@ -664,7 +710,7 @@ export default function BonusesPenalties() {
                   <option value="November">November</option>
                   <option value="December">December</option>
                 </select>
-              </div>
+        </div>
               <div className="flex-1 min-w-0">
                 <label className="block text-sm font-medium text-gray-700 mb-1">Year</label>
                 <select
@@ -678,7 +724,7 @@ export default function BonusesPenalties() {
                   <option value="2022">2022</option>
                   <option value="2021">2021</option>
                 </select>
-              </div>
+      </div>
               <div className="flex-1 min-w-0">
                 <label className="block text-sm font-medium text-gray-700 mb-1">Voucher Number</label>
                 <input
@@ -765,18 +811,18 @@ export default function BonusesPenalties() {
               </svg>
               Print Results
             </button>
-            {activeTab === 'penalties' && (
-              <button
-                onClick={handleAddPenalty}
+          {activeTab === 'penalties' && (
+            <button
+              onClick={handleAddPenalty}
                 className="px-4 py-2 bg-red-600 text-white rounded-md hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2 flex items-center gap-2 whitespace-nowrap"
-              >
+            >
                 <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
                 </svg>
-                Add New Penalty
-              </button>
-            )}
-          </div>
+              Add New Penalty
+            </button>
+          )}
+        </div>
         </div>
       </div>
 
@@ -839,24 +885,24 @@ export default function BonusesPenalties() {
                     <td className="px-6 py-4 whitespace-nowrap">
                       <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${getLevelColor(employee.levelOfWork)}`}>
                         {employee.levelOfWork}
-                      </span>
+                          </span>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
                       {employee.levelOfWork === 'Worker' ? (
                         <span className="text-sm font-medium text-green-600">
-                          ৳{775}
+                          ৳{bonusAmounts.attendanceBonus}
                         </span>
                       ) : (
                         <span className="text-sm text-gray-400">Not Eligible</span>
                       )}
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
-                      {isEligibleForFestivalBonus(employee.joiningDate || employee.dateOfJoining) ? (
+                      {applyFestivalBonus ? (
                         <span className="text-sm font-medium text-green-600">
-                          ৳{5000}
+                          ৳{calculateFestivalBonus(employee)}
                         </span>
                       ) : (
-                        <span className="text-sm text-gray-400">Not Eligible</span>
+                        <span className="text-sm text-gray-400">Not Applied</span>
                       )}
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-red-600">
@@ -869,8 +915,8 @@ export default function BonusesPenalties() {
                 ))}
               </tbody>
             </table>
-          </div>
-        </div>
+                        </div>
+                        </div>
       )}
 
       {/* Bonuses Tab Content */}
@@ -881,7 +927,8 @@ export default function BonusesPenalties() {
             <p className="text-sm text-gray-500">
               Employee bonus overview including attendance and festival bonuses
             </p>
-          </div>
+                      </div>
+          
           <div className="overflow-x-auto">
             <table className="min-w-full divide-y divide-gray-200 print-table bonuses-table">
               <thead className="bg-gray-50">
@@ -902,7 +949,7 @@ export default function BonusesPenalties() {
                     Level
                   </th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Job Tenure
+                    Basic Salary Grade
                   </th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                     Salary Month
@@ -914,7 +961,15 @@ export default function BonusesPenalties() {
                     Attendance Bonus
                   </th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Festival Bonus
+                    <div className="flex items-center space-x-2">
+                      <span>Festival Bonus</span>
+                      <input
+                        type="checkbox"
+                        checked={applyFestivalBonus}
+                        onChange={(e) => setApplyFestivalBonus(e.target.checked)}
+                        className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
+                      />
+                    </div>
                   </th>
                 </tr>
               </thead>
@@ -939,7 +994,7 @@ export default function BonusesPenalties() {
                       </span>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600">
-                      {calculateJobAge(employee.joiningDate || employee.dateOfJoining)}
+                      {employee.salaryGrade || 'N/A'}
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                       {filters.salaryMonth !== 'All' ? filters.salaryMonth : 'Current Month'}
@@ -950,19 +1005,19 @@ export default function BonusesPenalties() {
                     <td className="px-6 py-4 whitespace-nowrap">
                       {employee.levelOfWork === 'Worker' ? (
                         <span className="text-sm font-medium text-green-600">
-                          ৳{775}
+                          ৳{bonusAmounts.attendanceBonus}
                         </span>
                       ) : (
                         <span className="text-sm text-gray-400">Not Eligible</span>
                       )}
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
-                      {isEligibleForFestivalBonus(employee.joiningDate || employee.dateOfJoining) ? (
+                      {applyFestivalBonus ? (
                         <span className="text-sm font-medium text-green-600">
-                          ৳{5000}
+                          ৳{calculateFestivalBonus(employee)}
                         </span>
                       ) : (
-                        <span className="text-sm text-gray-400">Not Eligible</span>
+                        <span className="text-sm text-gray-400">Not Applied</span>
                       )}
                     </td>
                   </tr>
@@ -1014,7 +1069,13 @@ export default function BonusesPenalties() {
                     Rate of Work
                   </th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Total Overtime Amount
+                    Overtime Amount
+                  </th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    Extra Overtime Amount
+                  </th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    Total Amount
                   </th>
                 </tr>
               </thead>
@@ -1037,7 +1098,7 @@ export default function BonusesPenalties() {
                     
                     return (
                       <tr key={employee.id} className="hover:bg-gray-50">
-                        <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
+                    <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
                           {employee.id}
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
@@ -1064,10 +1125,16 @@ export default function BonusesPenalties() {
                         <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600">
                           ৳{rateOfWork}/hr
                         </td>
+                        <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-blue-600">
+                          ৳{(overtimeHours * rateOfWork).toLocaleString()}
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-purple-600">
+                          ৳{(extraOvertimeHours * rateOfWork).toLocaleString()}
+                        </td>
                         <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-green-600">
                           ৳{totalAmount.toLocaleString()}
-                        </td>
-                      </tr>
+                    </td>
+                  </tr>
                     )
                   })}
               </tbody>
@@ -1104,15 +1171,15 @@ export default function BonusesPenalties() {
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                     Level of Work
                   </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      Penalty Amount
-                    </th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    Penalty Amount
+                  </th>
                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                       Penalty V.Number
                     </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      Reason
-                    </th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    Reason
+                  </th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                     Date
                   </th>
@@ -1149,15 +1216,15 @@ export default function BonusesPenalties() {
                           {employee ? employee.levelOfWork : penalty.levelOfWork}
                         </span>
                       </td>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-red-600">
-                          ৳{penalty.penaltyAmount.toLocaleString()}
-                        </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-red-600">
+                        ৳{penalty.penaltyAmount.toLocaleString()}
+                      </td>
                         <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                           {penalty.penaltyVNumber || 'N/A'}
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 max-w-xs overflow-hidden">
                           <div className="truncate" title={penalty.reason}>{penalty.reason}</div>
-                        </td>
+                      </td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                         {(() => {
                           const date = new Date(penalty.date)
@@ -1170,7 +1237,7 @@ export default function BonusesPenalties() {
                       <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                         {penalty.salaryMonth} {penalty.year}
                       </td>
-                        <td className="px-6 py-4 whitespace-nowrap">
+                      <td className="px-6 py-4 whitespace-nowrap">
                           <span 
                             className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${getStatusColor(penalty.status)} ${
                               penalty.status === 'Activated' ? 'cursor-pointer hover:opacity-80' : ''
@@ -1182,9 +1249,9 @@ export default function BonusesPenalties() {
                             }}
                             title={penalty.status === 'Activated' ? 'Click to view in Performance Table' : ''}
                           >
-                            {penalty.status}
-                          </span>
-                        </td>
+                          {penalty.status}
+                        </span>
+                      </td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
                         <div className="flex space-x-2">
                           <button
@@ -1335,8 +1402,8 @@ export default function BonusesPenalties() {
                     className="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-red-500 focus:border-transparent"
                     placeholder="Enter penalty amount"
                   />
-                  </div>
-                  <div>
+                </div>
+                <div>
                     <label className="block text-sm font-medium text-gray-700 mb-1">Penalty V.Number</label>
                     <input
                       type="text"
@@ -1347,7 +1414,7 @@ export default function BonusesPenalties() {
                     />
                   </div>
                   <div className="md:col-span-2">
-                    <label className="block text-sm font-medium text-gray-700 mb-1">Reason *</label>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Reason *</label>
                   <textarea
                     value={penaltyFormData.reason}
                     onChange={(e) => setPenaltyFormData(prev => ({ ...prev, reason: e.target.value }))}
