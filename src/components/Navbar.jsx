@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react'
 
-export default function Navbar({ onLogout }) {
+export default function Navbar({ onLogout, onNavigate, hasUnreadNotifications }) {
   const [user, setUser] = useState(null)
   const [showUserMenu, setShowUserMenu] = useState(false)
   const [showNotifications, setShowNotifications] = useState(false)
@@ -17,7 +17,8 @@ export default function Navbar({ onLogout }) {
         message: 'Trade License expires in 15 days',
         timestamp: new Date().toISOString(),
         priority: 'high',
-        read: false
+        read: false,
+        targetPage: 'Legal Documents'
       },
       {
         id: 2,
@@ -26,7 +27,8 @@ export default function Navbar({ onLogout }) {
         message: 'Ahmed Khan requested 3 days of casual leave',
         timestamp: new Date(Date.now() - 2 * 60 * 60 * 1000).toISOString(), // 2 hours ago
         priority: 'medium',
-        read: false
+        read: false,
+        targetPage: 'Leave Management'
       },
       {
         id: 3,
@@ -35,7 +37,8 @@ export default function Navbar({ onLogout }) {
         message: 'Fire Safety Certificate expires in 7 days',
         timestamp: new Date(Date.now() - 4 * 60 * 60 * 1000).toISOString(), // 4 hours ago
         priority: 'high',
-        read: false
+        read: false,
+        targetPage: 'Legal Documents'
       },
       {
         id: 4,
@@ -44,7 +47,8 @@ export default function Navbar({ onLogout }) {
         message: 'Fatima Begum requested 1 day of sick leave',
         timestamp: new Date(Date.now() - 6 * 60 * 60 * 1000).toISOString(), // 6 hours ago
         priority: 'medium',
-        read: true
+        read: true,
+        targetPage: 'Leave Management'
       },
       {
         id: 5,
@@ -53,7 +57,8 @@ export default function Navbar({ onLogout }) {
         message: 'Mohammad Hassan requested 5 days of earned leave',
         timestamp: new Date(Date.now() - 8 * 60 * 60 * 1000).toISOString(), // 8 hours ago
         priority: 'low',
-        read: true
+        read: true,
+        targetPage: 'Leave Management'
       }
     ]
     return sampleNotifications
@@ -134,6 +139,19 @@ export default function Navbar({ onLogout }) {
     )
   }
 
+  const handleNotificationClick = (notification) => {
+    // Mark as read
+    markAsRead(notification.id)
+    
+    // Close notification dropdown
+    setShowNotifications(false)
+    
+    // Navigate to target page
+    if (onNavigate && notification.targetPage) {
+      onNavigate(notification.targetPage)
+    }
+  }
+
   const formatTimeAgo = (timestamp) => {
     const now = new Date()
     const time = new Date(timestamp)
@@ -189,11 +207,15 @@ export default function Navbar({ onLogout }) {
           <div className="relative" data-notification-dropdown>
             <button
               onClick={() => setShowNotifications(!showNotifications)}
-              className="relative h-9 w-9 grid place-items-center rounded-full hover:bg-orange-50"
+              className={`relative h-9 w-9 grid place-items-center rounded-full hover:bg-orange-50 transition-colors ${
+                unreadCount > 0 ? 'bg-orange-50' : ''
+              }`}
               aria-label="Notifications"
               title="Notifications"
             >
-              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" className="h-5 w-5 text-orange-600">
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" className={`h-5 w-5 transition-colors ${
+                unreadCount > 0 ? 'text-orange-700 animate-pulse' : 'text-orange-600'
+              }`}>
                 <path d="M12 2a6 6 0 00-6 6v3.586l-.707.707A1 1 0 006 14h12a1 1 0 00.707-1.707L18 11.586V8a6 6 0 00-6-6z" />
                 <path d="M9 18a3 3 0 006 0H9z" />
               </svg>
@@ -227,7 +249,7 @@ export default function Navbar({ onLogout }) {
                     notifications.map((notification) => (
                       <div
                         key={notification.id}
-                        onClick={() => markAsRead(notification.id)}
+                        onClick={() => handleNotificationClick(notification)}
                         className={`px-4 py-3 border-b border-gray-100 hover:bg-gray-50 cursor-pointer ${
                           !notification.read ? 'bg-orange-50' : ''
                         }`}

@@ -97,6 +97,14 @@ function App() {
     setIsAuthenticated(false)
   }
 
+  // Navigation function for notifications
+  const handleNavigate = (page) => {
+    setSelectedItem(page)
+  }
+
+  // Check for unread notifications (sample data - in real app this would come from API)
+  const hasUnreadNotifications = true // This would be calculated from actual notification data
+
   // HR Admin Dashboard
   const Content = useMemo(() => {
     switch (selectedItem) {
@@ -187,9 +195,9 @@ function App() {
 
   return (
     <div className="min-h-screen flex flex-col bg-gray-50">
-      <Navbar onLogout={handleLogout} />
+      <Navbar onLogout={handleLogout} onNavigate={handleNavigate} hasUnreadNotifications={hasUnreadNotifications} />
       <div className="flex flex-1 pt-14">
-        <Sidebar selectedItem={selectedItem} onSelect={setSelectedItem} />
+        <Sidebar selectedItem={selectedItem} onSelect={setSelectedItem} hasUnreadNotifications={hasUnreadNotifications} />
         <main className="flex-1 p-6 ml-72 overflow-y-auto">
           {Content}
         </main>

@@ -126,7 +126,7 @@ const sections = [
   },
 ]
 
-export default function Sidebar({ selectedItem, onSelect }) {
+export default function Sidebar({ selectedItem, onSelect, hasUnreadNotifications }) {
   const [openSections, setOpenSections] = useState(() => {
     const initial = new Set()
     if (selectedItem) {
@@ -147,6 +147,17 @@ export default function Sidebar({ selectedItem, onSelect }) {
 
   return (
     <aside className="fixed left-0 top-14 bottom-0 w-72 overflow-y-auto border-r border-gray-200 bg-white">
+      {/* Alert Indicator */}
+      {hasUnreadNotifications && (
+        <div className="bg-orange-50 border-b border-orange-200 px-4 py-3">
+          <div className="flex items-center gap-2 text-orange-700">
+            <svg className="h-4 w-4 text-orange-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L3.732 16.5c-.77.833.192 2.5 1.732 2.5z" />
+            </svg>
+            <span className="text-sm font-medium">You have unread notifications</span>
+          </div>
+        </div>
+      )}
       <div className="p-4 text-xl font-semibold"></div>
       <nav className="px-2 pb-6">
         {sections.map(section => {
