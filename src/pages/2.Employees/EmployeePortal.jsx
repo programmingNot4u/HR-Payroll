@@ -127,25 +127,25 @@ export default function EmployeePortal() {
           </div>
         </div>
 
-        <div className="max-w-md w-full space-y-8 relative z-10">
+        <div className="max-w-md w-full space-y-8 relative z-10 px-4">
           {/* Logo and Header */}
           <div className="text-center">
-            <div className="mx-auto h-20 w-20 bg-gradient-to-r from-orange-500 to-orange-600 rounded-full flex items-center justify-center mb-6 shadow-lg animate-pulse">
-              <svg className="h-10 w-10 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <div className="mx-auto h-16 w-16 sm:h-20 sm:w-20 bg-gradient-to-r from-orange-500 to-orange-600 rounded-full flex items-center justify-center mb-4 sm:mb-6 shadow-lg animate-pulse">
+              <svg className="h-8 w-8 sm:h-10 sm:w-10 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
               </svg>
             </div>
-            <h2 className="text-4xl font-bold bg-gradient-to-r from-orange-600 to-orange-800 bg-clip-text text-transparent mb-2">
+            <h2 className="text-2xl sm:text-3xl md:text-4xl font-bold bg-gradient-to-r from-orange-600 to-orange-800 bg-clip-text text-transparent mb-2">
               Employee Portal
             </h2>
-            <p className="text-gray-600 text-lg">
+            <p className="text-gray-600 text-sm sm:text-base md:text-lg">
               Welcome back! Please sign in to continue
             </p>
           </div>
 
           {/* Login Form */}
-          <div className="bg-white/80 backdrop-blur-sm rounded-2xl shadow-2xl p-8 border border-white/20">
-            <form className="space-y-6" onSubmit={handleLogin}>
+          <div className="bg-white/80 backdrop-blur-sm rounded-2xl shadow-2xl p-4 sm:p-6 md:p-8 border border-white/20">
+            <form className="space-y-4 sm:space-y-6" onSubmit={handleLogin}>
               <div className="space-y-4">
                 <div className="group">
                   <label htmlFor="employeeId" className="block text-sm font-semibold text-gray-700 mb-2">
@@ -252,30 +252,30 @@ export default function EmployeePortal() {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-50 to-orange-50">
-      <div className="space-y-6 p-6">
+      <div className="space-y-4 sm:space-y-6 p-3 sm:p-4 md:p-6">
         {/* Header */}
-        <div className="bg-white/80 backdrop-blur-sm rounded-2xl shadow-xl p-6 border border-white/20">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center space-x-4">
-              <div className="h-16 w-16 bg-gradient-to-r from-orange-500 to-orange-600 rounded-full flex items-center justify-center shadow-lg">
-                <svg className="h-8 w-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <div className="bg-white/80 backdrop-blur-sm rounded-2xl shadow-xl p-4 sm:p-6 border border-white/20">
+          <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between space-y-4 sm:space-y-0">
+            <div className="flex items-center space-x-3 sm:space-x-4">
+              <div className="h-12 w-12 sm:h-16 sm:w-16 bg-gradient-to-r from-orange-500 to-orange-600 rounded-full flex items-center justify-center shadow-lg">
+                <svg className="h-6 w-6 sm:h-8 sm:w-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
                 </svg>
               </div>
-              <div>
-                <h1 className="text-3xl font-bold bg-gradient-to-r from-orange-600 to-orange-800 bg-clip-text text-transparent">
+              <div className="min-w-0 flex-1">
+                <h1 className="text-xl sm:text-2xl md:text-3xl font-bold bg-gradient-to-r from-orange-600 to-orange-800 bg-clip-text text-transparent truncate">
                   Employee Portal
                 </h1>
-                <p className="text-gray-600 text-lg">Welcome back, <span className="font-semibold text-orange-600">{currentEmployee?.name}</span></p>
-                <p className="text-sm text-gray-500">{currentEmployee?.position} • {currentEmployee?.department}</p>
+                <p className="text-gray-600 text-sm sm:text-base md:text-lg truncate">Welcome back, <span className="font-semibold text-orange-600">{currentEmployee?.name}</span></p>
+                <p className="text-xs sm:text-sm text-gray-500 truncate">{currentEmployee?.position} • {currentEmployee?.department}</p>
               </div>
             </div>
             <button
               onClick={handleLogout}
-              className="group relative bg-gradient-to-r from-red-500 to-red-600 text-white px-6 py-3 rounded-xl hover:from-red-600 hover:to-red-700 transition-all duration-200 transform hover:scale-105 hover:shadow-lg"
+              className="group relative bg-gradient-to-r from-red-500 to-red-600 text-white px-4 py-2 sm:px-6 sm:py-3 rounded-xl hover:from-red-600 hover:to-red-700 transition-all duration-200 transform hover:scale-105 hover:shadow-lg text-sm sm:text-base w-full sm:w-auto"
             >
-              <span className="absolute left-0 inset-y-0 flex items-center pl-3">
-                <svg className="h-5 w-5 text-red-200 group-hover:text-red-100 transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <span className="absolute left-0 inset-y-0 flex items-center pl-2 sm:pl-3">
+                <svg className="h-4 w-4 sm:h-5 sm:w-5 text-red-200 group-hover:text-red-100 transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
                 </svg>
               </span>
@@ -285,31 +285,32 @@ export default function EmployeePortal() {
         </div>
 
         {/* Navigation Tabs */}
-        <div className="bg-white/80 backdrop-blur-sm rounded-2xl shadow-xl p-4 border border-white/20">
-          <nav className="flex space-x-2">
+        <div className="bg-white/80 backdrop-blur-sm rounded-2xl shadow-xl p-2 sm:p-4 border border-white/20">
+          <nav className="flex space-x-1 sm:space-x-2 overflow-x-auto scrollbar-hide">
             {[
-              { id: 'overview', name: 'Overview', icon: 'M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2H5a2 2 0 00-2-2z' },
-              { id: 'attendance', name: 'Attendance', icon: 'M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z' },
-              { id: 'payroll', name: 'Payroll', icon: 'M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1' },
-              { id: 'leave', name: 'Leave Management', icon: 'M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z' },
-              { id: 'timesheet', name: 'Timesheet', icon: 'M9 5H7a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2' },
-              { id: 'assets', name: 'Assigned Assets', icon: 'M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10' }
+              { id: 'overview', name: 'Overview', shortName: 'Overview', icon: 'M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2H5a2 2 0 00-2-2z' },
+              { id: 'attendance', name: 'Attendance', shortName: 'Attendance', icon: 'M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z' },
+              { id: 'payroll', name: 'Payroll', shortName: 'Payroll', icon: 'M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1' },
+              { id: 'leave', name: 'Leave Management', shortName: 'Leave', icon: 'M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z' },
+              { id: 'timesheet', name: 'Timesheet', shortName: 'Timesheet', icon: 'M9 5H7a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2' },
+              { id: 'assets', name: 'Assigned Assets', shortName: 'Assets', icon: 'M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10' }
             ].map((tab) => (
               <button
                 key={tab.id}
                 onClick={() => setActiveTab(tab.id)}
-                className={`group relative flex items-center px-4 py-3 rounded-xl font-medium text-sm transition-all duration-200 transform hover:scale-105 ${
+                className={`group relative flex items-center px-2 sm:px-4 py-2 sm:py-3 rounded-xl font-medium text-xs sm:text-sm transition-all duration-200 transform hover:scale-105 whitespace-nowrap flex-shrink-0 ${
                   activeTab === tab.id
                     ? 'bg-gradient-to-r from-orange-500 to-orange-600 text-white shadow-lg'
                     : 'text-gray-600 hover:text-orange-600 hover:bg-orange-50'
                 }`}
               >
-                <svg className={`w-5 h-5 mr-2 transition-colors ${
+                <svg className={`w-4 h-4 sm:w-5 sm:h-5 mr-1 sm:mr-2 transition-colors ${
                   activeTab === tab.id ? 'text-white' : 'text-gray-400 group-hover:text-orange-500'
                 }`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d={tab.icon} />
                 </svg>
-                {tab.name}
+                <span className="hidden sm:inline">{tab.name}</span>
+                <span className="sm:hidden">{tab.shortName}</span>
                 {activeTab === tab.id && (
                   <div className="absolute -bottom-1 left-1/2 transform -translate-x-1/2 w-2 h-2 bg-orange-500 rounded-full animate-pulse"></div>
                 )}
@@ -321,18 +322,18 @@ export default function EmployeePortal() {
       {/* Tab Content */}
       <div className="mt-6">
         {activeTab === 'overview' && (
-          <div className="space-y-6">
+          <div className="space-y-4 sm:space-y-6">
             {/* Personal Information */}
-            <div className="bg-white/80 backdrop-blur-sm rounded-2xl shadow-xl p-6 border border-white/20 hover:shadow-2xl transition-all duration-300">
-              <div className="flex items-center mb-6">
-                <div className="h-10 w-10 bg-gradient-to-r from-blue-500 to-blue-600 rounded-lg flex items-center justify-center mr-3">
-                  <svg className="h-6 w-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <div className="bg-white/80 backdrop-blur-sm rounded-2xl shadow-xl p-4 sm:p-6 border border-white/20 hover:shadow-2xl transition-all duration-300">
+              <div className="flex items-center mb-4 sm:mb-6">
+                <div className="h-8 w-8 sm:h-10 sm:w-10 bg-gradient-to-r from-blue-500 to-blue-600 rounded-lg flex items-center justify-center mr-2 sm:mr-3">
+                  <svg className="h-5 w-5 sm:h-6 sm:w-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
                   </svg>
                 </div>
-                <h3 className="text-2xl font-bold text-gray-900">Personal Information</h3>
+                <h3 className="text-lg sm:text-xl md:text-2xl font-bold text-gray-900">Personal Information</h3>
               </div>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6">
                 <div className="group p-4 rounded-xl hover:bg-gray-50 transition-colors duration-200">
                   <p className="text-sm font-medium text-gray-500 mb-1">Employee ID</p>
                   <p className="text-lg font-semibold text-gray-900">{currentEmployee?.id}</p>
@@ -369,19 +370,19 @@ export default function EmployeePortal() {
             </div>
 
             {/* Quick Stats */}
-            <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
-              <div className="group bg-white/80 backdrop-blur-sm rounded-2xl shadow-xl p-6 border border-white/20 hover:shadow-2xl transition-all duration-300 transform hover:scale-105">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6">
+              <div className="group bg-white/80 backdrop-blur-sm rounded-2xl shadow-xl p-4 sm:p-6 border border-white/20 hover:shadow-2xl transition-all duration-300 transform hover:scale-105">
                 <div className="flex items-center">
-                  <div className="p-3 bg-gradient-to-r from-green-500 to-green-600 rounded-xl shadow-lg group-hover:scale-110 transition-transform duration-200">
-                    <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <div className="p-2 sm:p-3 bg-gradient-to-r from-green-500 to-green-600 rounded-xl shadow-lg group-hover:scale-110 transition-transform duration-200">
+                    <svg className="w-5 h-5 sm:w-6 sm:h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
                     </svg>
                   </div>
-                  <div className="ml-4">
-                    <p className="text-sm font-medium text-gray-600">Attendance Rate</p>
-                    <p className="text-3xl font-bold text-gray-900 group-hover:text-green-600 transition-colors">95%</p>
-                    <div className="w-full bg-gray-200 rounded-full h-2 mt-2">
-                      <div className="bg-gradient-to-r from-green-500 to-green-600 h-2 rounded-full" style={{width: '95%'}}></div>
+                  <div className="ml-3 sm:ml-4 min-w-0 flex-1">
+                    <p className="text-xs sm:text-sm font-medium text-gray-600">Attendance Rate</p>
+                    <p className="text-xl sm:text-2xl md:text-3xl font-bold text-gray-900 group-hover:text-green-600 transition-colors">95%</p>
+                    <div className="w-full bg-gray-200 rounded-full h-1.5 sm:h-2 mt-1 sm:mt-2">
+                      <div className="bg-gradient-to-r from-green-500 to-green-600 h-1.5 sm:h-2 rounded-full" style={{width: '95%'}}></div>
                     </div>
                   </div>
                 </div>

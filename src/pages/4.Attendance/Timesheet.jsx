@@ -584,9 +584,6 @@ export default function Timesheet() {
                 <th className="px-1 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider min-w-[50px] whitespace-nowrap">
                   Absent
                 </th>
-                <th className="px-1 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider min-w-[50px] whitespace-nowrap">
-                  Weekend
-                </th>
               </tr>
             </thead>
             <tbody className="bg-white divide-y divide-gray-200">
@@ -702,11 +699,6 @@ export default function Timesheet() {
                     <td className="px-1 py-4 text-center min-w-[50px]">
                       <span className="text-red-600 font-semibold text-sm">
                         {legendCounts.absent}
-                      </span>
-                    </td>
-                    <td className="px-1 py-4 text-center min-w-[50px]">
-                      <span className="text-slate-600 font-semibold text-sm">
-                        {legendCounts.weekend}
                       </span>
                     </td>
                   </tr>
