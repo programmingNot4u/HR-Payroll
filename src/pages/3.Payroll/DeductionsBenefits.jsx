@@ -8,8 +8,10 @@ const sampleEmployees = [
     department: 'Sewing',
     designation: 'Senior Tailor',
     levelOfWork: 'Worker',
+    joiningDate: '2020-03-15',
     monthlySalary: 25000,
     attendanceBonus: 775,
+    festivalBonus: 5000,
     totalPenalties: 0
   },
   {
@@ -18,8 +20,10 @@ const sampleEmployees = [
     department: 'Quality Control',
     designation: 'Quality Inspector',
     levelOfWork: 'Staff',
+    joiningDate: '2021-07-10',
     monthlySalary: 35000,
     attendanceBonus: 0,
+    festivalBonus: 7000,
     totalPenalties: 0
   },
   {
@@ -28,8 +32,10 @@ const sampleEmployees = [
     department: 'Production',
     designation: 'Production Manager',
     levelOfWork: 'Staff',
+    joiningDate: '2019-11-22',
     monthlySalary: 45000,
     attendanceBonus: 0,
+    festivalBonus: 9000,
     totalPenalties: 0
   },
   {
@@ -38,8 +44,10 @@ const sampleEmployees = [
     department: 'Cutting',
     designation: 'Cutting Master',
     levelOfWork: 'Worker',
+    joiningDate: '2022-01-08',
     monthlySalary: 28000,
     attendanceBonus: 775,
+    festivalBonus: 5600,
     totalPenalties: 500
   },
   {
@@ -48,8 +56,10 @@ const sampleEmployees = [
     department: 'Maintenance',
     designation: 'Maintenance Engineer',
     levelOfWork: 'Staff',
+    joiningDate: '2020-09-14',
     monthlySalary: 40000,
     attendanceBonus: 0,
+    festivalBonus: 8000,
     totalPenalties: 0
   }
 ]
@@ -60,25 +70,65 @@ const samplePenalties = [
     id: 'PEN001',
     employeeId: 'EMP004',
     employeeName: 'Salma Khatun',
+    designation: 'Cutting Master',
     department: 'Cutting',
     levelOfWork: 'Worker',
-    penaltyAmount: 500,
-    reason: 'Damaged cutting machine blade due to improper usage',
-    date: '2024-01-15',
-    status: 'Active',
+      penaltyAmount: 500,
+      penaltyVNumber: 'PV-2024-001',
+      reason: 'Damaged cutting machine blade due to improper usage',
+      date: '2024-01-15',
+    salaryMonth: 'January',
+    year: '2024',
+    status: 'Activated',
     deductedFromSalary: true
   },
   {
     id: 'PEN002',
     employeeId: 'EMP001',
     employeeName: 'Ahmed Khan',
+    designation: 'Senior Tailor',
     department: 'Sewing',
     levelOfWork: 'Worker',
-    penaltyAmount: 300,
-    reason: 'Damaged sewing machine needle',
-    date: '2024-01-20',
-    status: 'Active',
+      penaltyAmount: 300,
+      penaltyVNumber: 'PV-2024-002',
+      reason: 'Damaged sewing machine needle',
+      date: '2024-01-20',
+    salaryMonth: 'January',
+    year: '2024',
+    status: 'Activated',
     deductedFromSalary: true
+  },
+  {
+    id: 'PEN003',
+    employeeId: 'EMP002',
+    employeeName: 'Fatima Begum',
+    designation: 'Quality Inspector',
+    department: 'Quality Control',
+    levelOfWork: 'Staff',
+      penaltyAmount: 200,
+      penaltyVNumber: 'PV-2024-003',
+      reason: 'Absent without notice',
+      date: '2024-02-10',
+    salaryMonth: 'February',
+    year: '2024',
+    status: 'Activated',
+    deductedFromSalary: false
+  },
+  {
+    id: 'PEN004',
+    employeeId: 'EMP003',
+    employeeName: 'Mohammad Hassan',
+    designation: 'Production Manager',
+    department: 'Production',
+    levelOfWork: 'Staff',
+      penaltyAmount: 150,
+      penaltyVNumber: 'PV-2024-004',
+      reason: 'Equipment damage',
+      date: '2024-02-15',
+    salaryMonth: 'February',
+    year: '2024',
+    status: 'Deactivated',
+    deductedFromSalary: false
   }
 ]
 
@@ -86,20 +136,31 @@ const departments = ['All', 'Sewing', 'Quality Control', 'Production', 'Cutting'
 const levelsOfWork = ['All', 'Worker', 'Staff']
 
 export default function BonusesPenalties() {
-  const [activeTab, setActiveTab] = useState('bonuses')
+  const [activeTab, setActiveTab] = useState('timeline')
   const [filters, setFilters] = useState({
     department: 'All',
     levelOfWork: 'All',
-    status: 'All'
+    status: 'All',
+    salaryMonth: 'All',
+    year: 'All',
+    voucherNumber: ''
   })
   
+  const [penalties, setPenalties] = useState(samplePenalties)
   const [showPenaltyModal, setShowPenaltyModal] = useState(false)
   const [editingPenalty, setEditingPenalty] = useState(null)
   const [penaltyFormData, setPenaltyFormData] = useState({
     employeeId: '',
+    employeeName: '',
+    designation: '',
+    department: '',
+    levelOfWork: '',
     penaltyAmount: '',
     reason: '',
     date: new Date().toISOString().split('T')[0],
+    salaryMonth: '',
+    year: '',
+    status: 'Deactivated',
     deductedFromSalary: true
   })
 
@@ -114,26 +175,49 @@ export default function BonusesPenalties() {
 
   // Filter penalties based on selected filters
   const filteredPenalties = useMemo(() => {
-    return samplePenalties.filter(penalty => {
+    return penalties.filter(penalty => {
       const employee = sampleEmployees.find(emp => emp.id === penalty.employeeId)
-      const matchesDepartment = filters.department === 'All' || employee?.department === filters.department
-      const matchesLevelOfWork = filters.levelOfWork === 'All' || employee?.levelOfWork === filters.levelOfWork
+      const matchesDepartment = filters.department === 'All' || penalty.department === filters.department
+      const matchesLevelOfWork = filters.levelOfWork === 'All' || penalty.levelOfWork === filters.levelOfWork
       const matchesStatus = filters.status === 'All' || penalty.status === filters.status
-      return matchesDepartment && matchesLevelOfWork && matchesStatus
+      const matchesSalaryMonth = filters.salaryMonth === 'All' || penalty.salaryMonth === filters.salaryMonth
+      const matchesYear = filters.year === 'All' || penalty.year === filters.year
+      const matchesVoucherNumber = !filters.voucherNumber || 
+        (penalty.penaltyVNumber && penalty.penaltyVNumber.toLowerCase().includes(filters.voucherNumber.toLowerCase()))
+      return matchesDepartment && matchesLevelOfWork && matchesStatus && matchesSalaryMonth && matchesYear && matchesVoucherNumber
     })
-  }, [filters])
+  }, [penalties, filters])
 
   const handleFilterChange = (field, value) => {
     setFilters(prev => ({ ...prev, [field]: value }))
+  }
+
+  const clearFilters = () => {
+    setFilters({
+      department: 'All',
+      levelOfWork: 'All',
+      status: 'All',
+      salaryMonth: 'All',
+      year: 'All',
+      voucherNumber: ''
+    })
   }
 
   const handleAddPenalty = () => {
     setEditingPenalty(null)
     setPenaltyFormData({
       employeeId: '',
+      employeeName: '',
+      designation: '',
+      department: '',
+      levelOfWork: '',
       penaltyAmount: '',
+      penaltyVNumber: '',
       reason: '',
       date: new Date().toISOString().split('T')[0],
+      salaryMonth: '',
+      year: '',
+      status: 'Activated',
       deductedFromSalary: true
     })
     setShowPenaltyModal(true)
@@ -143,36 +227,56 @@ export default function BonusesPenalties() {
     setEditingPenalty(penalty)
     setPenaltyFormData({
       employeeId: penalty.employeeId,
+      employeeName: penalty.employeeName,
+      designation: penalty.designation,
+      department: penalty.department,
+      levelOfWork: penalty.levelOfWork,
       penaltyAmount: penalty.penaltyAmount,
+      penaltyVNumber: penalty.penaltyVNumber,
       reason: penalty.reason,
       date: penalty.date,
+      salaryMonth: penalty.salaryMonth,
+      year: penalty.year,
+      status: penalty.status,
       deductedFromSalary: penalty.deductedFromSalary
     })
     setShowPenaltyModal(true)
   }
 
   const handlePenaltySubmit = () => {
-    if (!penaltyFormData.employeeId || !penaltyFormData.penaltyAmount || !penaltyFormData.reason) {
+    if (!penaltyFormData.employeeId || !penaltyFormData.employeeName || !penaltyFormData.designation || 
+        !penaltyFormData.department || !penaltyFormData.levelOfWork || !penaltyFormData.penaltyAmount || 
+        !penaltyFormData.reason || !penaltyFormData.salaryMonth || !penaltyFormData.year) {
       alert('Please fill in all required fields')
       return
     }
 
+    const newPenalty = {
+      id: editingPenalty ? editingPenalty.id : `PEN${String(penalties.length + 1).padStart(3, '0')}`,
+      employeeId: penaltyFormData.employeeId,
+      employeeName: penaltyFormData.employeeName,
+      designation: penaltyFormData.designation,
+      department: penaltyFormData.department,
+      levelOfWork: penaltyFormData.levelOfWork,
+      penaltyAmount: parseFloat(penaltyFormData.penaltyAmount),
+      penaltyVNumber: penaltyFormData.penaltyVNumber,
+      reason: penaltyFormData.reason,
+      date: penaltyFormData.date,
+      salaryMonth: penaltyFormData.salaryMonth,
+      year: penaltyFormData.year,
+      status: penaltyFormData.status,
+      deductedFromSalary: penaltyFormData.deductedFromSalary
+    }
+
     if (editingPenalty) {
-      console.log('Updating penalty:', editingPenalty.id, penaltyFormData)
+      setPenalties(prev => prev.map(p => p.id === editingPenalty.id ? newPenalty : p))
       alert('Penalty updated successfully')
     } else {
-      console.log('Adding new penalty:', penaltyFormData)
+      setPenalties(prev => [...prev, newPenalty])
       alert('Penalty added successfully')
     }
 
     setShowPenaltyModal(false)
-    setPenaltyFormData({
-      employeeId: '',
-      penaltyAmount: '',
-      reason: '',
-      date: new Date().toISOString().split('T')[0],
-      deductedFromSalary: true
-    })
   }
 
   const handleTogglePenaltyStatus = (penaltyId, currentStatus) => {
@@ -189,7 +293,12 @@ export default function BonusesPenalties() {
 
   const getStatusColor = (status) => {
     switch (status) {
-      case 'Active': return 'bg-red-100 text-red-800'
+      case 'Activated': return 'bg-green-100 text-green-800'
+      case 'Deactivated': return 'bg-gray-100 text-gray-800'
+      case 'Paid': return 'bg-green-100 text-green-800'
+      case 'Not Paid': return 'bg-red-100 text-red-800'
+      case 'Pending': return 'bg-yellow-100 text-yellow-800'
+      case 'Active': return 'bg-green-100 text-green-800'
       case 'Inactive': return 'bg-gray-100 text-gray-800'
       default: return 'bg-gray-100 text-gray-800'
     }
@@ -203,64 +312,117 @@ export default function BonusesPenalties() {
     }
   }
 
-  // Calculate totals
-  const totalAttendanceBonuses = filteredEmployees.reduce((sum, emp) => sum + emp.attendanceBonus, 0)
+  // Calculate job age in years and months
+  const calculateJobAge = (joiningDate) => {
+    const joinDate = new Date(joiningDate)
+    const currentDate = new Date()
+    const diffTime = Math.abs(currentDate - joinDate)
+    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24))
+    const years = Math.floor(diffDays / 365)
+    const months = Math.floor((diffDays % 365) / 30)
+    
+    if (years > 0) {
+      return `${years} year${years > 1 ? 's' : ''} ${months} month${months > 1 ? 's' : ''}`
+    } else {
+      return `${months} month${months > 1 ? 's' : ''}`
+    }
+  }
+
+  // Check if employee is eligible for festival bonus (1 year or more tenure)
+  const isEligibleForFestivalBonus = (joiningDate) => {
+    const joinDate = new Date(joiningDate)
+    const currentDate = new Date()
+    const diffTime = Math.abs(currentDate - joinDate)
+    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24))
+    const years = Math.floor(diffDays / 365)
+    return years >= 1
+  }
+
+  // Calculate totals based on active tab and filters
+  const totalFestivalBonuses = filteredEmployees.reduce((sum, emp) => {
+    return sum + (isEligibleForFestivalBonus(emp.joiningDate) ? emp.festivalBonus : 0)
+  }, 0)
+  
+  const totalAttendanceBonuses = filteredEmployees.reduce((sum, emp) => {
+    return sum + (emp.levelOfWork === 'Worker' ? emp.attendanceBonus : 0)
+  }, 0)
+  
   const totalPenalties = filteredPenalties.reduce((sum, penalty) => sum + penalty.penaltyAmount, 0)
-  const eligibleWorkers = filteredEmployees.filter(emp => emp.levelOfWork === 'Worker').length
-  const activePenalties = filteredPenalties.filter(penalty => penalty.status === 'Active').length
+  const totalEmployees = filteredEmployees.length
+  const eligibleForFestivalBonus = filteredEmployees.filter(emp => isEligibleForFestivalBonus(emp.joiningDate)).length
+  const eligibleForAttendanceBonus = filteredEmployees.filter(emp => emp.levelOfWork === 'Worker').length
+  const activatedPenalties = filteredPenalties.filter(penalty => penalty.status === 'Activated').length
+  const deactivatedPenalties = filteredPenalties.filter(penalty => penalty.status === 'Deactivated').length
+  const activatedPenaltyAmount = filteredPenalties
+    .filter(penalty => penalty.status === 'Activated')
+    .reduce((sum, penalty) => sum + penalty.penaltyAmount, 0)
+  const deactivatedPenaltyAmount = filteredPenalties
+    .filter(penalty => penalty.status === 'Deactivated')
+    .reduce((sum, penalty) => sum + penalty.penaltyAmount, 0)
 
   return (
     <div className="space-y-6">
+      <style jsx>{`
+        @media print {
+          .no-print {
+            display: none !important;
+          }
+          .print-table {
+            width: 100% !important;
+            font-size: 12px !important;
+          }
+          .print-table th,
+          .print-table td {
+            padding: 8px 4px !important;
+            border: 1px solid #000 !important;
+          }
+          .print-table th {
+            background-color: #f3f4f6 !important;
+            font-weight: bold !important;
+          }
+          .print-filter-info {
+            margin-bottom: 20px !important;
+            padding: 10px !important;
+            background-color: #f9fafb !important;
+            border: 1px solid #e5e7eb !important;
+            border-radius: 6px !important;
+          }
+        }
+      `}</style>
       <div>
         <h1 className="text-2xl font-semibold">Bonuses & Penalties</h1>
         <p className="text-sm text-gray-500">Manage employee attendance bonuses and penalties</p>
       </div>
 
-      {/* Statistics Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
-        <div className="rounded border border-gray-200 bg-white p-6">
-          <div className="text-sm text-gray-500">Total Attendance Bonuses</div>
-          <div className="mt-1 text-2xl font-semibold text-green-600">৳{totalAttendanceBonuses.toLocaleString()}</div>
-          <div className="text-xs text-gray-500">{eligibleWorkers} eligible workers</div>
-        </div>
-        <div className="rounded border border-gray-200 bg-white p-6">
-          <div className="text-sm text-gray-500">Total Penalties</div>
-          <div className="mt-1 text-2xl font-semibold text-red-600">৳{totalPenalties.toLocaleString()}</div>
-          <div className="text-xs text-gray-500">{activePenalties} active penalties</div>
-        </div>
-        <div className="rounded border border-gray-200 bg-white p-6">
-          <div className="text-sm text-gray-500">Eligible Workers</div>
-          <div className="mt-1 text-2xl font-semibold text-blue-600">{eligibleWorkers}</div>
-          <div className="text-xs text-gray-500">For attendance bonus</div>
-        </div>
-        <div className="rounded border border-gray-200 bg-white p-6">
-          <div className="text-sm text-gray-500">Net Impact</div>
-          <div className={`mt-1 text-2xl font-semibold ${totalAttendanceBonuses - totalPenalties >= 0 ? 'text-green-600' : 'text-red-600'}`}>
-            ৳{(totalAttendanceBonuses - totalPenalties).toLocaleString()}
-          </div>
-          <div className="text-xs text-gray-500">Bonuses - Penalties</div>
-        </div>
-      </div>
-
       {/* Tabs */}
-      <div className="border-b border-gray-200">
-        <nav className="-mb-px flex space-x-8">
+      <div className="no-print">
+        <nav className="flex space-x-2 w-full">
           <button
-            onClick={() => setActiveTab('bonuses')}
-            className={`py-2 px-1 border-b-2 font-medium text-sm ${
-              activeTab === 'bonuses'
-                ? 'border-blue-500 text-blue-600'
-                : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+            onClick={() => setActiveTab('timeline')}
+            className={`flex-1 py-4 px-6 font-medium text-sm rounded-lg transition-all duration-200 ${
+              activeTab === 'timeline'
+                ? 'bg-gradient-to-r from-orange-400 to-orange-500 text-white shadow-lg transform scale-105'
+                : 'bg-gray-100 text-gray-600 hover:bg-gradient-to-r hover:from-orange-300 hover:to-orange-400 hover:text-white hover:shadow-md hover:transform hover:scale-105'
             }`}
           >
-            Bonuses ({filteredEmployees.filter(emp => emp.levelOfWork === 'Worker').length})
+            Bonus & Penalties Timeline
+          </button>
+          <button
+            onClick={() => setActiveTab('bonuses')}
+            className={`flex-1 py-4 px-6 font-medium text-sm rounded-lg transition-all duration-200 ${
+              activeTab === 'bonuses'
+                ? 'bg-gradient-to-r from-orange-400 to-orange-500 text-white shadow-lg transform scale-105'
+                : 'bg-gray-100 text-gray-600 hover:bg-gradient-to-r hover:from-orange-300 hover:to-orange-400 hover:text-white hover:shadow-md hover:transform hover:scale-105'
+            }`}
+          >
+            Bonuses ({filteredEmployees.length})
           </button>
           <button
             onClick={() => setActiveTab('penalties')}
-            className={`py-2 px-1 border-b-2 font-medium text-sm ${
+            className={`flex-1 py-4 px-6 font-medium text-sm rounded-lg transition-all duration-200 ${
               activeTab === 'penalties'
-                ? 'border-blue-500 text-blue-600'
-                : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+                ? 'bg-gradient-to-r from-orange-400 to-orange-500 text-white shadow-lg transform scale-105'
+                : 'bg-gray-100 text-gray-600 hover:bg-gradient-to-r hover:from-orange-300 hover:to-orange-400 hover:text-white hover:shadow-md hover:transform hover:scale-105'
             }`}
           >
             Penalties ({filteredPenalties.length})
@@ -268,84 +430,392 @@ export default function BonusesPenalties() {
         </nav>
       </div>
 
+      {/* Statistics Cards */}
+      <div className={`grid grid-cols-1 gap-6 no-print ${
+        activeTab === 'penalties' ? 'md:grid-cols-5' : 'md:grid-cols-3'
+      }`}>
+        {activeTab === 'timeline' && (
+          <>
+            <div className="rounded border border-gray-200 bg-white p-6">
+              <div className="text-sm text-gray-500">Total Festival Bonuses</div>
+              <div className="mt-1 text-2xl font-semibold text-green-600">৳{totalFestivalBonuses.toLocaleString()}</div>
+              <div className="text-xs text-gray-500">{eligibleForFestivalBonus} eligible employees</div>
+              <div className="text-xs text-gray-400 mt-1">
+                {filters.department !== 'All' && `Dept: ${filters.department}`} 
+                {filters.levelOfWork !== 'All' && ` • Level: ${filters.levelOfWork}`}
+                {filters.salaryMonth !== 'All' && ` • Month: ${filters.salaryMonth}`}
+                {filters.year !== 'All' && ` • Year: ${filters.year}`}
+              </div>
+            </div>
+            <div className="rounded border border-gray-200 bg-white p-6">
+              <div className="text-sm text-gray-500">Total Attendance Bonuses</div>
+              <div className="mt-1 text-2xl font-semibold text-blue-600">৳{totalAttendanceBonuses.toLocaleString()}</div>
+              <div className="text-xs text-gray-500">{eligibleForAttendanceBonus} worker employees</div>
+              <div className="text-xs text-gray-400 mt-1">
+                {filters.department !== 'All' && `Dept: ${filters.department}`} 
+                {filters.levelOfWork !== 'All' && ` • Level: ${filters.levelOfWork}`}
+                {filters.salaryMonth !== 'All' && ` • Month: ${filters.salaryMonth}`}
+                {filters.year !== 'All' && ` • Year: ${filters.year}`}
+              </div>
+            </div>
+            <div className="rounded border border-gray-200 bg-white p-6">
+              <div className="text-sm text-gray-500">Total Penalties</div>
+              <div className="mt-1 text-2xl font-semibold text-red-600">৳{totalPenalties.toLocaleString()}</div>
+              <div className="text-xs text-gray-500">{filteredPenalties.length} total penalties</div>
+              <div className="text-xs text-gray-400 mt-1">
+                {filters.department !== 'All' && `Dept: ${filters.department}`} 
+                {filters.levelOfWork !== 'All' && ` • Level: ${filters.levelOfWork}`}
+                {filters.salaryMonth !== 'All' && ` • Month: ${filters.salaryMonth}`}
+                {filters.year !== 'All' && ` • Year: ${filters.year}`}
+              </div>
+            </div>
+          </>
+        )}
+        
+        {activeTab === 'bonuses' && (
+          <>
+            <div className="rounded border border-gray-200 bg-white p-6">
+              <div className="text-sm text-gray-500">Total Festival Bonuses</div>
+              <div className="mt-1 text-2xl font-semibold text-green-600">৳{totalFestivalBonuses.toLocaleString()}</div>
+              <div className="text-xs text-gray-500">{eligibleForFestivalBonus} eligible employees</div>
+              <div className="text-xs text-gray-400 mt-1">
+                {filters.department !== 'All' && `Dept: ${filters.department}`} 
+                {filters.levelOfWork !== 'All' && ` • Level: ${filters.levelOfWork}`}
+                {filters.salaryMonth !== 'All' && ` • Month: ${filters.salaryMonth}`}
+                {filters.year !== 'All' && ` • Year: ${filters.year}`}
+              </div>
+            </div>
+            <div className="rounded border border-gray-200 bg-white p-6">
+              <div className="text-sm text-gray-500">Total Attendance Bonuses</div>
+              <div className="mt-1 text-2xl font-semibold text-blue-600">৳{totalAttendanceBonuses.toLocaleString()}</div>
+              <div className="text-xs text-gray-500">{eligibleForAttendanceBonus} worker employees</div>
+              <div className="text-xs text-gray-400 mt-1">
+                {filters.department !== 'All' && `Dept: ${filters.department}`} 
+                {filters.levelOfWork !== 'All' && ` • Level: ${filters.levelOfWork}`}
+                {filters.salaryMonth !== 'All' && ` • Month: ${filters.salaryMonth}`}
+                {filters.year !== 'All' && ` • Year: ${filters.year}`}
+              </div>
+            </div>
+            <div className="rounded border border-gray-200 bg-white p-6">
+              <div className="text-sm text-gray-500">Total Bonuses</div>
+              <div className="mt-1 text-2xl font-semibold text-green-600">৳{(totalFestivalBonuses + totalAttendanceBonuses).toLocaleString()}</div>
+              <div className="text-xs text-gray-500">Festival + Attendance</div>
+              <div className="text-xs text-gray-400 mt-1">
+                {filters.department !== 'All' && `Dept: ${filters.department}`} 
+                {filters.levelOfWork !== 'All' && ` • Level: ${filters.levelOfWork}`}
+                {filters.salaryMonth !== 'All' && ` • Month: ${filters.salaryMonth}`}
+                {filters.year !== 'All' && ` • Year: ${filters.year}`}
+              </div>
+            </div>
+          </>
+        )}
+        
+        {activeTab === 'penalties' && (
+          <>
+            <div className="rounded border border-gray-200 bg-white p-6">
+              <div className="text-sm text-gray-500">Activated</div>
+              <div className="mt-1 text-2xl font-semibold text-green-600">{activatedPenalties}</div>
+              <div className="text-xs text-gray-500">penalties activated</div>
+              <div className="text-xs text-gray-400 mt-1">
+                {filters.department !== 'All' && `Dept: ${filters.department}`} 
+                {filters.levelOfWork !== 'All' && ` • Level: ${filters.levelOfWork}`}
+                {filters.status !== 'All' && ` • Status: ${filters.status}`}
+                {filters.salaryMonth !== 'All' && ` • Month: ${filters.salaryMonth}`}
+                {filters.year !== 'All' && ` • Year: ${filters.year}`}
+                {filters.voucherNumber && ` • Voucher: ${filters.voucherNumber}`}
+              </div>
+            </div>
+            <div className="rounded border border-gray-200 bg-white p-6">
+              <div className="text-sm text-gray-500">Deactivated</div>
+              <div className="mt-1 text-2xl font-semibold text-gray-600">{deactivatedPenalties}</div>
+              <div className="text-xs text-gray-500">penalties deactivated</div>
+              <div className="text-xs text-gray-400 mt-1">
+                {filters.department !== 'All' && `Dept: ${filters.department}`} 
+                {filters.levelOfWork !== 'All' && ` • Level: ${filters.levelOfWork}`}
+                {filters.status !== 'All' && ` • Status: ${filters.status}`}
+                {filters.salaryMonth !== 'All' && ` • Month: ${filters.salaryMonth}`}
+                {filters.year !== 'All' && ` • Year: ${filters.year}`}
+                {filters.voucherNumber && ` • Voucher: ${filters.voucherNumber}`}
+              </div>
+            </div>
+            <div className="rounded border border-gray-200 bg-white p-6">
+              <div className="text-sm text-gray-500">Activated Penalty Amount</div>
+              <div className="mt-1 text-2xl font-semibold text-green-600">৳{activatedPenaltyAmount.toLocaleString()}</div>
+              <div className="text-xs text-gray-500">{activatedPenalties} activated penalties</div>
+              <div className="text-xs text-gray-400 mt-1">
+                {filters.department !== 'All' && `Dept: ${filters.department}`} 
+                {filters.levelOfWork !== 'All' && ` • Level: ${filters.levelOfWork}`}
+                {filters.status !== 'All' && ` • Status: ${filters.status}`}
+                {filters.salaryMonth !== 'All' && ` • Month: ${filters.salaryMonth}`}
+                {filters.year !== 'All' && ` • Year: ${filters.year}`}
+                {filters.voucherNumber && ` • Voucher: ${filters.voucherNumber}`}
+              </div>
+            </div>
+            <div className="rounded border border-gray-200 bg-white p-6">
+              <div className="text-sm text-gray-500">Deactivated Penalty Amount</div>
+              <div className="mt-1 text-2xl font-semibold text-gray-600">৳{deactivatedPenaltyAmount.toLocaleString()}</div>
+              <div className="text-xs text-gray-500">{deactivatedPenalties} deactivated penalties</div>
+              <div className="text-xs text-gray-400 mt-1">
+                {filters.department !== 'All' && `Dept: ${filters.department}`} 
+                {filters.levelOfWork !== 'All' && ` • Level: ${filters.levelOfWork}`}
+                {filters.status !== 'All' && ` • Status: ${filters.status}`}
+                {filters.salaryMonth !== 'All' && ` • Month: ${filters.salaryMonth}`}
+                {filters.year !== 'All' && ` • Year: ${filters.year}`}
+                {filters.voucherNumber && ` • Voucher: ${filters.voucherNumber}`}
+              </div>
+            </div>
+            <div className="rounded border border-gray-200 bg-white p-6">
+              <div className="text-sm text-gray-500">Total Penalty Amount</div>
+              <div className="mt-1 text-2xl font-semibold text-red-600">৳{totalPenalties.toLocaleString()}</div>
+              <div className="text-xs text-gray-500">{filteredPenalties.length} total penalties</div>
+              <div className="text-xs text-gray-400 mt-1">
+                {filters.department !== 'All' && `Dept: ${filters.department}`} 
+                {filters.levelOfWork !== 'All' && ` • Level: ${filters.levelOfWork}`}
+                {filters.status !== 'All' && ` • Status: ${filters.status}`}
+                {filters.salaryMonth !== 'All' && ` • Month: ${filters.salaryMonth}`}
+                {filters.year !== 'All' && ` • Year: ${filters.year}`}
+                {filters.voucherNumber && ` • Voucher: ${filters.voucherNumber}`}
+              </div>
+            </div>
+          </>
+        )}
+      </div>
+
       {/* Filters */}
-      <div className="bg-white rounded-lg border border-gray-200 p-4">
-        <div className="flex flex-wrap gap-4">
-          <div>
+      <div className="bg-white rounded-lg border border-gray-200 p-4 w-full">
+        <div className="flex flex-nowrap gap-4 items-end w-full">
+          <div className="flex-1 min-w-0">
             <label className="block text-sm font-medium text-gray-700 mb-1">Department</label>
             <select
               value={filters.department}
               onChange={(e) => handleFilterChange('department', e.target.value)}
-              className="border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
             >
               {departments.map(dept => (
                 <option key={dept} value={dept}>{dept}</option>
               ))}
             </select>
           </div>
-          <div>
+          <div className="flex-1 min-w-0">
             <label className="block text-sm font-medium text-gray-700 mb-1">Level of Work</label>
             <select
               value={filters.levelOfWork}
               onChange={(e) => handleFilterChange('levelOfWork', e.target.value)}
-              className="border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
             >
               {levelsOfWork.map(level => (
                 <option key={level} value={level}>{level}</option>
               ))}
             </select>
           </div>
-          {activeTab === 'penalties' && (
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Status</label>
-              <select
-                value={filters.status}
-                onChange={(e) => handleFilterChange('status', e.target.value)}
-                className="border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-              >
-                <option value="All">All</option>
-                <option value="Active">Active</option>
-                <option value="Inactive">Inactive</option>
-              </select>
-            </div>
+          {(activeTab === 'timeline' || activeTab === 'bonuses') && (
+            <>
+              <div className="flex-1 min-w-0">
+                <label className="block text-sm font-medium text-gray-700 mb-1">Salary Month</label>
+                <select
+                  value={filters.salaryMonth}
+                  onChange={(e) => handleFilterChange('salaryMonth', e.target.value)}
+                  className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                >
+                  <option value="All">All</option>
+                  <option value="January">January</option>
+                  <option value="February">February</option>
+                  <option value="March">March</option>
+                  <option value="April">April</option>
+                  <option value="May">May</option>
+                  <option value="June">June</option>
+                  <option value="July">July</option>
+                  <option value="August">August</option>
+                  <option value="September">September</option>
+                  <option value="October">October</option>
+                  <option value="November">November</option>
+                  <option value="December">December</option>
+                </select>
+              </div>
+              <div className="flex-1 min-w-0">
+                <label className="block text-sm font-medium text-gray-700 mb-1">Year</label>
+                <select
+                  value={filters.year}
+                  onChange={(e) => handleFilterChange('year', e.target.value)}
+                  className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                >
+                  <option value="All">All</option>
+                  <option value="2024">2024</option>
+                  <option value="2023">2023</option>
+                  <option value="2022">2022</option>
+                  <option value="2021">2021</option>
+                </select>
+              </div>
+            </>
           )}
-        </div>
-      </div>
-
-      {/* Action Buttons */}
-      <div className="flex justify-between items-center">
-        <div className="flex space-x-3">
           {activeTab === 'penalties' && (
+            <>
+              <div className="flex-1 min-w-0">
+                <label className="block text-sm font-medium text-gray-700 mb-1">Status</label>
+                <select
+                  value={filters.status}
+                  onChange={(e) => handleFilterChange('status', e.target.value)}
+                  className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                >
+                  <option value="All">All</option>
+                  <option value="Activated">Activated</option>
+                  <option value="Deactivated">Deactivated</option>
+                </select>
+              </div>
+              <div className="flex-1 min-w-0">
+                <label className="block text-sm font-medium text-gray-700 mb-1">Salary Month</label>
+                <select
+                  value={filters.salaryMonth}
+                  onChange={(e) => handleFilterChange('salaryMonth', e.target.value)}
+                  className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                >
+                  <option value="All">All</option>
+                  <option value="January">January</option>
+                  <option value="February">February</option>
+                  <option value="March">March</option>
+                  <option value="April">April</option>
+                  <option value="May">May</option>
+                  <option value="June">June</option>
+                  <option value="July">July</option>
+                  <option value="August">August</option>
+                  <option value="September">September</option>
+                  <option value="October">October</option>
+                  <option value="November">November</option>
+                  <option value="December">December</option>
+                </select>
+              </div>
+              <div className="flex-1 min-w-0">
+                <label className="block text-sm font-medium text-gray-700 mb-1">Year</label>
+                <select
+                  value={filters.year}
+                  onChange={(e) => handleFilterChange('year', e.target.value)}
+                  className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                >
+                  <option value="All">All</option>
+                  <option value="2024">2024</option>
+                  <option value="2023">2023</option>
+                  <option value="2022">2022</option>
+                  <option value="2021">2021</option>
+                </select>
+              </div>
+              <div className="flex-1 min-w-0">
+                <label className="block text-sm font-medium text-gray-700 mb-1">Voucher Number</label>
+                <input
+                  type="text"
+                  value={filters.voucherNumber}
+                  onChange={(e) => handleFilterChange('voucherNumber', e.target.value)}
+                  className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  placeholder="Search by voucher number..."
+                />
+              </div>
+            </>
+          )}
+          <div className="flex items-end gap-2 flex-shrink-0">
             <button
-              onClick={handleAddPenalty}
-              className="bg-red-600 text-white px-4 py-2 rounded-md hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2"
+              onClick={clearFilters}
+              className="px-4 py-2 text-sm text-gray-600 hover:text-gray-800 border border-gray-300 rounded-md hover:bg-gray-50 whitespace-nowrap"
             >
-              Add New Penalty
+              Clear Filters
             </button>
-          )}
-        </div>
-        <div className="flex space-x-3">
-          <button className="border border-gray-300 text-gray-700 px-4 py-2 rounded-md hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2">
-            Export
-          </button>
+            <button 
+              onClick={() => {
+                let tableElement, tableTitle, tableDescription, resultCount, resultType
+                
+                if (activeTab === 'timeline') {
+                  tableElement = document.querySelector('.bonuses-table')
+                  tableTitle = 'Performance Table'
+                  tableDescription = 'Employee performance overview including bonuses, penalties, and job tenure'
+                  resultCount = filteredEmployees.length
+                  resultType = 'employees'
+                } else if (activeTab === 'bonuses') {
+                  tableElement = document.querySelector('.bonuses-table')
+                  tableTitle = 'Employee Bonuses'
+                  tableDescription = 'Employee bonus overview including attendance and festival bonuses'
+                  resultCount = filteredEmployees.length
+                  resultType = 'employees'
+                } else if (activeTab === 'penalties') {
+                  tableElement = document.querySelector('.penalties-table')
+                  tableTitle = 'Employee Penalties'
+                  tableDescription = 'Penalties for damage to company property or products, deducted from monthly salary'
+                  resultCount = filteredPenalties.length
+                  resultType = 'penalties'
+                }
+                
+                if (!tableElement) {
+                  alert('Table not found for printing')
+                  return
+                }
+                
+                const printWindow = window.open('', '_blank')
+                
+                printWindow.document.write(`
+                  <html>
+                    <head>
+                      <title>${tableTitle} - Print</title>
+                      <style>
+                        body { font-family: Arial, sans-serif; margin: 20px; }
+                        .print-table { width: 100%; border-collapse: collapse; font-size: 12px; }
+                        .print-table th, .print-table td { padding: 8px 4px; border: 1px solid #000; text-align: left; }
+                        .print-table th { background-color: #f3f4f6; font-weight: bold; }
+                        h2 { margin: 0 0 10px 0; }
+                        p { margin: 0 0 20px 0; color: #666; }
+                      </style>
+                    </head>
+                    <body>
+                      <h2>${tableTitle}</h2>
+                      <p>${tableDescription}</p>
+                      ${tableElement.outerHTML}
+                    </body>
+                  </html>
+                `)
+                printWindow.document.close()
+                printWindow.print()
+              }}
+              className="px-4 py-2 bg-orange-600 text-white rounded-md hover:bg-orange-700 focus:outline-none focus:ring-2 focus:ring-orange-500 focus:ring-offset-2 flex items-center gap-2 whitespace-nowrap"
+            >
+              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z" />
+              </svg>
+              Print Results
+            </button>
+            {activeTab === 'penalties' && (
+              <button
+                onClick={handleAddPenalty}
+                className="px-4 py-2 bg-red-600 text-white rounded-md hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2 flex items-center gap-2 whitespace-nowrap"
+              >
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
+                </svg>
+                Add New Penalty
+              </button>
+            )}
+          </div>
         </div>
       </div>
 
-      {/* Bonuses Tab Content */}
-      {activeTab === 'bonuses' && (
+
+      {/* Timeline Tab Content */}
+      {activeTab === 'timeline' && (
         <div className="bg-white rounded-lg border border-gray-200 overflow-hidden">
           <div className="px-6 py-4 border-b border-gray-200">
-            <h2 className="text-lg font-medium text-gray-900">Attendance Bonuses</h2>
+            <h2 className="text-lg font-medium text-gray-900">Performance Table</h2>
             <p className="text-sm text-gray-500">
-              Workers who attend every day of a month on time receive ৳775 attendance bonus
+              Employee performance overview including bonuses, penalties, and job tenure
             </p>
           </div>
+          
           <div className="overflow-x-auto">
-            <table className="min-w-full divide-y divide-gray-200">
+            <table className="min-w-full divide-y divide-gray-200 print-table bonuses-table">
               <thead className="bg-gray-50">
                 <tr>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Employee
+                    Employee ID
+                  </th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    Employee Name
+                  </th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    Designation
                   </th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                     Department
@@ -354,43 +824,41 @@ export default function BonusesPenalties() {
                     Level
                   </th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Monthly Salary
+                    Job Tenure
                   </th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                     Attendance Bonus
                   </th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Total Penalties
+                    Festival Bonus
                   </th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Net Salary
+                    Penalties
                   </th>
                 </tr>
               </thead>
               <tbody className="bg-white divide-y divide-gray-200">
                 {filteredEmployees.map((employee) => (
                   <tr key={employee.id} className="hover:bg-gray-50">
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <div className="flex items-center">
-                        <div className="h-10 w-10 rounded-full bg-blue-600 flex items-center justify-center">
-                          <span className="text-sm font-medium text-white">
-                            {employee.id.replace('EMP', '')}
-                          </span>
-                        </div>
-                        <div className="ml-4">
-                          <div className="text-sm font-medium text-gray-900">{employee.name}</div>
-                          <div className="text-sm text-gray-500">{employee.designation}</div>
-                        </div>
-                      </div>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
+                      {employee.id}
                     </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{employee.department}</td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                      {employee.name}
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                      {employee.designation}
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                      {employee.department}
+                    </td>
                     <td className="px-6 py-4 whitespace-nowrap">
                       <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${getLevelColor(employee.levelOfWork)}`}>
                         {employee.levelOfWork}
                       </span>
                     </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                      ৳{employee.monthlySalary.toLocaleString()}
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600">
+                      {calculateJobAge(employee.joiningDate)}
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
                       {employee.levelOfWork === 'Worker' ? (
@@ -401,11 +869,117 @@ export default function BonusesPenalties() {
                         <span className="text-sm text-gray-400">Not Eligible</span>
                       )}
                     </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-red-600">
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      {isEligibleForFestivalBonus(employee.joiningDate) ? (
+                        <span className="text-sm font-medium text-green-600">
+                          ৳{employee.festivalBonus.toLocaleString()}
+                        </span>
+                      ) : (
+                        <span className="text-sm text-gray-400">Not Eligible</span>
+                      )}
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-red-600">
                       ৳{employee.totalPenalties.toLocaleString()}
                     </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      )}
+
+      {/* Bonuses Tab Content */}
+      {activeTab === 'bonuses' && (
+        <div className="bg-white rounded-lg border border-gray-200 overflow-hidden">
+          <div className="px-6 py-4 border-b border-gray-200">
+            <h2 className="text-lg font-medium text-gray-900">Employee Bonuses</h2>
+            <p className="text-sm text-gray-500">
+              Employee bonus overview including attendance and festival bonuses
+            </p>
+          </div>
+          <div className="overflow-x-auto">
+            <table className="min-w-full divide-y divide-gray-200 print-table bonuses-table">
+              <thead className="bg-gray-50">
+                <tr>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    Employee ID
+                  </th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    Employee Name
+                  </th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    Designation
+                  </th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    Department
+                  </th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    Level
+                  </th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    Job Tenure
+                  </th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    Salary Month
+                  </th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    Year
+                  </th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    Attendance Bonus
+                  </th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    Festival Bonus
+                  </th>
+                </tr>
+              </thead>
+              <tbody className="bg-white divide-y divide-gray-200">
+                {filteredEmployees.map((employee) => (
+                  <tr key={employee.id} className="hover:bg-gray-50">
                     <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
-                      ৳{(employee.monthlySalary + employee.attendanceBonus - employee.totalPenalties).toLocaleString()}
+                      {employee.id}
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                      {employee.name}
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                      {employee.designation}
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                      {employee.department}
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${getLevelColor(employee.levelOfWork)}`}>
+                        {employee.levelOfWork}
+                      </span>
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600">
+                      {calculateJobAge(employee.joiningDate)}
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                      {filters.salaryMonth !== 'All' ? filters.salaryMonth : 'Current Month'}
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                      {filters.year !== 'All' ? filters.year : new Date().getFullYear()}
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      {employee.levelOfWork === 'Worker' ? (
+                        <span className="text-sm font-medium text-green-600">
+                          ৳{employee.attendanceBonus.toLocaleString()}
+                        </span>
+                      ) : (
+                        <span className="text-sm text-gray-400">Not Eligible</span>
+                      )}
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      {isEligibleForFestivalBonus(employee.joiningDate) ? (
+                        <span className="text-sm font-medium text-green-600">
+                          ৳{employee.festivalBonus.toLocaleString()}
+                        </span>
+                      ) : (
+                        <span className="text-sm text-gray-400">Not Eligible</span>
+                      )}
                     </td>
                   </tr>
                 ))}
@@ -425,26 +999,38 @@ export default function BonusesPenalties() {
             </p>
           </div>
           <div className="overflow-x-auto">
-            <table className="min-w-full divide-y divide-gray-200">
+            <table className="min-w-full divide-y divide-gray-200 penalties-table">
               <thead className="bg-gray-50">
                 <tr>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Employee
+                    Employee ID
+                  </th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    Employee Name
+                  </th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    Designation
                   </th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                     Department
                   </th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Level
+                    Level of Work
                   </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Penalty Amount
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Reason
-                  </th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      Penalty Amount
+                    </th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      Penalty V.Number
+                    </th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      Reason
+                    </th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                     Date
+                  </th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    Adjusted from Salary Month
                   </th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                     Status
@@ -459,31 +1045,32 @@ export default function BonusesPenalties() {
                   const employee = sampleEmployees.find(emp => emp.id === penalty.employeeId)
                   return (
                     <tr key={penalty.id} className="hover:bg-gray-50">
-                      <td className="px-6 py-4 whitespace-nowrap">
-                        <div className="flex items-center">
-                          <div className="h-10 w-10 rounded-full bg-red-600 flex items-center justify-center">
-                            <span className="text-sm font-medium text-white">
-                              {penalty.employeeId.replace('EMP', '')}
-                            </span>
-                          </div>
-                          <div className="ml-4">
-                            <div className="text-sm font-medium text-gray-900">{penalty.employeeName}</div>
-                            <div className="text-sm text-gray-500">{penalty.employeeId}</div>
-                          </div>
-                        </div>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
+                        {penalty.employeeId}
                       </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{employee?.department}</td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                        {penalty.employeeName}
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                        {penalty.designation}
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                        {penalty.department}
+                      </td>
                       <td className="px-6 py-4 whitespace-nowrap">
-                        <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${getLevelColor(employee?.levelOfWork)}`}>
-                          {employee?.levelOfWork}
+                        <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${getLevelColor(penalty.levelOfWork)}`}>
+                          {penalty.levelOfWork}
                         </span>
                       </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-red-600">
-                        ৳{penalty.penaltyAmount.toLocaleString()}
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 max-w-xs">
-                        {penalty.reason}
-                      </td>
+                        <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-red-600">
+                          ৳{penalty.penaltyAmount.toLocaleString()}
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                          {penalty.penaltyVNumber || 'N/A'}
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 max-w-xs overflow-hidden">
+                          <div className="truncate" title={penalty.reason}>{penalty.reason}</div>
+                        </td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                         {(() => {
                           const date = new Date(penalty.date)
@@ -493,11 +1080,24 @@ export default function BonusesPenalties() {
                           return `${day}/${month}/${year}`
                         })()}
                       </td>
-                      <td className="px-6 py-4 whitespace-nowrap">
-                        <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${getStatusColor(penalty.status)}`}>
-                          {penalty.status}
-                        </span>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                        {penalty.salaryMonth} {penalty.year}
                       </td>
+                        <td className="px-6 py-4 whitespace-nowrap">
+                          <span 
+                            className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${getStatusColor(penalty.status)} ${
+                              penalty.status === 'Activated' ? 'cursor-pointer hover:opacity-80' : ''
+                            }`}
+                            onClick={() => {
+                              if (penalty.status === 'Activated') {
+                                setActiveTab('timeline')
+                              }
+                            }}
+                            title={penalty.status === 'Activated' ? 'Click to view in Performance Table' : ''}
+                          >
+                            {penalty.status}
+                          </span>
+                        </td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
                         <div className="flex space-x-2">
                           <button
@@ -505,12 +1105,6 @@ export default function BonusesPenalties() {
                             className="text-blue-600 hover:text-blue-900"
                           >
                             Edit
-                          </button>
-                          <button
-                            onClick={() => handleTogglePenaltyStatus(penalty.id, penalty.status)}
-                            className={penalty.status === 'Active' ? 'text-yellow-600 hover:text-yellow-900' : 'text-green-600 hover:text-green-900'}
-                          >
-                            {penalty.status === 'Active' ? 'Deactivate' : 'Activate'}
                           </button>
                           <button
                             onClick={() => handleDeletePenalty(penalty.id)}
@@ -532,24 +1126,116 @@ export default function BonusesPenalties() {
       {/* Add/Edit Penalty Modal */}
       {showPenaltyModal && (
         <div className="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50">
-          <div className="relative top-20 mx-auto p-5 border w-96 shadow-lg rounded-md bg-white">
+          <div className="relative top-10 mx-auto p-5 border w-4/5 max-w-4xl shadow-lg rounded-md bg-white">
             <div className="mt-3">
               <h3 className="text-lg font-medium text-gray-900 mb-4">
                 {editingPenalty ? 'Edit' : 'Add New'} Penalty
               </h3>
-              <div className="space-y-4">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Employee *</label>
-                  <select
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Employee ID *</label>
+                  <input
+                    type="text"
                     value={penaltyFormData.employeeId}
-                    onChange={(e) => setPenaltyFormData(prev => ({ ...prev, employeeId: e.target.value }))}
+                    onChange={(e) => {
+                      const employeeId = e.target.value
+                      setPenaltyFormData(prev => ({ ...prev, employeeId }))
+                      
+                      // Auto-fill other fields when employee ID is entered
+                      if (employeeId) {
+                        const employee = sampleEmployees.find(emp => emp.id === employeeId)
+                        if (employee) {
+                          setPenaltyFormData(prev => ({
+                            ...prev,
+                            employeeId,
+                            employeeName: employee.name,
+                            designation: employee.designation,
+                            department: employee.department,
+                            levelOfWork: employee.levelOfWork
+                          }))
+                        }
+                      } else {
+                        // Clear fields if employee ID is empty
+                        setPenaltyFormData(prev => ({
+                          ...prev,
+                          employeeId: '',
+                          employeeName: '',
+                          designation: '',
+                          department: '',
+                          levelOfWork: ''
+                        }))
+                      }
+                    }}
                     className="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-red-500 focus:border-transparent"
+                    placeholder="e.g., EMP001"
+                  />
+                  <p className="text-xs text-gray-500 mt-1">
+                    Enter Employee ID to auto-fill other fields (EMP001, EMP002, EMP003, EMP004, EMP005)
+                  </p>
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Employee Name * 
+                    {penaltyFormData.employeeId && (
+                      <span className="text-xs text-green-600 ml-1">(Auto-filled)</span>
+                    )}
+                  </label>
+                  <input
+                    type="text"
+                    value={penaltyFormData.employeeName}
+                    readOnly
+                    className="w-full border border-gray-300 rounded-md px-3 py-2 bg-gray-50 text-gray-700 cursor-not-allowed"
+                    placeholder="Will be auto-filled when Employee ID is entered"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Designation * 
+                    {penaltyFormData.employeeId && (
+                      <span className="text-xs text-green-600 ml-1">(Auto-filled)</span>
+                    )}
+                  </label>
+                  <input
+                    type="text"
+                    value={penaltyFormData.designation}
+                    readOnly
+                    className="w-full border border-gray-300 rounded-md px-3 py-2 bg-gray-50 text-gray-700 cursor-not-allowed"
+                    placeholder="Will be auto-filled when Employee ID is entered"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Department * 
+                    {penaltyFormData.employeeId && (
+                      <span className="text-xs text-green-600 ml-1">(Auto-filled)</span>
+                    )}
+                  </label>
+                  <select
+                    value={penaltyFormData.department}
+                    disabled
+                    className="w-full border border-gray-300 rounded-md px-3 py-2 bg-gray-50 text-gray-700 cursor-not-allowed"
                   >
-                    <option value="">Select Employee</option>
-                    {filteredEmployees.map(employee => (
-                      <option key={employee.id} value={employee.id}>
-                        {employee.name} ({employee.id}) - {employee.department}
-                      </option>
+                    <option value="">Will be auto-filled when Employee ID is entered</option>
+                    {departments.filter(d => d !== 'All').map(dept => (
+                      <option key={dept} value={dept}>{dept}</option>
+                    ))}
+                  </select>
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Level of Work * 
+                    {penaltyFormData.employeeId && (
+                      <span className="text-xs text-green-600 ml-1">(Auto-filled)</span>
+                    )}
+                  </label>
+                  <select
+                    value={penaltyFormData.levelOfWork}
+                    disabled
+                    className="w-full border border-gray-300 rounded-md px-3 py-2 bg-gray-50 text-gray-700 cursor-not-allowed"
+                  >
+                    <option value="">Will be auto-filled when Employee ID is entered</option>
+                    {levelsOfWork.filter(l => l !== 'All').map(level => (
+                      <option key={level} value={level}>{level}</option>
                     ))}
                   </select>
                 </div>
@@ -562,25 +1248,82 @@ export default function BonusesPenalties() {
                     className="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-red-500 focus:border-transparent"
                     placeholder="Enter penalty amount"
                   />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Reason *</label>
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">Penalty V.Number</label>
+                    <input
+                      type="text"
+                      value={penaltyFormData.penaltyVNumber}
+                      onChange={(e) => setPenaltyFormData(prev => ({ ...prev, penaltyVNumber: e.target.value }))}
+                      className="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-red-500 focus:border-transparent"
+                      placeholder="Enter penalty voucher number"
+                    />
+                  </div>
+                  <div className="md:col-span-2">
+                    <label className="block text-sm font-medium text-gray-700 mb-1">Reason *</label>
                   <textarea
                     value={penaltyFormData.reason}
                     onChange={(e) => setPenaltyFormData(prev => ({ ...prev, reason: e.target.value }))}
                     className="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-red-500 focus:border-transparent"
-                    rows="3"
+                    rows="5"
                     placeholder="Describe the reason for penalty..."
                   />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Date</label>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Date *</label>
                   <input
                     type="date"
                     value={penaltyFormData.date}
                     onChange={(e) => setPenaltyFormData(prev => ({ ...prev, date: e.target.value }))}
                     className="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-red-500 focus:border-transparent"
                   />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Adjusted from Salary Month *</label>
+                  <select
+                    value={penaltyFormData.salaryMonth}
+                    onChange={(e) => setPenaltyFormData(prev => ({ ...prev, salaryMonth: e.target.value }))}
+                    className="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-red-500 focus:border-transparent"
+                  >
+                    <option value="">Select Month</option>
+                    <option value="January">January</option>
+                    <option value="February">February</option>
+                    <option value="March">March</option>
+                    <option value="April">April</option>
+                    <option value="May">May</option>
+                    <option value="June">June</option>
+                    <option value="July">July</option>
+                    <option value="August">August</option>
+                    <option value="September">September</option>
+                    <option value="October">October</option>
+                    <option value="November">November</option>
+                    <option value="December">December</option>
+                  </select>
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Year *</label>
+                  <select
+                    value={penaltyFormData.year}
+                    onChange={(e) => setPenaltyFormData(prev => ({ ...prev, year: e.target.value }))}
+                    className="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-red-500 focus:border-transparent"
+                  >
+                    <option value="">Select Year</option>
+                    <option value="2024">2024</option>
+                    <option value="2023">2023</option>
+                    <option value="2022">2022</option>
+                    <option value="2021">2021</option>
+                  </select>
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Status *</label>
+                  <select
+                    value={penaltyFormData.status}
+                    onChange={(e) => setPenaltyFormData(prev => ({ ...prev, status: e.target.value }))}
+                    className="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-red-500 focus:border-transparent"
+                  >
+                    <option value="Activated">Activated</option>
+                    <option value="Deactivated">Deactivated</option>
+                  </select>
                 </div>
                 <div className="flex items-center">
                   <input

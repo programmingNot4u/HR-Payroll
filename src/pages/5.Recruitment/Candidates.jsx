@@ -1,4 +1,5 @@
-import React, { useState } from 'react'
+import React, { useState, useEffect } from 'react'
+import organizationalDataService from '../../services/organizationalDataService'
 
 const Candidates = () => {
   const [candidates, setCandidates] = useState([
@@ -8,7 +9,9 @@ const Candidates = () => {
       email: 'ahmed.rahman@email.com',
       phone: '+880 1712-345678',
       position: 'Senior Production Manager',
+      designation: 'Production Manager',
       department: 'Production',
+      jobId: 'JOB-001',
       experience: '7 years',
       education: 'BSc Textile Engineering',
       location: 'Dhaka, Bangladesh',
@@ -26,7 +29,9 @@ const Candidates = () => {
       email: 'fatima.begum@email.com',
       phone: '+880 1812-345678',
       position: 'Quality Control Supervisor',
+      designation: 'Quality Supervisor',
       department: 'Quality Assurance',
+      jobId: 'JOB-002',
       experience: '4 years',
       education: 'Diploma Textile Technology',
       location: 'Chittagong, Bangladesh',
@@ -44,7 +49,9 @@ const Candidates = () => {
       email: 'karim.hossain@email.com',
       phone: '+880 1912-345678',
       position: 'Fashion Designer',
+      designation: 'Designer',
       department: 'Design',
+      jobId: 'JOB-003',
       experience: '3 years',
       education: 'BSc Fashion Design',
       location: 'Dhaka, Bangladesh',
@@ -62,7 +69,9 @@ const Candidates = () => {
       email: 'nusrat.jahan@email.com',
       phone: '+880 1612-345678',
       position: 'Machine Operator',
+      designation: 'Operator',
       department: 'Production',
+      jobId: 'JOB-004',
       experience: '2 years',
       education: 'High School',
       location: 'Narayanganj, Bangladesh',
@@ -80,7 +89,9 @@ const Candidates = () => {
       email: 'rashid.ahmed@email.com',
       phone: '+880 1512-345678',
       position: 'HR Coordinator',
+      designation: 'HR Coordinator',
       department: 'Human Resources',
+      jobId: 'JOB-005',
       experience: '3 years',
       education: 'BBA HRM',
       location: 'Dhaka, Bangladesh',
@@ -95,23 +106,28 @@ const Candidates = () => {
   ])
 
   const [searchTerm, setSearchTerm] = useState('')
-  const [filterStatus, setFilterStatus] = useState('')
   const [filterDepartment, setFilterDepartment] = useState('')
-  const [filterSource, setFilterSource] = useState('')
+  const [filterDesignation, setFilterDesignation] = useState('')
 
-  const statuses = ['Applied', 'Under Review', 'Shortlisted', 'Interview Scheduled', 'Hired', 'Rejected']
-  const departments = ['Production', 'Quality Assurance', 'Design', 'Human Resources', 'Finance', 'Marketing']
-  const sources = ['LinkedIn', 'Company Website', 'Job Portal', 'Referral', 'University', 'Other']
+  // Load organizational data
+  const [departments, setDepartments] = useState([])
+  const [designations, setDesignations] = useState([])
+
+  useEffect(() => {
+    // Load departments and designations from organizational data service
+    setDepartments(organizationalDataService.getDepartmentNames())
+    setDesignations(organizationalDataService.getDesignationNames())
+  }, [])
 
   const filteredCandidates = candidates.filter(candidate => {
     const matchesSearch = candidate.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
                          candidate.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         candidate.position.toLowerCase().includes(searchTerm.toLowerCase())
-    const matchesStatus = filterStatus === '' || candidate.status === filterStatus
+                         candidate.position.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                         candidate.jobId.toLowerCase().includes(searchTerm.toLowerCase())
     const matchesDepartment = filterDepartment === '' || candidate.department === filterDepartment
-    const matchesSource = filterSource === '' || candidate.source === filterSource
+    const matchesDesignation = filterDesignation === '' || candidate.designation === filterDesignation
 
-    return matchesSearch && matchesStatus && matchesDepartment && matchesSource
+    return matchesSearch && matchesDepartment && matchesDesignation
   })
 
   const totalCandidates = candidates.length
@@ -135,9 +151,63 @@ const Candidates = () => {
     <div className="p-6 bg-gray-50 min-h-screen">
       <div className="max-w-7xl mx-auto">
         {/* Header */}
-        <div className="mb-8">
+        <div className="mb-6">
           <h1 className="text-3xl font-bold text-gray-900 mb-2">Candidates</h1>
           <p className="text-gray-600">Manage job applicants and recruitment pipeline for RMG positions</p>
+        </div>
+
+        {/* Search Bar - Moved to Top */}
+        <div className="bg-white rounded-lg shadow p-6 mb-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">Search</label>
+              <input
+                type="text"
+                placeholder="Search by name, email, position, or job ID..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">Department</label>
+              <select
+                value={filterDepartment}
+                onChange={(e) => setFilterDepartment(e.target.value)}
+                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+              >
+                <option value="">All Departments</option>
+                {departments.map(dept => (
+                  <option key={dept} value={dept}>{dept}</option>
+                ))}
+              </select>
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">Designation</label>
+              <select
+                value={filterDesignation}
+                onChange={(e) => setFilterDesignation(e.target.value)}
+                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+              >
+                <option value="">All Designations</option>
+                {designations.map(designation => (
+                  <option key={designation} value={designation}>{designation}</option>
+                ))}
+              </select>
+            </div>
+            <div className="flex items-end">
+              <button
+                onClick={() => {
+                  setSearchTerm('')
+                  setFilterDepartment('')
+                  setFilterDesignation('')
+                }}
+                className="w-full px-4 py-2 bg-gray-500 text-white rounded-md hover:bg-gray-600 transition-colors"
+              >
+                Clear Filters
+              </button>
+            </div>
+          </div>
         </div>
 
         {/* Summary Cards */}
@@ -199,73 +269,6 @@ const Candidates = () => {
           </div>
         </div>
 
-        {/* Filters and Search */}
-        <div className="bg-white rounded-lg shadow p-6 mb-6">
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">Search</label>
-              <input
-                type="text"
-                placeholder="Search candidates..."
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-              />
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">Status</label>
-              <select
-                value={filterStatus}
-                onChange={(e) => setFilterStatus(e.target.value)}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-              >
-                <option value="">All Status</option>
-                {statuses.map(status => (
-                  <option key={status} value={status}>{status}</option>
-                ))}
-              </select>
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">Department</label>
-              <select
-                value={filterDepartment}
-                onChange={(e) => setFilterDepartment(e.target.value)}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-              >
-                <option value="">All Departments</option>
-                {departments.map(dept => (
-                  <option key={dept} value={dept}>{dept}</option>
-                ))}
-              </select>
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">Source</label>
-              <select
-                value={filterSource}
-                onChange={(e) => setFilterSource(e.target.value)}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-              >
-                <option value="">All Sources</option>
-                {sources.map(source => (
-                  <option key={source} value={source}>{source}</option>
-                ))}
-              </select>
-            </div>
-            <div className="flex items-end">
-              <button
-                onClick={() => {
-                  setSearchTerm('')
-                  setFilterStatus('')
-                  setFilterDepartment('')
-                  setFilterSource('')
-                }}
-                className="w-full px-4 py-2 bg-gray-500 text-white rounded-md hover:bg-gray-600 transition-colors"
-              >
-                Clear Filters
-              </button>
-            </div>
-          </div>
-        </div>
 
         {/* Candidates List */}
         <div className="space-y-4">
@@ -279,10 +282,11 @@ const Candidates = () => {
                       <p className="text-lg text-gray-600 mb-2">{candidate.position}</p>
                       <div className="flex flex-wrap gap-2 mb-3">
                         <span className="px-3 py-1 bg-blue-100 text-blue-800 text-sm rounded-full">{candidate.department}</span>
+                        <span className="px-3 py-1 bg-purple-100 text-purple-800 text-sm rounded-full">{candidate.designation}</span>
+                        <span className="px-3 py-1 bg-orange-100 text-orange-800 text-sm rounded-full">{candidate.jobId}</span>
                         <span className={`px-3 py-1 text-sm rounded-full ${getStatusColor(candidate.status)}`}>
                           {candidate.status}
                         </span>
-                        <span className="px-3 py-1 bg-purple-100 text-purple-800 text-sm rounded-full">{candidate.source}</span>
                         <span className="px-3 py-1 bg-green-100 text-green-800 text-sm rounded-full">{candidate.experience}</span>
                       </div>
                     </div>
