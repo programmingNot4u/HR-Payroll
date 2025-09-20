@@ -2823,8 +2823,9 @@ function AdministrativeInfoSection({ employee, formatDate, isEditMode, onUpdate 
   useEffect(() => {
     const loadOrganizationalData = () => {
       // Load salary grades from service
-      const workerGrades = organizationalDataService.getSalaryGrades()
-      const staffGrades = organizationalDataService.getStaffSalaryGrades()
+      const allGrades = organizationalDataService.getAllSalaryGrades()
+      const workerGrades = allGrades.filter(grade => grade.type === 'Worker')
+      const staffGrades = allGrades.filter(grade => grade.type === 'Staff')
       
       // Convert to the format expected by the component
       const gradesObject = {}

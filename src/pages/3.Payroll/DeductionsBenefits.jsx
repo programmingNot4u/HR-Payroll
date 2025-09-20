@@ -1,142 +1,17 @@
-import { useState, useMemo } from 'react'
+import { useState, useMemo, useEffect } from 'react'
+import employeeService from '../../services/employeeService'
+import organizationalDataService from '../../services/organizationalDataService'
 
-// Sample employee data for bonuses and penalties
-const sampleEmployees = [
-  {
-    id: 'EMP001',
-    name: 'Ahmed Khan',
-    department: 'Sewing',
-    designation: 'Senior Tailor',
-    levelOfWork: 'Worker',
-    joiningDate: '2020-03-15',
-    monthlySalary: 25000,
-    attendanceBonus: 775,
-    festivalBonus: 5000,
-    totalPenalties: 0
-  },
-  {
-    id: 'EMP002',
-    name: 'Fatima Begum',
-    department: 'Quality Control',
-    designation: 'Quality Inspector',
-    levelOfWork: 'Staff',
-    joiningDate: '2021-07-10',
-    monthlySalary: 35000,
-    attendanceBonus: 0,
-    festivalBonus: 7000,
-    totalPenalties: 0
-  },
-  {
-    id: 'EMP003',
-    name: 'Mohammad Hassan',
-    department: 'Production',
-    designation: 'Production Manager',
-    levelOfWork: 'Staff',
-    joiningDate: '2019-11-22',
-    monthlySalary: 45000,
-    attendanceBonus: 0,
-    festivalBonus: 9000,
-    totalPenalties: 0
-  },
-  {
-    id: 'EMP004',
-    name: 'Salma Khatun',
-    department: 'Cutting',
-    designation: 'Cutting Master',
-    levelOfWork: 'Worker',
-    joiningDate: '2022-01-08',
-    monthlySalary: 28000,
-    attendanceBonus: 775,
-    festivalBonus: 5600,
-    totalPenalties: 500
-  },
-  {
-    id: 'EMP005',
-    name: 'Karim Uddin',
-    department: 'Maintenance',
-    designation: 'Maintenance Engineer',
-    levelOfWork: 'Staff',
-    joiningDate: '2020-09-14',
-    monthlySalary: 40000,
-    attendanceBonus: 0,
-    festivalBonus: 8000,
-    totalPenalties: 0
-  }
-]
+// Dynamic data will be loaded from employee service and localStorage
 
-// Sample penalties data
-const samplePenalties = [
-  {
-    id: 'PEN001',
-    employeeId: 'EMP004',
-    employeeName: 'Salma Khatun',
-    designation: 'Cutting Master',
-    department: 'Cutting',
-    levelOfWork: 'Worker',
-      penaltyAmount: 500,
-      penaltyVNumber: 'PV-2024-001',
-      reason: 'Damaged cutting machine blade due to improper usage',
-      date: '2024-01-15',
-    salaryMonth: 'January',
-    year: '2024',
-    status: 'Activated',
-    deductedFromSalary: true
-  },
-  {
-    id: 'PEN002',
-    employeeId: 'EMP001',
-    employeeName: 'Ahmed Khan',
-    designation: 'Senior Tailor',
-    department: 'Sewing',
-    levelOfWork: 'Worker',
-      penaltyAmount: 300,
-      penaltyVNumber: 'PV-2024-002',
-      reason: 'Damaged sewing machine needle',
-      date: '2024-01-20',
-    salaryMonth: 'January',
-    year: '2024',
-    status: 'Activated',
-    deductedFromSalary: true
-  },
-  {
-    id: 'PEN003',
-    employeeId: 'EMP002',
-    employeeName: 'Fatima Begum',
-    designation: 'Quality Inspector',
-    department: 'Quality Control',
-    levelOfWork: 'Staff',
-      penaltyAmount: 200,
-      penaltyVNumber: 'PV-2024-003',
-      reason: 'Absent without notice',
-      date: '2024-02-10',
-    salaryMonth: 'February',
-    year: '2024',
-    status: 'Activated',
-    deductedFromSalary: false
-  },
-  {
-    id: 'PEN004',
-    employeeId: 'EMP003',
-    employeeName: 'Mohammad Hassan',
-    designation: 'Production Manager',
-    department: 'Production',
-    levelOfWork: 'Staff',
-      penaltyAmount: 150,
-      penaltyVNumber: 'PV-2024-004',
-      reason: 'Equipment damage',
-      date: '2024-02-15',
-    salaryMonth: 'February',
-    year: '2024',
-    status: 'Deactivated',
-    deductedFromSalary: false
-  }
-]
-
-const departments = ['All', 'Sewing', 'Quality Control', 'Production', 'Cutting', 'Maintenance']
 const levelsOfWork = ['All', 'Worker', 'Staff']
 
 export default function BonusesPenalties() {
   const [activeTab, setActiveTab] = useState('timeline')
+  const [employees, setEmployees] = useState([])
+  const [loading, setLoading] = useState(true)
+  const [departments, setDepartments] = useState(['All'])
+  const [designations, setDesignations] = useState(['All'])
   const [filters, setFilters] = useState({
     department: 'All',
     levelOfWork: 'All',
@@ -146,7 +21,7 @@ export default function BonusesPenalties() {
     voucherNumber: ''
   })
   
-  const [penalties, setPenalties] = useState(samplePenalties)
+  const [penalties, setPenalties] = useState([])
   const [showPenaltyModal, setShowPenaltyModal] = useState(false)
   const [editingPenalty, setEditingPenalty] = useState(null)
   const [penaltyFormData, setPenaltyFormData] = useState({
@@ -160,25 +35,77 @@ export default function BonusesPenalties() {
     date: new Date().toISOString().split('T')[0],
     salaryMonth: '',
     year: '',
+    penaltyVNumber: '',
     status: 'Deactivated',
     deductedFromSalary: true
   })
 
+  // Save penalties to localStorage
+  const savePenalties = (penaltiesData) => {
+    try {
+      localStorage.setItem('hr_penalties_data', JSON.stringify(penaltiesData))
+    } catch (error) {
+      console.error('Error saving penalties to localStorage:', error)
+    }
+  }
+
+  // Load employee data, organizational data, and penalties
+  useEffect(() => {
+    const loadData = async () => {
+      try {
+        setLoading(true)
+        // Load employees from employee service
+        const employeeData = await employeeService.getAllEmployees()
+        setEmployees(employeeData)
+        
+        // Load organizational data
+        const deptData = organizationalDataService.getDepartments()
+        const desigData = organizationalDataService.getDesignations()
+        
+        setDepartments(['All', ...deptData.map(dept => dept.name)])
+        setDesignations(['All', ...desigData.map(desig => desig.name)])
+        
+        // Load penalties from localStorage
+        const savedPenalties = localStorage.getItem('hr_penalties_data')
+        if (savedPenalties) {
+          try {
+            const penaltiesData = JSON.parse(savedPenalties)
+            setPenalties(penaltiesData)
+          } catch (error) {
+            console.error('Error parsing penalties data:', error)
+            setPenalties([])
+          }
+        }
+        
+        console.log('Loaded employees for bonuses:', employeeData.length)
+        console.log('Loaded penalties:', savedPenalties ? JSON.parse(savedPenalties).length : 0)
+      } catch (error) {
+        console.error('Error loading data:', error)
+      } finally {
+        setLoading(false)
+      }
+    }
+    
+    loadData()
+  }, [])
+
   // Filter employees based on selected filters
   const filteredEmployees = useMemo(() => {
-    return sampleEmployees.filter(employee => {
+    return employees.filter(employee => {
       const matchesDepartment = filters.department === 'All' || employee.department === filters.department
       const matchesLevelOfWork = filters.levelOfWork === 'All' || employee.levelOfWork === filters.levelOfWork
       return matchesDepartment && matchesLevelOfWork
     })
-  }, [filters])
+  }, [employees, filters])
 
   // Filter penalties based on selected filters
   const filteredPenalties = useMemo(() => {
     return penalties.filter(penalty => {
-      const employee = sampleEmployees.find(emp => emp.id === penalty.employeeId)
-      const matchesDepartment = filters.department === 'All' || penalty.department === filters.department
-      const matchesLevelOfWork = filters.levelOfWork === 'All' || penalty.levelOfWork === filters.levelOfWork
+      const employee = employees.find(emp => emp.id === penalty.employeeId)
+      if (!employee) return false
+      
+      const matchesDepartment = filters.department === 'All' || employee.department === filters.department
+      const matchesLevelOfWork = filters.levelOfWork === 'All' || employee.levelOfWork === filters.levelOfWork
       const matchesStatus = filters.status === 'All' || penalty.status === filters.status
       const matchesSalaryMonth = filters.salaryMonth === 'All' || penalty.salaryMonth === filters.salaryMonth
       const matchesYear = filters.year === 'All' || penalty.year === filters.year
@@ -186,7 +113,7 @@ export default function BonusesPenalties() {
         (penalty.penaltyVNumber && penalty.penaltyVNumber.toLowerCase().includes(filters.voucherNumber.toLowerCase()))
       return matchesDepartment && matchesLevelOfWork && matchesStatus && matchesSalaryMonth && matchesYear && matchesVoucherNumber
     })
-  }, [penalties, filters])
+  }, [penalties, filters, employees])
 
   const handleFilterChange = (field, value) => {
     setFilters(prev => ({ ...prev, [field]: value }))
@@ -269,10 +196,14 @@ export default function BonusesPenalties() {
     }
 
     if (editingPenalty) {
-      setPenalties(prev => prev.map(p => p.id === editingPenalty.id ? newPenalty : p))
+      const updatedPenalties = penalties.map(p => p.id === editingPenalty.id ? newPenalty : p)
+      setPenalties(updatedPenalties)
+      savePenalties(updatedPenalties)
       alert('Penalty updated successfully')
     } else {
-      setPenalties(prev => [...prev, newPenalty])
+      const updatedPenalties = [...penalties, newPenalty]
+      setPenalties(updatedPenalties)
+      savePenalties(updatedPenalties)
       alert('Penalty added successfully')
     }
 
@@ -314,7 +245,19 @@ export default function BonusesPenalties() {
 
   // Calculate job age in years and months
   const calculateJobAge = (joiningDate) => {
-    const joinDate = new Date(joiningDate)
+    if (!joiningDate) return '0 months'
+    
+    // Handle dd/mm/yyyy format
+    let joinDate
+    if (joiningDate.includes('/')) {
+      // Convert dd/mm/yyyy to yyyy-mm-dd for proper parsing
+      const [day, month, year] = joiningDate.split('/')
+      joinDate = new Date(`${year}-${month.padStart(2, '0')}-${day.padStart(2, '0')}`)
+    } else {
+      // Handle yyyy-mm-dd format
+      joinDate = new Date(joiningDate)
+    }
+    
     const currentDate = new Date()
     const diffTime = Math.abs(currentDate - joinDate)
     const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24))
@@ -330,7 +273,19 @@ export default function BonusesPenalties() {
 
   // Check if employee is eligible for festival bonus (1 year or more tenure)
   const isEligibleForFestivalBonus = (joiningDate) => {
-    const joinDate = new Date(joiningDate)
+    if (!joiningDate) return false
+    
+    // Handle dd/mm/yyyy format
+    let joinDate
+    if (joiningDate.includes('/')) {
+      // Convert dd/mm/yyyy to yyyy-mm-dd for proper parsing
+      const [day, month, year] = joiningDate.split('/')
+      joinDate = new Date(`${year}-${month.padStart(2, '0')}-${day.padStart(2, '0')}`)
+    } else {
+      // Handle yyyy-mm-dd format
+      joinDate = new Date(joiningDate)
+    }
+    
     const currentDate = new Date()
     const diffTime = Math.abs(currentDate - joinDate)
     const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24))
@@ -340,16 +295,20 @@ export default function BonusesPenalties() {
 
   // Calculate totals based on active tab and filters
   const totalFestivalBonuses = filteredEmployees.reduce((sum, emp) => {
-    return sum + (isEligibleForFestivalBonus(emp.joiningDate) ? emp.festivalBonus : 0)
+    // Calculate festival bonus based on job tenure (1 year = 5000 BDT)
+    const festivalBonus = isEligibleForFestivalBonus(emp.joiningDate || emp.dateOfJoining) ? 5000 : 0
+    return sum + festivalBonus
   }, 0)
   
   const totalAttendanceBonuses = filteredEmployees.reduce((sum, emp) => {
-    return sum + (emp.levelOfWork === 'Worker' ? emp.attendanceBonus : 0)
+    // Calculate attendance bonus for workers (775 BDT per month)
+    const attendanceBonus = emp.levelOfWork === 'Worker' ? 775 : 0
+    return sum + attendanceBonus
   }, 0)
   
   const totalPenalties = filteredPenalties.reduce((sum, penalty) => sum + penalty.penaltyAmount, 0)
   const totalEmployees = filteredEmployees.length
-  const eligibleForFestivalBonus = filteredEmployees.filter(emp => isEligibleForFestivalBonus(emp.joiningDate)).length
+  const eligibleForFestivalBonus = filteredEmployees.filter(emp => isEligibleForFestivalBonus(emp.joiningDate || emp.dateOfJoining)).length
   const eligibleForAttendanceBonus = filteredEmployees.filter(emp => emp.levelOfWork === 'Worker').length
   const activatedPenalties = filteredPenalties.filter(penalty => penalty.status === 'Activated').length
   const deactivatedPenalties = filteredPenalties.filter(penalty => penalty.status === 'Deactivated').length
@@ -360,9 +319,21 @@ export default function BonusesPenalties() {
     .filter(penalty => penalty.status === 'Deactivated')
     .reduce((sum, penalty) => sum + penalty.penaltyAmount, 0)
 
+  // Show loading state
+  if (loading) {
+    return (
+      <div className="space-y-6">
+        <div className="flex items-center justify-center py-12">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-orange-600"></div>
+          <span className="ml-2 text-gray-600">Loading employee data...</span>
+        </div>
+      </div>
+    )
+  }
+
   return (
     <div className="space-y-6">
-      <style jsx>{`
+      <style>{`
         @media print {
           .no-print {
             display: none !important;
@@ -390,7 +361,7 @@ export default function BonusesPenalties() {
         }
       `}</style>
       <div>
-        <h1 className="text-2xl font-semibold">Bonuses & Penalties</h1>
+        <h1 className="text-2xl font-semibold">Overtime || Bonuses || Penalties</h1>
         <p className="text-sm text-gray-500">Manage employee attendance bonuses and penalties</p>
       </div>
 
@@ -405,7 +376,17 @@ export default function BonusesPenalties() {
                 : 'bg-gray-100 text-gray-600 hover:bg-gradient-to-r hover:from-orange-300 hover:to-orange-400 hover:text-white hover:shadow-md hover:transform hover:scale-105'
             }`}
           >
-            Bonus & Penalties Timeline
+            Performance Tab
+          </button>
+          <button
+            onClick={() => setActiveTab('overtime')}
+            className={`flex-1 py-4 px-6 font-medium text-sm rounded-lg transition-all duration-200 ${
+              activeTab === 'overtime'
+                ? 'bg-gradient-to-r from-orange-400 to-orange-500 text-white shadow-lg transform scale-105'
+                : 'bg-gray-100 text-gray-600 hover:bg-gradient-to-r hover:from-orange-300 hover:to-orange-400 hover:text-white hover:shadow-md hover:transform hover:scale-105'
+            }`}
+          >
+            OverTime ({filteredEmployees.filter(emp => emp.levelOfWork === 'Worker').length})
           </button>
           <button
             onClick={() => setActiveTab('bonuses')}
@@ -608,7 +589,7 @@ export default function BonusesPenalties() {
               ))}
             </select>
           </div>
-          {(activeTab === 'timeline' || activeTab === 'bonuses') && (
+          {(activeTab === 'timeline' || activeTab === 'bonuses' || activeTab === 'overtime') && (
             <>
               <div className="flex-1 min-w-0">
                 <label className="block text-sm font-medium text-gray-700 mb-1">Salary Month</label>
@@ -727,6 +708,12 @@ export default function BonusesPenalties() {
                   tableDescription = 'Employee performance overview including bonuses, penalties, and job tenure'
                   resultCount = filteredEmployees.length
                   resultType = 'employees'
+                } else if (activeTab === 'overtime') {
+                  tableElement = document.querySelector('.overtime-table')
+                  tableTitle = 'Worker Overtime'
+                  tableDescription = 'Overtime hours and rates for worker employees'
+                  resultCount = filteredEmployees.filter(emp => emp.levelOfWork === 'Worker').length
+                  resultType = 'workers'
                 } else if (activeTab === 'bonuses') {
                   tableElement = document.querySelector('.bonuses-table')
                   tableTitle = 'Employee Bonuses'
@@ -824,9 +811,6 @@ export default function BonusesPenalties() {
                     Level
                   </th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Job Tenure
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                     Attendance Bonus
                   </th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
@@ -857,29 +841,29 @@ export default function BonusesPenalties() {
                         {employee.levelOfWork}
                       </span>
                     </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600">
-                      {calculateJobAge(employee.joiningDate)}
-                    </td>
                     <td className="px-6 py-4 whitespace-nowrap">
                       {employee.levelOfWork === 'Worker' ? (
                         <span className="text-sm font-medium text-green-600">
-                          ৳{employee.attendanceBonus.toLocaleString()}
+                          ৳{775}
                         </span>
                       ) : (
                         <span className="text-sm text-gray-400">Not Eligible</span>
                       )}
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
-                      {isEligibleForFestivalBonus(employee.joiningDate) ? (
+                      {isEligibleForFestivalBonus(employee.joiningDate || employee.dateOfJoining) ? (
                         <span className="text-sm font-medium text-green-600">
-                          ৳{employee.festivalBonus.toLocaleString()}
+                          ৳{5000}
                         </span>
                       ) : (
                         <span className="text-sm text-gray-400">Not Eligible</span>
                       )}
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-red-600">
-                      ৳{employee.totalPenalties.toLocaleString()}
+                      ৳{penalties
+                        .filter(penalty => penalty.employeeId === employee.id)
+                        .reduce((sum, penalty) => sum + penalty.penaltyAmount, 0)
+                        .toLocaleString()}
                     </td>
                   </tr>
                 ))}
@@ -955,7 +939,7 @@ export default function BonusesPenalties() {
                       </span>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600">
-                      {calculateJobAge(employee.joiningDate)}
+                      {calculateJobAge(employee.joiningDate || employee.dateOfJoining)}
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                       {filters.salaryMonth !== 'All' ? filters.salaryMonth : 'Current Month'}
@@ -966,16 +950,16 @@ export default function BonusesPenalties() {
                     <td className="px-6 py-4 whitespace-nowrap">
                       {employee.levelOfWork === 'Worker' ? (
                         <span className="text-sm font-medium text-green-600">
-                          ৳{employee.attendanceBonus.toLocaleString()}
+                          ৳{775}
                         </span>
                       ) : (
                         <span className="text-sm text-gray-400">Not Eligible</span>
                       )}
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
-                      {isEligibleForFestivalBonus(employee.joiningDate) ? (
+                      {isEligibleForFestivalBonus(employee.joiningDate || employee.dateOfJoining) ? (
                         <span className="text-sm font-medium text-green-600">
-                          ৳{employee.festivalBonus.toLocaleString()}
+                          ৳{5000}
                         </span>
                       ) : (
                         <span className="text-sm text-gray-400">Not Eligible</span>
@@ -983,6 +967,109 @@ export default function BonusesPenalties() {
                     </td>
                   </tr>
                 ))}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      )}
+
+      {/* OverTime Tab Content */}
+      {activeTab === 'overtime' && (
+        <div className="bg-white rounded-lg border border-gray-200 overflow-hidden">
+          <div className="px-6 py-4 border-b border-gray-200">
+            <h2 className="text-lg font-medium text-gray-900">Worker Overtime</h2>
+            <p className="text-sm text-gray-500">
+              Overtime hours and rates for worker employees
+            </p>
+          </div>
+          <div className="overflow-x-auto">
+            <table className="min-w-full divide-y divide-gray-200 print-table overtime-table">
+              <thead className="bg-gray-50">
+                <tr>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    Employee ID
+                  </th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    Employee Name
+                  </th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    Designation
+                  </th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    Department
+                  </th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    Basic Salary
+                  </th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    Overtime Hours
+                  </th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    Extra Overtime Hours
+                  </th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    Total Overtime
+                  </th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    Rate of Work
+                  </th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    Total Overtime Amount
+                  </th>
+                </tr>
+              </thead>
+              <tbody className="bg-white divide-y divide-gray-200">
+                {filteredEmployees
+                  .filter(employee => employee.levelOfWork === 'Worker')
+                  .map((employee) => {
+                    // Sample overtime data - in real app this would come from database
+                    const overtimeHours = Math.floor(Math.random() * 20) + 5 // 5-24 hours
+                    const extraOvertimeHours = Math.floor(Math.random() * 10) + 1 // 1-10 hours
+                    
+                    // Get basic salary from employee data (use basicSalary from salaryComponents, fallback to grossSalary)
+                    const basicSalary = employee.salaryComponents?.basicSalary?.amount || employee.grossSalary || employee.salary || 25000
+                    
+                    // Calculate rate of work: (Basic Salary) x 2 / 208
+                    const rateOfWork = Math.round((basicSalary * 2) / 208)
+                    
+                    // Calculate total overtime amount (both regular and extra overtime use same rate)
+                    const totalAmount = (overtimeHours + extraOvertimeHours) * rateOfWork
+                    
+                    return (
+                      <tr key={employee.id} className="hover:bg-gray-50">
+                        <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
+                          {employee.id}
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                          {employee.name}
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                          {employee.designation}
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                          {employee.department}
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600">
+                          ৳{basicSalary.toLocaleString()}
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600">
+                          {overtimeHours} hrs
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600">
+                          {extraOvertimeHours} hrs
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-blue-600">
+                          {overtimeHours + extraOvertimeHours} hrs
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600">
+                          ৳{rateOfWork}/hr
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-green-600">
+                          ৳{totalAmount.toLocaleString()}
+                        </td>
+                      </tr>
+                    )
+                  })}
               </tbody>
             </table>
           </div>
@@ -1042,24 +1129,24 @@ export default function BonusesPenalties() {
               </thead>
               <tbody className="bg-white divide-y divide-gray-200">
                 {filteredPenalties.map((penalty) => {
-                  const employee = sampleEmployees.find(emp => emp.id === penalty.employeeId)
+                  const employee = employees.find(emp => emp.id === penalty.employeeId)
                   return (
                     <tr key={penalty.id} className="hover:bg-gray-50">
                       <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
                         {penalty.employeeId}
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                        {penalty.employeeName}
+                        {employee ? employee.name : penalty.employeeName}
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                        {penalty.designation}
+                        {employee ? employee.designation : penalty.designation}
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                        {penalty.department}
+                        {employee ? employee.department : penalty.department}
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">
-                        <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${getLevelColor(penalty.levelOfWork)}`}>
-                          {penalty.levelOfWork}
+                        <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${getLevelColor(employee ? employee.levelOfWork : penalty.levelOfWork)}`}>
+                          {employee ? employee.levelOfWork : penalty.levelOfWork}
                         </span>
                       </td>
                         <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-red-600">
@@ -1143,7 +1230,7 @@ export default function BonusesPenalties() {
                       
                       // Auto-fill other fields when employee ID is entered
                       if (employeeId) {
-                        const employee = sampleEmployees.find(emp => emp.id === employeeId)
+                        const employee = employees.find(emp => emp.id === employeeId)
                         if (employee) {
                           setPenaltyFormData(prev => ({
                             ...prev,

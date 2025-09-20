@@ -100,7 +100,7 @@ const sections = [
   },
   {
     title: 'Payroll',
-    items: ['Salary & Payslips', 'Bonuses & Penalties', 'Advance From Accounts'],
+    items: ['Salary & Payslips', 'Overtime || Bonuses || Penalties', 'Advance From Accounts'],
   },
   {
     title: 'Attendance',

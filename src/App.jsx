@@ -123,7 +123,7 @@ function App() {
 
       case 'Salary & Payslips':
         return <SalaryPayslips />
-      case 'Bonuses & Penalties':
+      case 'Overtime || Bonuses || Penalties':
         return <DeductionsBenefits />
       case 'Advance From Accounts':
         return <AdvanceFromAccounts />
