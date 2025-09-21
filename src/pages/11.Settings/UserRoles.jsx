@@ -118,7 +118,7 @@ const permissionCategories = [
   },
   {
     name: 'Performance Management',
-    permissions: ['performance_view', 'appraisal_edit', 'goals_management', 'feedback_view']
+    permissions: ['performance_view', 'appraisal_edit', 'goals_management']
   },
   {
     name: 'Asset Management',

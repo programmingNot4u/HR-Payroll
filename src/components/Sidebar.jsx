@@ -112,7 +112,7 @@ const sections = [
   },
   {
     title: 'Performance',
-    items: ['Goals & KPIs', 'Promotions'],
+    items: ['KPI'],
   },
   {
     title: 'Assets',

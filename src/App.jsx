@@ -23,7 +23,6 @@ import LeavePolicies from './pages/4.Attendance/LeavePolicies'
 import JobOpenings from './pages/5.Recruitment/JobOpenings'
 import Candidates from './pages/5.Recruitment/Candidates'
 import GoalsKPIs from './pages/6.Performance/GoalsKPIs'
-import Feedback from './pages/6.Performance/Feedback'
 import Promotions from './pages/6.Performance/Promotions'
 import AssetInventory from './pages/7.Assets/AssetInventory'
 import AssignAsset from './pages/7.Assets/AssignAsset'
@@ -138,10 +137,8 @@ function App() {
         return <JobOpenings />
       case 'Candidates':
         return <Candidates />
-      case 'Goals & KPIs':
+      case 'KPI':
         return <GoalsKPIs />
-      case 'Feedback':
-        return <Feedback />
       case 'Promotions':
         return <Promotions />
       case 'Asset Inventory':

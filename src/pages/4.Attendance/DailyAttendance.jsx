@@ -282,14 +282,6 @@ const designations = ['All', 'Senior Tailor', 'Quality Inspector', 'Cutting Mast
 const workLevels = ['All', 'Worker', 'Staff']
 
 export default function DailyAttendance() {
-  // Format date to dd/mm/yyyy for display
-  const formatDateForDisplay = (dateString) => {
-    const date = new Date(dateString)
-    const day = String(date.getDate()).padStart(2, '0')
-    const month = String(date.getMonth() + 1).padStart(2, '0')
-    const year = date.getFullYear()
-    return `${day}/${month}/${year}`
-  }
 
   const [selectedDate, setSelectedDate] = useState(new Date().toISOString().split('T')[0])
   const [filters, setFilters] = useState({
@@ -645,7 +637,7 @@ export default function DailyAttendance() {
   ).length
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 pb-24">
       <div>
         <h1 className="text-2xl font-semibold">Daily Attendance</h1>
       </div>
@@ -884,7 +876,7 @@ export default function DailyAttendance() {
                     </span>
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{attendance.checkOut}</td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 font-medium text-blue-600">{getRoundedCheckOut(attendance.checkOut)}</td>
+                  <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-blue-600">{getRoundedCheckOut(attendance.checkOut)}</td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{formatWorkingHours(calculateWorkingHours(attendance.checkIn, attendance.checkOut))}</td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
                     {attendance.levelOfWork === 'Worker' ? (
@@ -929,45 +921,52 @@ export default function DailyAttendance() {
         </div>
       </div>
 
-             {/* Summary */}
-       <div className="rounded border border-gray-200 bg-white p-6">
-         <h3 className="text-lg font-medium mb-4">Summary for {(() => {
-           const date = new Date(selectedDate)
-           const day = String(date.getDate()).padStart(2, '0')
-           const month = String(date.getMonth() + 1).padStart(2, '0')
-           const year = date.getFullYear()
-           return `${day}/${month}/${year}`
-         })()}</h3>
-         <div className="grid grid-cols-1 md:grid-cols-6 gap-4">
-           <div className="text-center">
-             <div className="text-2xl font-semibold text-green-600">{presentEmployees}</div>
-             <div className="text-sm text-gray-500">Present Employees</div>
-           </div>
-           <div className="text-center">
-             <div className="text-2xl font-semibold">{formatWorkingHours(totalWorkingHours)}</div>
-             <div className="text-sm text-gray-500">Total Working Hours</div>
-           </div>
-           <div className="text-center">
-             <div className="text-2xl font-semibold text-orange-600">{formatOvertime(totalOvertime)}</div>
-             <div className="text-sm text-gray-500">Worker Overtime Only</div>
-           </div>
-           <div className="text-center">
-             <div className="text-2xl font-semibold text-red-600">{formatOvertime(totalExtraOvertime)}</div>
-             <div className="text-sm text-gray-500">Worker Extra Overtime Only</div>
-           </div>
-           <div className="text-center">
-             <div className="text-2xl font-semibold text-green-600">{snacksEligibleCount}</div>
-             <div className="text-sm text-gray-500">Snacks Eligible</div>
-           </div>
-           <div className="text-center">
-             <div className="text-2xl font-semibold text-purple-600">{nightBillEligibleCount}</div>
-             <div className="text-sm text-gray-500">Night Bill Eligible</div>
-           </div>
-         </div>
-         <div className="mt-4 text-xs text-gray-500 text-center">
-           * Overtime and Extra Overtime calculations are only applicable for Workers
-         </div>
-       </div>
+      {/* Fixed Bottom Summary */}
+      <div className="fixed bottom-0 left-80 right-6 bg-white border-t border-gray-200 p-4 shadow-lg z-40">
+        <div className="max-w-full mx-auto">
+          <div className="flex justify-between items-center mb-2">
+            <h3 className="text-lg font-medium">Summary for {(() => {
+              const date = new Date(selectedDate)
+              const day = String(date.getDate()).padStart(2, '0')
+              const month = String(date.getMonth() + 1).padStart(2, '0')
+              const year = date.getFullYear()
+              return `${day}/${month}/${year}`
+            })()}</h3>
+            <div className="text-sm text-gray-600">
+              Showing {filteredAttendance.length} employees
+            </div>
+          </div>
+          <div className="grid grid-cols-1 md:grid-cols-6 gap-4">
+            <div className="text-center">
+              <div className="text-2xl font-semibold text-green-600">{presentEmployees}</div>
+              <div className="text-sm text-gray-500">Present Employees</div>
+            </div>
+            <div className="text-center">
+              <div className="text-2xl font-semibold">{formatWorkingHours(totalWorkingHours)}</div>
+              <div className="text-sm text-gray-500">Total Working Hours</div>
+            </div>
+            <div className="text-center">
+              <div className="text-2xl font-semibold text-orange-600">{formatOvertime(totalOvertime)}</div>
+              <div className="text-sm text-gray-500">Worker Overtime Only</div>
+            </div>
+            <div className="text-center">
+              <div className="text-2xl font-semibold text-red-600">{formatOvertime(totalExtraOvertime)}</div>
+              <div className="text-sm text-gray-500">Worker Extra Overtime Only</div>
+            </div>
+            <div className="text-center">
+              <div className="text-2xl font-semibold text-green-600">{snacksEligibleCount}</div>
+              <div className="text-sm text-gray-500">Snacks Eligible</div>
+            </div>
+            <div className="text-center">
+              <div className="text-2xl font-semibold text-purple-600">{nightBillEligibleCount}</div>
+              <div className="text-sm text-gray-500">Night Bill Eligible</div>
+            </div>
+          </div>
+          <div className="mt-2 text-xs text-gray-500 text-center">
+            * Overtime and Extra Overtime calculations are only applicable for Workers
+          </div>
+        </div>
+      </div>
 
       {/* Scan Times Modal */}
       {showScanModal && selectedEmployee && (

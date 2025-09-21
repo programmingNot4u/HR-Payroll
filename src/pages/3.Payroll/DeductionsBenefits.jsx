@@ -11,7 +11,7 @@ export default function BonusesPenalties() {
   const [employees, setEmployees] = useState([])
   const [loading, setLoading] = useState(true)
   const [departments, setDepartments] = useState(['All'])
-  const [designations, setDesignations] = useState(['All'])
+  const [, setDesignations] = useState(['All'])
   const [filters, setFilters] = useState({
     department: 'All',
     levelOfWork: 'All',
@@ -22,11 +22,8 @@ export default function BonusesPenalties() {
   })
   
   const [bonusAmounts, setBonusAmounts] = useState({
-    attendanceBonus: 775,
-    festivalBonus: 5000
+    attendanceBonus: 775
   })
-  
-  const [applyFestivalBonus, setApplyFestivalBonus] = useState(true)
   
   const [penalties, setPenalties] = useState([])
   const [showPenaltyModal, setShowPenaltyModal] = useState(false)
@@ -221,10 +218,6 @@ export default function BonusesPenalties() {
     setShowPenaltyModal(false)
   }
 
-  const handleTogglePenaltyStatus = (penaltyId, currentStatus) => {
-    console.log('Toggling penalty status for:', penaltyId, 'from', currentStatus, 'to', currentStatus === 'Active' ? 'Inactive' : 'Active')
-    alert(`Penalty status ${currentStatus === 'Active' ? 'deactivated' : 'activated'} successfully`)
-  }
 
   const handleDeletePenalty = (penaltyId) => {
     if (confirm('Are you sure you want to delete this penalty?')) {
@@ -254,77 +247,10 @@ export default function BonusesPenalties() {
     }
   }
 
-  // Calculate festival bonus as 50% of basic salary
-  const calculateFestivalBonus = (employee) => {
-    if (!applyFestivalBonus) {
-      return 0
-    }
-    
-    // Get basic salary from employee data
-    const basicSalary = employee.salaryComponents?.basicSalary?.amount || 
-                       employee.grossSalary || 
-                       employee.salary || 
-                       25000 // fallback amount
-    
-    return Math.round(basicSalary * 0.5) // 50% of basic salary
-  }
 
-  // Calculate job age in years and months
-  const calculateJobAge = (joiningDate) => {
-    if (!joiningDate) return '0 months'
-    
-    // Handle dd/mm/yyyy format
-    let joinDate
-    if (joiningDate.includes('/')) {
-      // Convert dd/mm/yyyy to yyyy-mm-dd for proper parsing
-      const [day, month, year] = joiningDate.split('/')
-      joinDate = new Date(`${year}-${month.padStart(2, '0')}-${day.padStart(2, '0')}`)
-    } else {
-      // Handle yyyy-mm-dd format
-      joinDate = new Date(joiningDate)
-    }
-    
-    const currentDate = new Date()
-    const diffTime = Math.abs(currentDate - joinDate)
-    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24))
-    const years = Math.floor(diffDays / 365)
-    const months = Math.floor((diffDays % 365) / 30)
-    
-    if (years > 0) {
-      return `${years} year${years > 1 ? 's' : ''} ${months} month${months > 1 ? 's' : ''}`
-    } else {
-      return `${months} month${months > 1 ? 's' : ''}`
-    }
-  }
 
-  // Check if employee is eligible for festival bonus (1 year or more tenure)
-  const isEligibleForFestivalBonus = (joiningDate) => {
-    if (!joiningDate) return false
-    
-    // Handle dd/mm/yyyy format
-    let joinDate
-    if (joiningDate.includes('/')) {
-      // Convert dd/mm/yyyy to yyyy-mm-dd for proper parsing
-      const [day, month, year] = joiningDate.split('/')
-      joinDate = new Date(`${year}-${month.padStart(2, '0')}-${day.padStart(2, '0')}`)
-    } else {
-      // Handle yyyy-mm-dd format
-      joinDate = new Date(joiningDate)
-    }
-    
-    const currentDate = new Date()
-    const diffTime = Math.abs(currentDate - joinDate)
-    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24))
-    const years = Math.floor(diffDays / 365)
-    return years >= 1
-  }
 
   // Calculate totals based on active tab and filters
-  const totalFestivalBonuses = filteredEmployees.reduce((sum, emp) => {
-    // Calculate festival bonus as 50% of basic salary
-    const festivalBonus = calculateFestivalBonus(emp)
-    return sum + festivalBonus
-  }, 0)
   
   const totalAttendanceBonuses = filteredEmployees.reduce((sum, emp) => {
     // Calculate attendance bonus for workers using editable amount
@@ -333,8 +259,6 @@ export default function BonusesPenalties() {
   }, 0)
   
   const totalPenalties = filteredPenalties.reduce((sum, penalty) => sum + penalty.penaltyAmount, 0)
-  const totalEmployees = filteredEmployees.length
-  const eligibleForFestivalBonus = filteredEmployees.filter(emp => isEligibleForFestivalBonus(emp.joiningDate || emp.dateOfJoining)).length
   const eligibleForAttendanceBonus = filteredEmployees.filter(emp => emp.levelOfWork === 'Worker').length
   const activatedPenalties = filteredPenalties.filter(penalty => penalty.status === 'Activated').length
   const deactivatedPenalties = filteredPenalties.filter(penalty => penalty.status === 'Deactivated').length
@@ -440,21 +364,10 @@ export default function BonusesPenalties() {
       {/* Statistics Cards */}
       <div className={`grid grid-cols-1 gap-6 no-print ${
         activeTab === 'penalties' ? 'md:grid-cols-5' : 
-        activeTab === 'bonuses' ? 'md:grid-cols-4' : 'md:grid-cols-3'
+        activeTab === 'bonuses' ? 'md:grid-cols-3' : 'md:grid-cols-3'
       }`}>
         {activeTab === 'timeline' && (
           <>
-            <div className="rounded border border-gray-200 bg-white p-6">
-              <div className="text-sm text-gray-500">Total Festival Bonuses</div>
-              <div className="mt-1 text-2xl font-semibold text-green-600">৳{totalFestivalBonuses.toLocaleString()}</div>
-              <div className="text-xs text-gray-500">{eligibleForFestivalBonus} eligible employees</div>
-              <div className="text-xs text-gray-400 mt-1">
-                {filters.department !== 'All' && `Dept: ${filters.department}`} 
-                {filters.levelOfWork !== 'All' && ` • Level: ${filters.levelOfWork}`}
-                {filters.salaryMonth !== 'All' && ` • Month: ${filters.salaryMonth}`}
-                {filters.year !== 'All' && ` • Year: ${filters.year}`}
-              </div>
-            </div>
             <div className="rounded border border-gray-200 bg-white p-6">
               <div className="text-sm text-gray-500">Total Attendance Bonuses</div>
               <div className="mt-1 text-2xl font-semibold text-blue-600">৳{totalAttendanceBonuses.toLocaleString()}</div>
@@ -482,17 +395,6 @@ export default function BonusesPenalties() {
         
         {activeTab === 'bonuses' && (
           <>
-            <div className="rounded border border-gray-200 bg-white p-6">
-              <div className="text-sm text-gray-500">Total Festival Bonuses</div>
-              <div className="mt-1 text-2xl font-semibold text-green-600">৳{totalFestivalBonuses.toLocaleString()}</div>
-              <div className="text-xs text-gray-500">{eligibleForFestivalBonus} eligible employees</div>
-              <div className="text-xs text-gray-400 mt-1">
-                {filters.department !== 'All' && `Dept: ${filters.department}`} 
-                {filters.levelOfWork !== 'All' && ` • Level: ${filters.levelOfWork}`}
-                {filters.salaryMonth !== 'All' && ` • Month: ${filters.salaryMonth}`}
-                {filters.year !== 'All' && ` • Year: ${filters.year}`}
-              </div>
-            </div>
             <div className="rounded border border-gray-200 bg-white p-6">
               <div className="text-sm text-gray-500">Attendance Bonus Amount</div>
               <div className="mt-2 flex items-center space-x-2">
@@ -525,8 +427,8 @@ export default function BonusesPenalties() {
             </div>
             <div className="rounded border border-gray-200 bg-white p-6">
               <div className="text-sm text-gray-500">Total Bonuses</div>
-              <div className="mt-1 text-2xl font-semibold text-green-600">৳{(totalFestivalBonuses + totalAttendanceBonuses).toLocaleString()}</div>
-              <div className="text-xs text-gray-500">Festival + Attendance</div>
+              <div className="mt-1 text-2xl font-semibold text-green-600">৳{totalAttendanceBonuses.toLocaleString()}</div>
+              <div className="text-xs text-gray-500">Attendance Bonuses</div>
               <div className="text-xs text-gray-400 mt-1">
                 {filters.department !== 'All' && `Dept: ${filters.department}`} 
                 {filters.levelOfWork !== 'All' && ` • Level: ${filters.levelOfWork}`}
@@ -746,32 +648,24 @@ export default function BonusesPenalties() {
             </button>
             <button 
               onClick={() => {
-                let tableElement, tableTitle, tableDescription, resultCount, resultType
+                let tableElement, tableTitle, tableDescription
                 
                 if (activeTab === 'timeline') {
                   tableElement = document.querySelector('.bonuses-table')
                   tableTitle = 'Performance Table'
                   tableDescription = 'Employee performance overview including bonuses, penalties, and job tenure'
-                  resultCount = filteredEmployees.length
-                  resultType = 'employees'
                 } else if (activeTab === 'overtime') {
                   tableElement = document.querySelector('.overtime-table')
                   tableTitle = 'Worker Overtime'
                   tableDescription = 'Overtime hours and rates for worker employees'
-                  resultCount = filteredEmployees.filter(emp => emp.levelOfWork === 'Worker').length
-                  resultType = 'workers'
                 } else if (activeTab === 'bonuses') {
                   tableElement = document.querySelector('.bonuses-table')
                   tableTitle = 'Employee Bonuses'
-                  tableDescription = 'Employee bonus overview including attendance and festival bonuses'
-                  resultCount = filteredEmployees.length
-                  resultType = 'employees'
+                  tableDescription = 'Employee bonus overview including attendance bonuses'
                 } else if (activeTab === 'penalties') {
                   tableElement = document.querySelector('.penalties-table')
                   tableTitle = 'Employee Penalties'
                   tableDescription = 'Penalties for damage to company property or products, deducted from monthly salary'
-                  resultCount = filteredPenalties.length
-                  resultType = 'penalties'
                 }
                 
                 if (!tableElement) {
@@ -860,9 +754,6 @@ export default function BonusesPenalties() {
                     Attendance Bonus
                   </th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Festival Bonus
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                     Penalties
                   </th>
                 </tr>
@@ -896,15 +787,6 @@ export default function BonusesPenalties() {
                         <span className="text-sm text-gray-400">Not Eligible</span>
                       )}
                     </td>
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      {applyFestivalBonus ? (
-                        <span className="text-sm font-medium text-green-600">
-                          ৳{calculateFestivalBonus(employee)}
-                        </span>
-                      ) : (
-                        <span className="text-sm text-gray-400">Not Applied</span>
-                      )}
-                    </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-red-600">
                       ৳{penalties
                         .filter(penalty => penalty.employeeId === employee.id)
@@ -925,7 +807,7 @@ export default function BonusesPenalties() {
           <div className="px-6 py-4 border-b border-gray-200">
             <h2 className="text-lg font-medium text-gray-900">Employee Bonuses</h2>
             <p className="text-sm text-gray-500">
-              Employee bonus overview including attendance and festival bonuses
+              Employee bonus overview including attendance bonuses
             </p>
                       </div>
           
@@ -959,17 +841,6 @@ export default function BonusesPenalties() {
                   </th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                     Attendance Bonus
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    <div className="flex items-center space-x-2">
-                      <span>Festival Bonus</span>
-                      <input
-                        type="checkbox"
-                        checked={applyFestivalBonus}
-                        onChange={(e) => setApplyFestivalBonus(e.target.checked)}
-                        className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
-                      />
-                    </div>
                   </th>
                 </tr>
               </thead>
@@ -1009,15 +880,6 @@ export default function BonusesPenalties() {
                         </span>
                       ) : (
                         <span className="text-sm text-gray-400">Not Eligible</span>
-                      )}
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      {applyFestivalBonus ? (
-                        <span className="text-sm font-medium text-green-600">
-                          ৳{calculateFestivalBonus(employee)}
-                        </span>
-                      ) : (
-                        <span className="text-sm text-gray-400">Not Applied</span>
                       )}
                     </td>
                   </tr>

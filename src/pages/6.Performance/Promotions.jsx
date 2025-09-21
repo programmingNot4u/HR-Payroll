@@ -1,269 +1,205 @@
-import { useState } from 'react'
+import React, { useState, useEffect } from 'react'
+import employeeService from '../../services/employeeService'
+import organizationalDataService from '../../services/organizationalDataService'
 
 export default function Promotions() {
-  const [promotions] = useState([
-    {
-      id: 1,
-      employeeName: 'Sarah Johnson',
-      employeeId: 'EMP001',
-      currentPosition: 'Senior Customer Support Manager',
-      currentDepartment: 'Customer Support',
-      proposedPosition: 'Customer Support Director',
-      proposedDepartment: 'Customer Support',
-      promotionType: 'Position Upgrade',
-      requestDate: '2024-06-20',
-      effectiveDate: '2024-08-01',
-      status: 'Approved',
-      priority: 'High',
-      requestedBy: 'Mike Chen',
-      approvedBy: 'CEO',
-      currentSalary: '$75,000',
-      proposedSalary: '$95,000',
-      salaryIncrease: '26.7%',
-      justification: 'Sarah has demonstrated exceptional leadership in managing the customer support team. She has consistently exceeded performance targets and shown strong strategic thinking. Her team has achieved 95% customer satisfaction rating and she has successfully implemented new processes that improved efficiency by 30%.',
-      performanceMetrics: {
-        'Customer Satisfaction': '95%',
-        'Team Performance': '92%',
-        'Process Efficiency': '30% improvement',
-        'Leadership Score': '4.5/5.0'
-      },
-      requirements: [
-        'Complete advanced leadership training',
-        'Develop strategic plan for Q3-Q4 2024',
-        'Mentor 2 junior managers'
-      ],
-      timeline: '3 months',
-      riskAssessment: 'Low - Employee has proven track record and strong team support'
-    },
-    {
-      id: 2,
-      employeeName: 'David Thompson',
-      employeeId: 'EMP002',
-      currentPosition: 'Project Manager',
-      currentDepartment: 'Project Management',
-      proposedPosition: 'Senior Project Manager',
-      proposedDepartment: 'Project Management',
-      promotionType: 'Level Upgrade',
-      requestDate: '2024-06-15',
-      effectiveDate: '2024-07-15',
-      status: 'Under Review',
-      priority: 'Medium',
-      requestedBy: 'Emily Watson',
-      approvedBy: 'Pending',
-      currentSalary: '$65,000',
-      proposedSalary: '$75,000',
-      salaryIncrease: '15.4%',
-      justification: 'David has shown strong technical capabilities and has successfully delivered 8 major projects on time and within budget. He has improved project delivery efficiency and has been mentoring junior project managers. His technical skills are solid and he shows potential for senior leadership.',
-      performanceMetrics: {
-        'Project Delivery': '100% on time',
-        'Budget Management': '98% within budget',
-        'Team Leadership': '4.2/5.0',
-        'Client Satisfaction': '4.5/5.0'
-      },
-      requirements: [
-        'Complete communication skills workshop',
-        'Lead 2 major projects independently',
-        'Develop mentoring program for junior PMs'
-      ],
-      timeline: '2 months',
-      riskAssessment: 'Medium - Good technical skills but communication needs improvement'
-    },
-    {
-      id: 3,
-      employeeName: 'Lisa Rodriguez',
-      employeeId: 'EMP003',
-      currentPosition: 'Training Specialist',
-      currentDepartment: 'Training & Development',
-      proposedPosition: 'Training Manager',
-      proposedDepartment: 'Training & Development',
-      promotionType: 'Position Upgrade',
-      requestDate: '2024-06-10',
-      effectiveDate: '2024-09-01',
-      status: 'Approved',
-      priority: 'Medium',
-      requestedBy: 'Robert Wilson',
-      approvedBy: 'HR Director',
-      currentSalary: '$60,000',
-      proposedSalary: '$75,000',
-      salaryIncrease: '25.0%',
-      justification: 'Lisa is an outstanding training professional who consistently exceeds expectations. Her innovative approach to learning design and exceptional delivery skills make her a valuable asset. She has successfully designed and delivered 15+ training programs with 98% participant satisfaction.',
-      performanceMetrics: {
-        'Training Satisfaction': '98%',
-        'Program Completion': '95%',
-        'Innovation Score': '4.8/5.0',
-        'Leadership Potential': '4.6/5.0'
-      },
-      requirements: [
-        'Complete technical training certification',
-        'Lead strategic learning initiative',
-        'Mentor new training specialists'
-      ],
-      timeline: '3 months',
-      riskAssessment: 'Low - Exceptional performer with strong leadership potential'
-    },
-    {
-      id: 4,
-      employeeName: 'Mike Chen',
-      employeeId: 'EMP004',
-      currentPosition: 'HR Director',
-      currentDepartment: 'Human Resources',
-      proposedPosition: 'VP of Human Resources',
-      proposedDepartment: 'Human Resources',
-      promotionType: 'Executive Promotion',
-      requestDate: '2024-06-05',
-      effectiveDate: '2024-10-01',
-      status: 'Under Review',
-      priority: 'High',
-      requestedBy: 'CEO',
-      approvedBy: 'Board of Directors',
-      currentSalary: '$120,000',
-      proposedSalary: '$150,000',
-      salaryIncrease: '25.0%',
-      justification: 'Mike has demonstrated excellent leadership in the HR function and has been instrumental in driving positive organizational change. His strategic thinking and team management skills are exemplary. He has successfully implemented new HR systems and improved employee satisfaction by 25%.',
-      performanceMetrics: {
-        'Employee Satisfaction': '25% improvement',
-        'HR System Implementation': '100% completion',
-        'Strategic Leadership': '4.7/5.0',
-        'Change Management': '4.5/5.0'
-      },
-      requirements: [
-        'Develop comprehensive HR strategy for 2025',
-        'Lead organizational culture transformation',
-        'Implement advanced HR analytics'
-      ],
-      timeline: '4 months',
-      riskAssessment: 'Low - Proven leader with strong strategic capabilities'
-    },
-    {
-      id: 5,
-      employeeName: 'Emily Watson',
-      employeeId: 'EMP005',
-      currentPosition: 'Sales Manager',
-      currentDepartment: 'Sales',
-      proposedPosition: 'Regional Sales Director',
-      proposedDepartment: 'Sales',
-      promotionType: 'Position Upgrade',
-      requestDate: '2024-06-01',
-      effectiveDate: '2024-08-15',
-      status: 'Pending Approval',
-      priority: 'Medium',
-      requestedBy: 'Sales Director',
-      approvedBy: 'Pending',
-      currentSalary: '$70,000',
-      proposedSalary: '$85,000',
-      salaryIncrease: '21.4%',
-      justification: 'Emily has shown strong leadership in managing the sales team and has consistently achieved 110% of sales targets. Her customer relationship skills and initiative are commendable. She has successfully expanded the customer base and improved team performance metrics.',
-      performanceMetrics: {
-        'Sales Target Achievement': '110%',
-        'Customer Acquisition': '25% increase',
-        'Team Performance': '4.3/5.0',
-        'Customer Satisfaction': '4.6/5.0'
-      },
-      requirements: [
-        'Develop regional sales strategy',
-        'Improve forecasting accuracy by 20%',
-        'Implement team performance tracking system'
-      ],
-      timeline: '2.5 months',
-      riskAssessment: 'Medium - Good performance but needs strategic planning experience'
-    },
-    {
-      id: 6,
-      employeeName: 'Robert Wilson',
-      employeeId: 'EMP006',
-      currentPosition: 'Software Developer',
-      currentDepartment: 'Engineering',
-      proposedPosition: 'Senior Software Developer',
-      proposedDepartment: 'Engineering',
-      promotionType: 'Level Upgrade',
-      requestDate: '2024-05-25',
-      effectiveDate: '2024-07-01',
-      status: 'Approved',
-      priority: 'Low',
-      requestedBy: 'Engineering Manager',
-      approvedBy: 'CTO',
-      currentSalary: '$80,000',
-      proposedSalary: '$95,000',
-      salaryIncrease: '18.8%',
-      justification: 'Robert is a skilled developer with strong technical capabilities. He has contributed significantly to major projects and has been mentoring junior developers. His code quality and problem-solving skills are excellent, and he shows strong potential for technical leadership.',
-      performanceMetrics: {
-        'Code Quality': '4.5/5.0',
-        'Project Contribution': 'High',
-        'Mentoring': '4.2/5.0',
-        'Problem Solving': '4.4/5.0'
-      },
-      requirements: [
-        'Lead technical design for 2 major features',
-        'Mentor 3 junior developers',
-        'Improve code documentation standards'
-      ],
-      timeline: '1.5 months',
-      riskAssessment: 'Low - Strong technical performer with good leadership potential'
-    }
-  ])
-
-  const [selectedStatus, setSelectedStatus] = useState('All')
-  const [selectedType, setSelectedType] = useState('All')
-  const [selectedPriority, setSelectedPriority] = useState('All')
-  const [selectedDepartment, setSelectedDepartment] = useState('All')
-  const [searchTerm, setSearchTerm] = useState('')
-
-  const statuses = ['All', 'Approved', 'Under Review', 'Pending Approval', 'Rejected', 'On Hold']
-  const promotionTypes = ['All', 'Position Upgrade', 'Level Upgrade', 'Executive Promotion', 'Lateral Move']
-  const priorities = ['All', 'High', 'Medium', 'Low']
-  const departments = ['All', 'Customer Support', 'Project Management', 'Training & Development', 'Human Resources', 'Sales', 'Engineering']
-
-  const filteredPromotions = promotions.filter(promotion => {
-    const matchesStatus = selectedStatus === 'All' || promotion.status === selectedStatus
-    const matchesType = selectedType === 'All' || promotion.promotionType === selectedType
-    const matchesPriority = selectedPriority === 'All' || promotion.priority === selectedPriority
-    const matchesDepartment = selectedDepartment === 'All' || promotion.currentDepartment === selectedDepartment
-    const matchesSearch = promotion.employeeName.toLowerCase().includes(searchTerm.toLowerCase()) || 
-                         promotion.currentPosition.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         promotion.proposedPosition.toLowerCase().includes(searchTerm.toLowerCase())
-    return matchesStatus && matchesType && matchesPriority && matchesDepartment && matchesSearch
+  const [filters, setFilters] = useState({
+    employeeId: '',
+    designation: '',
+    department: '',
+    status: '',
+    month: '',
+    year: ''
   })
 
-  const getStatusColor = (status) => {
-    switch (status) {
-      case 'Approved': return 'text-green-600 bg-green-100'
-      case 'Under Review': return 'text-blue-600 bg-blue-100'
-      case 'Pending Approval': return 'text-yellow-600 bg-yellow-100'
-      case 'Rejected': return 'text-red-600 bg-red-100'
-      case 'On Hold': return 'text-gray-600 bg-gray-100'
-      default: return 'text-gray-600 bg-gray-100'
+  const [employees, setEmployees] = useState([])
+  const [departments, setDepartments] = useState([])
+  const [designations, setDesignations] = useState([])
+  const [salaryGrades, setSalaryGrades] = useState([])
+  const [promotions, setPromotions] = useState({})
+  const [kpiData, setKpiData] = useState({})
+
+  const handleFilterChange = (field, value) => {
+    setFilters(prev => ({
+      ...prev,
+      [field]: value
+    }))
+  }
+
+  const clearFilters = () => {
+    setFilters({
+      employeeId: '',
+      designation: '',
+      department: '',
+      status: '',
+      month: '',
+      year: ''
+    })
+  }
+
+  // Load data on component mount
+  useEffect(() => {
+    const loadData = async () => {
+      try {
+        const employeesData = await employeeService.getAllEmployees()
+        setEmployees(employeesData.filter(emp => emp.status === 'Active'))
+        setDepartments(organizationalDataService.getDepartments())
+        setDesignations(organizationalDataService.getDesignations())
+        setSalaryGrades(organizationalDataService.getAllSalaryGrades())
+        
+        // Load KPI data from localStorage (from KPI page)
+        const savedRatings = localStorage.getItem('kpiEmployeeRatings')
+        let kpiRatings = {}
+        
+        if (savedRatings) {
+          try {
+            const savedData = JSON.parse(savedRatings)
+            console.log('Promotions - Loaded KPI ratings:', savedData)
+            
+            // Handle both old format (array) and new format (object)
+            if (Array.isArray(savedData)) {
+              // Old format: array of employees with skillRatings
+              savedData.forEach(emp => {
+                if (emp.skillRatings && Object.keys(emp.skillRatings).length > 0) {
+                  const ratings = Object.values(emp.skillRatings).filter(rating => rating > 0)
+                  if (ratings.length > 0) {
+                    const average = (ratings.reduce((acc, rating) => acc + rating, 0) / ratings.length).toFixed(1)
+                    kpiRatings[emp.id] = average
+                  }
+                }
+              })
+            } else {
+              // New format: object with employee ID as key
+              Object.keys(savedData).forEach(empId => {
+                const skillRatings = savedData[empId]
+                if (skillRatings && Object.keys(skillRatings).length > 0) {
+                  const ratings = Object.values(skillRatings).filter(rating => rating > 0)
+                  if (ratings.length > 0) {
+                    const average = (ratings.reduce((acc, rating) => acc + rating, 0) / ratings.length).toFixed(1)
+                    kpiRatings[empId] = average
+                  }
+                }
+              })
+            }
+          } catch (error) {
+            console.error('Error parsing KPI ratings:', error)
+          }
+        }
+        
+        // If no saved ratings, use mock data as fallback
+        if (Object.keys(kpiRatings).length === 0) {
+          employeesData.forEach(emp => {
+            if (emp.status === 'Active') {
+              const baseRating = 3.0
+              const randomFactor = Math.random() * 2 // 0-2
+              kpiRatings[emp.id] = (baseRating + randomFactor).toFixed(1)
+            }
+          })
+        }
+        
+        setKpiData(kpiRatings)
+      } catch (error) {
+        console.error('Error loading data:', error)
+      }
+    }
+    loadData()
+  }, [])
+
+  // Filter employees based on selected filters
+  const filteredEmployees = employees.filter(employee => {
+    const matchesEmployeeId = !filters.employeeId || employee.id.toString().includes(filters.employeeId)
+    const matchesDesignation = !filters.designation || employee.designation === filters.designation
+    const matchesDepartment = !filters.department || employee.department === filters.department
+    const matchesStatus = !filters.status || (promotions[employee.id]?.status === filters.status)
+    const matchesMonth = !filters.month || (promotions[employee.id]?.month === filters.month)
+    const matchesYear = !filters.year || (promotions[employee.id]?.year === filters.year)
+    
+    return matchesEmployeeId && matchesDesignation && matchesDepartment && matchesStatus && matchesMonth && matchesYear
+  })
+
+  // Handle promotion selection
+  const handlePromotionSelect = (employeeId, isSelected) => {
+    if (isSelected) {
+      setPromotions(prev => ({
+        ...prev,
+        [employeeId]: {
+          status: 'Selected For Promotion',
+          month: new Date().toLocaleDateString('en-GB').split('/')[1].padStart(2, '0'),
+          year: new Date().getFullYear().toString(),
+          promotedDesignation: '',
+          promotedDepartment: '',
+          promotedLevelOfWork: '',
+          promotedSalaryGrade: ''
+        }
+      }))
+    } else {
+      setPromotions(prev => {
+        const newPromotions = { ...prev }
+        delete newPromotions[employeeId]
+        return newPromotions
+      })
     }
   }
 
-  const getPriorityColor = (priority) => {
-    switch (priority) {
-      case 'High': return 'text-red-600 bg-red-100'
-      case 'Medium': return 'text-yellow-600 bg-yellow-100'
-      case 'Low': return 'text-green-600 bg-green-100'
-      default: return 'text-gray-600 bg-gray-100'
-    }
+  // Handle promotion details update
+  const handlePromotionUpdate = (employeeId, field, value) => {
+    setPromotions(prev => {
+      const updatedPromotion = {
+        ...prev[employeeId],
+        [field]: value
+      }
+      
+      // If level of work changes, clear the salary grade to avoid invalid combinations
+      if (field === 'promotedLevelOfWork') {
+        updatedPromotion.promotedSalaryGrade = ''
+      }
+      
+      return {
+        ...prev,
+        [employeeId]: updatedPromotion
+      }
+    })
   }
 
-  const getTypeColor = (type) => {
-    switch (type) {
-      case 'Position Upgrade': return 'text-purple-600 bg-purple-100'
-      case 'Level Upgrade': return 'text-indigo-600 bg-indigo-100'
-      case 'Executive Promotion': return 'text-green-600 bg-green-100'
-      case 'Lateral Move': return 'text-orange-600 bg-orange-100'
-      default: return 'text-gray-600 bg-gray-100'
+  // Function to refresh KPI data from localStorage
+  const refreshKpiData = () => {
+    const savedRatings = localStorage.getItem('kpiEmployeeRatings')
+    let kpiRatings = {}
+    
+    if (savedRatings) {
+      try {
+        const savedData = JSON.parse(savedRatings)
+        
+        // Handle both old format (array) and new format (object)
+        if (Array.isArray(savedData)) {
+          savedData.forEach(emp => {
+            if (emp.skillRatings && Object.keys(emp.skillRatings).length > 0) {
+              const ratings = Object.values(emp.skillRatings).filter(rating => rating > 0)
+              if (ratings.length > 0) {
+                const average = (ratings.reduce((acc, rating) => acc + rating, 0) / ratings.length).toFixed(1)
+                kpiRatings[emp.id] = average
+              }
+            }
+          })
+        } else {
+          Object.keys(savedData).forEach(empId => {
+            const skillRatings = savedData[empId]
+            if (skillRatings && Object.keys(skillRatings).length > 0) {
+              const ratings = Object.values(skillRatings).filter(rating => rating > 0)
+              if (ratings.length > 0) {
+                const average = (ratings.reduce((acc, rating) => acc + rating, 0) / ratings.length).toFixed(1)
+                kpiRatings[empId] = average
+              }
+            }
+          })
+        }
+      } catch (error) {
+        console.error('Error parsing KPI ratings:', error)
+      }
     }
-  }
-
-  const getDepartmentColor = (department) => {
-    switch (department) {
-      case 'Customer Support': return 'text-blue-600 bg-blue-100'
-      case 'Project Management': return 'text-purple-600 bg-purple-100'
-      case 'Training & Development': return 'text-indigo-600 bg-indigo-100'
-      case 'Human Resources': return 'text-green-600 bg-green-100'
-      case 'Sales': return 'text-orange-600 bg-orange-100'
-      case 'Engineering': return 'text-teal-600 bg-teal-100'
-      default: return 'text-gray-600 bg-gray-100'
-    }
+    
+    setKpiData(kpiRatings)
+    console.log('KPI data refreshed:', kpiRatings)
   }
 
   return (
@@ -273,291 +209,423 @@ export default function Promotions() {
           <h1 className="text-2xl font-semibold text-gray-900">Employee Promotions</h1>
           <p className="text-gray-600 mt-1">Manage and track employee promotion requests and approvals</p>
         </div>
-        <button className="bg-orange-500 text-white px-4 py-2 rounded-lg hover:bg-orange-600 transition-colors">
-          + Request Promotion
+          <button
+            onClick={refreshKpiData}
+            className="flex items-center px-4 py-2 bg-orange-600 text-white rounded-lg hover:bg-orange-700 transition-colors duration-200"
+          >
+            <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+            </svg>
+            Refresh KPI Data
         </button>
       </div>
 
-      {/* Summary Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-        <div className="bg-white p-4 rounded-lg border border-gray-200">
-          <div className="flex items-center">
-            <div className="p-2 bg-blue-100 rounded-lg">
-              <svg className="w-6 h-6 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" />
-              </svg>
-            </div>
-            <div className="ml-3">
-              <p className="text-sm font-medium text-gray-600">Total Requests</p>
-              <p className="text-2xl font-semibold text-gray-900">{promotions.length}</p>
-            </div>
-          </div>
+      {/* Filter Section */}
+      <div className="bg-white p-6 rounded-lg border border-gray-200">
+        <div className="flex items-center justify-between mb-4">
+          <h3 className="text-lg font-semibold text-gray-900">Filter Promotion Data</h3>
+          <button
+            onClick={clearFilters}
+            className="text-sm text-orange-600 hover:text-orange-700 font-medium"
+          >
+            Clear All Filters
+          </button>
         </div>
         
-        <div className="bg-white p-4 rounded-lg border border-gray-200">
-          <div className="flex items-center">
-            <div className="p-2 bg-green-100 rounded-lg">
-              <svg className="w-6 h-6 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-              </svg>
-            </div>
-            <div className="ml-3">
-              <p className="text-sm font-medium text-gray-600">Approved</p>
-              <p className="text-2xl font-semibold text-gray-900">
-                {promotions.filter(p => p.status === 'Approved').length}
-              </p>
-            </div>
-          </div>
-        </div>
-        
-        <div className="bg-white p-4 rounded-lg border border-gray-200">
-          <div className="flex items-center">
-            <div className="p-2 bg-yellow-100 rounded-lg">
-              <svg className="w-6 h-6 text-yellow-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
-              </svg>
-            </div>
-            <div className="ml-3">
-              <p className="text-sm font-medium text-gray-600">Pending</p>
-              <p className="text-2xl font-semibold text-gray-900">
-                {promotions.filter(p => p.status === 'Pending Approval' || p.status === 'Under Review').length}
-              </p>
-            </div>
-          </div>
-        </div>
-        
-        <div className="bg-white p-4 rounded-lg border border-gray-200">
-          <div className="flex items-center">
-            <div className="p-2 bg-purple-100 rounded-lg">
-              <svg className="w-6 h-6 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1" />
-              </svg>
-            </div>
-            <div className="ml-3">
-              <p className="text-sm font-medium text-gray-600">Avg Increase</p>
-              <p className="text-2xl font-semibold text-gray-900">
-                {(() => {
-                  const increases = promotions.map(p => parseFloat(p.salaryIncrease.replace('%', '')))
-                  return (increases.reduce((sum, inc) => sum + inc, 0) / increases.length).toFixed(1) + '%'
-                })()}
-              </p>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      {/* Filters */}
-      <div className="bg-white p-4 rounded-lg border border-gray-200">
-        <div className="flex flex-wrap gap-4 items-center">
-          <div className="flex-1 min-w-64">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-6 gap-4">
+          {/* Employee ID Filter */}
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">Employee ID</label>
             <input
               type="text"
-              placeholder="Search promotions..."
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
+              placeholder="Enter Employee ID"
+              value={filters.employeeId}
+              onChange={(e) => handleFilterChange('employeeId', e.target.value)}
               className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-transparent"
             />
           </div>
-          <div className="flex gap-2">
+
+           {/* Designation Filter */}
+           <div>
+             <label className="block text-sm font-medium text-gray-700 mb-2">Designation</label>
             <select
-              value={selectedStatus}
-              onChange={(e) => setSelectedStatus(e.target.value)}
-              className="px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-transparent"
-            >
-              {statuses.map(status => (
-                <option key={status} value={status}>{status}</option>
+               value={filters.designation}
+               onChange={(e) => handleFilterChange('designation', e.target.value)}
+               className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-transparent"
+             >
+               <option value="">All Designations</option>
+               {designations.map(designation => (
+                 <option key={designation.id} value={designation.name}>
+                   {designation.name}
+                 </option>
               ))}
             </select>
+           </div>
+
+           {/* Department Filter */}
+           <div>
+             <label className="block text-sm font-medium text-gray-700 mb-2">Department</label>
             <select
-              value={selectedType}
-              onChange={(e) => setSelectedType(e.target.value)}
-              className="px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-transparent"
-            >
-              {promotionTypes.map(type => (
-                <option key={type} value={type}>{type}</option>
+               value={filters.department}
+               onChange={(e) => handleFilterChange('department', e.target.value)}
+               className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-transparent"
+             >
+               <option value="">All Departments</option>
+               {departments.map(department => (
+                 <option key={department.id} value={department.name}>
+                   {department.name}
+                 </option>
               ))}
             </select>
+           </div>
+
+          {/* Status Filter */}
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">Status</label>
             <select
-              value={selectedPriority}
-              onChange={(e) => setSelectedPriority(e.target.value)}
-              className="px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-transparent"
+              value={filters.status}
+              onChange={(e) => handleFilterChange('status', e.target.value)}
+              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-transparent"
             >
-              {priorities.map(priority => (
-                <option key={priority} value={priority}>{priority}</option>
-              ))}
-            </select>
-            <select
-              value={selectedDepartment}
-              onChange={(e) => setSelectedDepartment(e.target.value)}
-              className="px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-transparent"
-            >
-              {departments.map(department => (
-                <option key={department} value={department}>{department}</option>
-              ))}
+              <option value="">All Status</option>
+              <option value="Approved">Approved</option>
+              <option value="Under Review">Under Review</option>
+              <option value="Pending Approval">Pending Approval</option>
+              <option value="Rejected">Rejected</option>
+              <option value="On Hold">On Hold</option>
             </select>
           </div>
+
+          {/* Month Filter */}
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">Month</label>
+            <select
+              value={filters.month}
+              onChange={(e) => handleFilterChange('month', e.target.value)}
+              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-transparent"
+            >
+              <option value="">All Months</option>
+              <option value="01">January</option>
+              <option value="02">February</option>
+              <option value="03">March</option>
+              <option value="04">April</option>
+              <option value="05">May</option>
+              <option value="06">June</option>
+              <option value="07">July</option>
+              <option value="08">August</option>
+              <option value="09">September</option>
+              <option value="10">October</option>
+              <option value="11">November</option>
+              <option value="12">December</option>
+            </select>
+          </div>
+
+          {/* Year Filter */}
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">Year</label>
+            <select
+              value={filters.year}
+              onChange={(e) => handleFilterChange('year', e.target.value)}
+              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-transparent"
+            >
+              <option value="">All Years</option>
+              {Array.from({ length: 10 }, (_, i) => {
+                const year = new Date().getFullYear() - i
+                return (
+                  <option key={year} value={year.toString()}>
+                    {year}
+                  </option>
+                )
+              })}
+            </select>
         </div>
       </div>
 
-      {/* Promotions List */}
-      <div className="space-y-4">
-        {filteredPromotions.map(promotion => (
-          <div key={promotion.id} className="bg-white p-6 rounded-lg border border-gray-200 hover:shadow-md transition-shadow">
-            <div className="flex items-start justify-between mb-4">
-              <div className="flex-1">
-                <div className="flex items-center gap-3 mb-2">
-                  <h3 className="text-lg font-semibold text-gray-900">{promotion.employeeName}</h3>
-                  <span className={`px-2 py-1 rounded-full text-xs font-medium ${getStatusColor(promotion.status)}`}>
-                    {promotion.status}
+        {/* Active Filters Display */}
+        {(filters.employeeId || filters.designation || filters.department || filters.status || filters.month || filters.year) && (
+          <div className="mt-4 pt-4 border-t border-gray-200">
+            <div className="flex items-center gap-2 flex-wrap">
+              <span className="text-sm font-medium text-gray-700">Active Filters:</span>
+              {filters.employeeId && (
+                <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-orange-100 text-orange-800">
+                  Employee ID: {filters.employeeId}
+                  <button
+                    onClick={() => handleFilterChange('employeeId', '')}
+                    className="ml-2 text-orange-600 hover:text-orange-800"
+                  >
+                    ×
+                  </button>
                   </span>
-                  <span className={`px-2 py-1 rounded-full text-xs font-medium ${getPriorityColor(promotion.priority)}`}>
-                    {promotion.priority}
+              )}
+              {filters.designation && (
+                <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-orange-100 text-orange-800">
+                  Designation: {filters.designation}
+                  <button
+                    onClick={() => handleFilterChange('designation', '')}
+                    className="ml-2 text-orange-600 hover:text-orange-800"
+                  >
+                    ×
+                  </button>
                   </span>
-                  <span className={`px-2 py-1 rounded-full text-xs font-medium ${getTypeColor(promotion.promotionType)}`}>
-                    {promotion.promotionType}
+              )}
+              {filters.department && (
+                <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-orange-100 text-orange-800">
+                  Department: {filters.department}
+                  <button
+                    onClick={() => handleFilterChange('department', '')}
+                    className="ml-2 text-orange-600 hover:text-orange-800"
+                  >
+                    ×
+                  </button>
                   </span>
-                  <span className={`px-2 py-1 rounded-full text-xs font-medium ${getDepartmentColor(promotion.currentDepartment)}`}>
-                    {promotion.currentDepartment}
+              )}
+              {filters.status && (
+                <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-orange-100 text-orange-800">
+                  Status: {filters.status}
+                  <button
+                    onClick={() => handleFilterChange('status', '')}
+                    className="ml-2 text-orange-600 hover:text-orange-800"
+                  >
+                    ×
+                  </button>
                   </span>
+              )}
+              {filters.month && (
+                <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-orange-100 text-orange-800">
+                  Month: {filters.month === '01' ? 'January' : filters.month === '02' ? 'February' : filters.month === '03' ? 'March' : filters.month === '04' ? 'April' : filters.month === '05' ? 'May' : filters.month === '06' ? 'June' : filters.month === '07' ? 'July' : filters.month === '08' ? 'August' : filters.month === '09' ? 'September' : filters.month === '10' ? 'October' : filters.month === '11' ? 'November' : filters.month === '12' ? 'December' : filters.month}
+                  <button
+                    onClick={() => handleFilterChange('month', '')}
+                    className="ml-2 text-orange-600 hover:text-orange-800"
+                  >
+                    ×
+                </button>
+                  </span>
+              )}
+              {filters.year && (
+                <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-orange-100 text-orange-800">
+                  Year: {filters.year}
+                  <button
+                    onClick={() => handleFilterChange('year', '')}
+                    className="ml-2 text-orange-600 hover:text-orange-800"
+                  >
+                    ×
+                </button>
+                  </span>
+              )}
+            </div>
+          </div>
+        )}
+      </div>
+
+       {/* Employee List */}
+       <div className="bg-white rounded-lg border border-gray-200">
+         <div className="px-6 py-4 border-b border-gray-200">
+           <h3 className="text-lg font-semibold text-gray-900">Employee List</h3>
+           <p className="text-sm text-gray-600 mt-1">
+             Showing {filteredEmployees.length} of {employees.length} employees
+           </p>
                 </div>
                 
-                <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-4">
-                  <div>
-                    <p className="text-sm text-gray-500">Current Position</p>
-                    <p className="text-sm font-medium text-gray-900">{promotion.currentPosition}</p>
+         <div className="p-6">
+           {filteredEmployees.length > 0 ? (
+             <div className="space-y-4">
+               {filteredEmployees.map(employee => {
+                 const promotion = promotions[employee.id]
+                 const kpiRating = kpiData[employee.id] || '0.0'
+                 const isSelectedForPromotion = promotion?.status === 'Selected For Promotion'
+                 
+                 return (
+                   <div key={employee.id} className="border border-gray-200 rounded-lg p-6 hover:shadow-lg hover:border-orange-300 transition-all duration-300 transform hover:scale-[1.01] bg-white hover:bg-orange-50/30">
+                     <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                       {/* Left Section - Employee Information */}
+                       <div className="space-y-4">
+                         <h3 className="text-lg font-semibold text-gray-900">Employee Details</h3>
+                         
+                         <div className="space-y-3">
+                           <div className="flex items-center space-x-3">
+                             <span className="text-sm font-medium text-gray-500 min-w-[120px]">ID:</span>
+                             <span className="text-sm font-semibold text-gray-900">{employee.id}</span>
+                           </div>
+                           <div className="flex items-center space-x-3">
+                             <span className="text-sm font-medium text-gray-500 min-w-[120px]">Name:</span>
+                             <span className="text-sm font-semibold text-gray-900">{employee.name}</span>
+                           </div>
+                           <div className="flex items-center space-x-3">
+                             <span className="text-sm font-medium text-gray-500 min-w-[120px]">Designation:</span>
+                             <span className="text-sm text-gray-700">{employee.designation}</span>
+                           </div>
+                           <div className="flex items-center space-x-3">
+                             <span className="text-sm font-medium text-gray-500 min-w-[120px]">Department:</span>
+                             <span className="text-sm text-gray-700">{employee.department}</span>
                   </div>
-                  <div>
-                    <p className="text-sm text-gray-500">Proposed Position</p>
-                    <p className="text-sm font-medium text-gray-900">{promotion.proposedPosition}</p>
+                           <div className="flex items-center space-x-3">
+                             <span className="text-sm font-medium text-gray-500 min-w-[120px]">Level of Work:</span>
+                             <span className="text-xs px-3 py-1 rounded-full bg-blue-100 text-blue-800">
+                               {employee.levelOfWork}
+                             </span>
                   </div>
-                  <div>
-                    <p className="text-sm text-gray-500">Requested By</p>
-                    <p className="text-sm font-medium text-gray-900">{promotion.requestedBy}</p>
+                           <div className="flex items-center space-x-3">
+                             <span className="text-sm font-medium text-gray-500 min-w-[120px]">Salary Grade:</span>
+                             <span className="text-sm text-gray-700">{employee.salaryGrade || 'Not assigned'}</span>
                   </div>
-                  <div>
-                    <p className="text-sm text-gray-500">Request Date</p>
-                    <p className="text-sm font-medium text-gray-900">{(() => {
-                      const date = new Date(promotion.requestDate)
-                      const day = String(date.getDate()).padStart(2, '0')
-                      const month = String(date.getMonth() + 1).padStart(2, '0')
-                      const year = date.getFullYear()
-                      return `${day}/${month}/${year}`
-                    })()}</p>
-                  </div>
-                </div>
-
-                {/* Salary Information */}
-                <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-4">
-                  <div>
-                    <p className="text-sm text-gray-500">Current Salary</p>
-                    <p className="text-sm font-medium text-gray-900">{promotion.currentSalary}</p>
-                  </div>
-                  <div>
-                    <p className="text-sm text-gray-500">Proposed Salary</p>
-                    <p className="text-sm font-medium text-gray-900">{promotion.proposedSalary}</p>
-                  </div>
-                  <div>
-                    <p className="text-sm text-gray-500">Increase</p>
-                    <p className="text-sm font-medium text-green-600">{promotion.salaryIncrease}</p>
-                  </div>
-                  <div>
-                    <p className="text-sm text-gray-500">Effective Date</p>
-                    <p className="text-sm font-medium text-gray-900">{(() => {
-                      const date = new Date(promotion.effectiveDate)
-                      const day = String(date.getDate()).padStart(2, '0')
-                      const month = String(date.getMonth() + 1).padStart(2, '0')
-                      const year = date.getFullYear()
-                      return `${day}/${month}/${year}`
-                    })()}</p>
                   </div>
                 </div>
 
-                {/* Performance Metrics */}
-                <div className="mb-4">
-                  <h4 className="text-sm font-medium text-gray-700 mb-2">Performance Metrics</h4>
-                  <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-                    {Object.entries(promotion.performanceMetrics).map(([metric, value]) => (
-                      <div key={metric} className="flex items-center justify-between">
-                        <span className="text-xs text-gray-600">{metric}</span>
-                        <span className="text-sm font-medium text-gray-900">{value}</span>
+                       {/* Middle Section - KPI Rating */}
+                       <div className="space-y-4">
+                         <h3 className="text-lg font-semibold text-gray-900">Performance</h3>
+                         
+                         <div className="bg-gradient-to-r from-orange-50 to-orange-100 rounded-lg p-4">
+                           <div className="text-center">
+                             <div className="text-3xl font-bold text-orange-600 mb-2">{kpiRating}/5</div>
+                             <div className="text-sm font-medium text-gray-700 mb-2">KPI Rating</div>
+                             <div className="text-xs text-gray-500 mb-3">From KPI Page</div>
+                             <div className="flex justify-center space-x-1">
+                               {[1, 2, 3, 4, 5].map((star) => (
+                                 <svg
+                                   key={star}
+                                   className={`w-5 h-5 ${star <= parseFloat(kpiRating) ? 'text-orange-400' : 'text-gray-300'}`}
+                                   fill="currentColor"
+                                   viewBox="0 0 20 20"
+                                 >
+                                   <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
+                                 </svg>
+                               ))}
+                  </div>
+                  </div>
+                </div>
+
+                         {/* Performance Level Indicator */}
+                         <div className="text-center">
+                           <div className={`inline-flex items-center px-3 py-1 rounded-full text-xs font-medium ${
+                             parseFloat(kpiRating) >= 4.5 ? 'bg-green-100 text-green-800' :
+                             parseFloat(kpiRating) >= 3.5 ? 'bg-yellow-100 text-yellow-800' :
+                             parseFloat(kpiRating) >= 2.5 ? 'bg-orange-100 text-orange-800' :
+                             'bg-red-100 text-red-800'
+                           }`}>
+                             {parseFloat(kpiRating) >= 4.5 ? 'Excellent' :
+                              parseFloat(kpiRating) >= 3.5 ? 'Good' :
+                              parseFloat(kpiRating) >= 2.5 ? 'Average' :
+                              'Needs Improvement'}
                       </div>
-                    ))}
                   </div>
                 </div>
 
-                {/* Justification */}
-                <div className="mb-4">
-                  <h4 className="text-sm font-medium text-gray-700 mb-2">Justification</h4>
-                  <p className="text-sm text-gray-600">{promotion.justification}</p>
+                       {/* Right Section - Promotion Actions */}
+                       <div className="space-y-4">
+                         <h3 className="text-lg font-semibold text-gray-900">Promotion Decision</h3>
+                         
+                         <div className="space-y-3">
+                           <div className="flex gap-2">
+                             <button
+                               onClick={() => handlePromotionSelect(employee.id, true)}
+                               className={`flex-1 px-4 py-2 text-sm font-medium rounded-lg transition-all duration-200 ${
+                                 isSelectedForPromotion
+                                   ? 'bg-green-600 text-white hover:bg-green-700'
+                                   : 'bg-gray-100 text-gray-700 hover:bg-green-100 hover:text-green-700'
+                               }`}
+                             >
+                               Selected For Promotion
+                             </button>
+                             <button
+                               onClick={() => handlePromotionSelect(employee.id, false)}
+                               className={`flex-1 px-4 py-2 text-sm font-medium rounded-lg transition-all duration-200 ${
+                                 !isSelectedForPromotion
+                                   ? 'bg-red-600 text-white hover:bg-red-700'
+                                   : 'bg-gray-100 text-gray-700 hover:bg-red-100 hover:text-red-700'
+                               }`}
+                             >
+                               No Promotion
+                             </button>
                 </div>
 
-                {/* Requirements & Timeline */}
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                           {isSelectedForPromotion && (
+                             <div className="mt-4 p-4 bg-green-50 rounded-lg border border-green-200">
+                               <h4 className="text-sm font-semibold text-green-800 mb-3">Promotion Details</h4>
+                               <div className="space-y-3">
                   <div>
-                    <h4 className="text-sm font-medium text-gray-700 mb-2">Requirements</h4>
-                    <ul className="space-y-1">
-                      {promotion.requirements.map((requirement, index) => (
-                        <li key={index} className="text-xs text-gray-600 flex items-start gap-2">
-                          <span className="text-blue-500 mt-1">•</span>
-                          {requirement}
-                        </li>
-                      ))}
-                    </ul>
+                                   <label className="block text-xs font-medium text-gray-600 mb-1">Promoted Designation</label>
+                                   <select
+                                     value={promotion.promotedDesignation || ''}
+                                     onChange={(e) => handlePromotionUpdate(employee.id, 'promotedDesignation', e.target.value)}
+                                     className="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500"
+                                   >
+                                     <option value="">Select Designation</option>
+                                     {designations.map(designation => (
+                                       <option key={designation.id} value={designation.name}>
+                                         {designation.name}
+                                       </option>
+                                     ))}
+                                   </select>
                   </div>
                   <div>
-                    <h4 className="text-sm font-medium text-gray-700 mb-2">Implementation Details</h4>
-                    <div className="space-y-2">
-                      <div className="flex items-center justify-between">
-                        <span className="text-xs text-gray-600">Timeline:</span>
-                        <span className="text-sm font-medium text-gray-900">{promotion.timeline}</span>
+                                   <label className="block text-xs font-medium text-gray-600 mb-1">Promoted Department</label>
+                                   <select
+                                     value={promotion.promotedDepartment || ''}
+                                     onChange={(e) => handlePromotionUpdate(employee.id, 'promotedDepartment', e.target.value)}
+                                     className="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500"
+                                   >
+                                     <option value="">Select Department</option>
+                                     {departments.map(department => (
+                                       <option key={department.id} value={department.name}>
+                                         {department.name}
+                                       </option>
+                                     ))}
+                                   </select>
                       </div>
-                      <div className="flex items-center justify-between">
-                        <span className="text-xs text-gray-600">Risk Assessment:</span>
-                        <span className="text-sm font-medium text-gray-900">{promotion.riskAssessment}</span>
+                                 <div>
+                                   <label className="block text-xs font-medium text-gray-600 mb-1">Promoted Level of Work</label>
+                                   <select
+                                     value={promotion.promotedLevelOfWork || ''}
+                                     onChange={(e) => handlePromotionUpdate(employee.id, 'promotedLevelOfWork', e.target.value)}
+                                     className="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500"
+                                   >
+                                     <option value="">Select Level</option>
+                                     <option value="Worker">Worker</option>
+                                     <option value="Staff">Staff</option>
+                                   </select>
                       </div>
+                                 <div>
+                                   <label className="block text-xs font-medium text-gray-600 mb-1">Promoted Salary Grade</label>
+                                   <select
+                                     value={promotion.promotedSalaryGrade || ''}
+                                     onChange={(e) => handlePromotionUpdate(employee.id, 'promotedSalaryGrade', e.target.value)}
+                                     className="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500"
+                                   >
+                                     <option value="">Select Salary Grade</option>
+                                     {salaryGrades
+                                       .filter(grade => {
+                                         if (!promotion.promotedLevelOfWork) return true
+                                         return grade.type === promotion.promotedLevelOfWork
+                                       })
+                                       .map(grade => (
+                                         <option key={grade.id} value={grade.name}>
+                                           {grade.name}
+                                         </option>
+                                       ))}
+                                   </select>
                     </div>
                   </div>
                 </div>
-
-                <div className="flex items-center gap-4 text-sm text-gray-500">
-                  <span>Approved By: {promotion.approvedBy}</span>
-                  <span>Timeline: {promotion.timeline}</span>
-                </div>
-              </div>
-              
-              <div className="flex gap-2 ml-4">
-                <button className="text-gray-400 hover:text-gray-600 p-1">
-                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
-                  </svg>
-                </button>
-                <button className="text-gray-400 hover:text-blue-600 p-1">
-                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
-                  </svg>
-                </button>
-                <button className="text-gray-400 hover:text-red-600 p-1">
-                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                  </svg>
-                </button>
+                           )}
               </div>
             </div>
           </div>
-        ))}
+                   </div>
+                 )
+               })}
       </div>
-
-      {filteredPromotions.length === 0 && (
+           ) : (
         <div className="text-center py-12">
           <svg className="mx-auto h-12 w-12 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" />
+                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
           </svg>
-          <h3 className="mt-2 text-sm font-medium text-gray-900">No promotions found</h3>
+               <h3 className="mt-2 text-sm font-medium text-gray-900">No employees found</h3>
           <p className="mt-1 text-sm text-gray-500">Try adjusting your search or filter criteria.</p>
         </div>
       )}
+         </div>
+       </div>
     </div>
   )
 }
-

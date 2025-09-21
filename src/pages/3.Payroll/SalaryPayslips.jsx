@@ -16,6 +16,7 @@ const sampleEmployees = [
     otherAllowances: 400,
     attendanceBonus: 775,
     totalPenalties: 0,
+    advance: 5000,
     overtime: 12,
     extraOvertime: 8,
     attendance: {
@@ -40,6 +41,7 @@ const sampleEmployees = [
     otherAllowances: 480,
     attendanceBonus: 0,
     totalPenalties: 0,
+    advance: 0,
     overtime: 0,
     extraOvertime: 0,
     attendance: {
@@ -64,6 +66,7 @@ const sampleEmployees = [
     otherAllowances: 560,
     attendanceBonus: 775,
     totalPenalties: 500,
+    advance: 3000,
     overtime: 18,
     extraOvertime: 12,
     attendance: {
@@ -88,6 +91,7 @@ const sampleEmployees = [
     otherAllowances: 512,
     attendanceBonus: 0,
     totalPenalties: 0,
+    advance: 0,
     overtime: 0,
     extraOvertime: 0,
     attendance: {
@@ -112,6 +116,7 @@ const sampleEmployees = [
     otherAllowances: 720,
     attendanceBonus: 0,
     totalPenalties: 0,
+    advance: 0,
     overtime: 0,
     extraOvertime: 0,
     attendance: {
@@ -136,6 +141,7 @@ const sampleEmployees = [
     otherAllowances: 320,
     attendanceBonus: 775,
     totalPenalties: 300,
+    advance: 2000,
     overtime: 15,
     extraOvertime: 6,
     attendance: {
@@ -160,6 +166,7 @@ const sampleEmployees = [
     otherAllowances: 352,
     attendanceBonus: 775,
     totalPenalties: 0,
+    advance: 0,
     overtime: 20,
     extraOvertime: 10,
     attendance: {
@@ -184,6 +191,7 @@ const sampleEmployees = [
     otherAllowances: 288,
     attendanceBonus: 775,
     totalPenalties: 0,
+    advance: 1500,
     overtime: 10,
     extraOvertime: 5,
     attendance: {
@@ -253,8 +261,8 @@ export default function SalaryPayslips() {
     const absentDeduction = (employee.attendance.absentDays / employee.attendance.totalDays) * employee.basicSalary
     const lateDeduction = (employee.attendance.lateDays / employee.attendance.totalDays) * (employee.basicSalary * 0.5)
     
-    const totalDeductions = absentDeduction + lateDeduction + employee.totalPenalties
-    const netSalary = grossSalary + employee.attendanceBonus + overtimePayment + extraOvertimePayment - totalDeductions
+    const totalDeductions = absentDeduction + lateDeduction + employee.totalPenalties + employee.advance
+    const payableSalary = grossSalary + employee.attendanceBonus + overtimePayment + extraOvertimePayment - employee.totalPenalties - employee.advance - absentDeduction
     
     return {
       grossSalary,
@@ -263,16 +271,18 @@ export default function SalaryPayslips() {
       absentDeduction,
       lateDeduction,
       totalDeductions,
-      netSalary
+      advance: employee.advance,
+      payableSalary
     }
   }
 
   const totalGrossSalary = filteredEmployees.reduce((sum, emp) => sum + calculateSalary(emp).grossSalary, 0)
-  const totalNetSalary = filteredEmployees.reduce((sum, emp) => sum + calculateSalary(emp).netSalary, 0)
+  const totalPayableSalary = filteredEmployees.reduce((sum, emp) => sum + calculateSalary(emp).payableSalary, 0)
   const totalAttendanceBonuses = filteredEmployees.reduce((sum, emp) => sum + emp.attendanceBonus, 0)
   const totalOvertime = filteredEmployees.reduce((sum, emp) => sum + calculateSalary(emp).overtimePayment, 0)
   const totalExtraOvertime = filteredEmployees.reduce((sum, emp) => sum + calculateSalary(emp).extraOvertimePayment, 0)
   const totalPenalties = filteredEmployees.reduce((sum, emp) => sum + emp.totalPenalties, 0)
+  const totalAdvance = filteredEmployees.reduce((sum, emp) => sum + emp.advance, 0)
 
   return (
     <div className="space-y-6">
@@ -282,7 +292,7 @@ export default function SalaryPayslips() {
       </div>
 
       {/* Statistics Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-6 gap-4">
+      <div className="grid grid-cols-1 md:grid-cols-7 gap-4">
         <div className="rounded border border-gray-200 bg-white p-4">
           <div className="text-sm text-gray-500">Total Employees</div>
           <div className="mt-1 text-xl font-semibold">{filteredEmployees.length}</div>
@@ -304,8 +314,12 @@ export default function SalaryPayslips() {
           <div className="mt-1 text-xl font-semibold text-green-600">৳{totalAttendanceBonuses.toLocaleString()}</div>
         </div>
         <div className="rounded border border-gray-200 bg-white p-4">
-          <div className="text-sm text-gray-500">Net Salary</div>
-          <div className="mt-1 text-xl font-semibold text-green-600">৳{totalNetSalary.toLocaleString()}</div>
+          <div className="text-sm text-gray-500">Advance</div>
+          <div className="mt-1 text-xl font-semibold text-orange-600">৳{totalAdvance.toLocaleString()}</div>
+        </div>
+        <div className="rounded border border-gray-200 bg-white p-4">
+          <div className="text-sm text-gray-500">Payable Salary</div>
+          <div className="mt-1 text-xl font-semibold text-green-600">৳{totalPayableSalary.toLocaleString()}</div>
         </div>
       </div>
 
@@ -404,11 +418,13 @@ export default function SalaryPayslips() {
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Department</th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Level</th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Gross Salary</th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Absent Deduction</th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Overtime</th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Extra Overtime</th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Attendance Bonus</th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Penalties</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Net Salary</th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Advance</th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Payable Salary</th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Pay Slip</th>
               </tr>
             </thead>
@@ -429,6 +445,9 @@ export default function SalaryPayslips() {
                       </span>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">৳{salary.grossSalary.toLocaleString()}</td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-red-600">
+                      {salary.absentDeduction > 0 ? `-৳${salary.absentDeduction.toFixed(0)}` : '-'}
+                    </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-blue-600">
                       {salary.overtimePayment > 0 ? `৳${salary.overtimePayment.toLocaleString()}` : '-'}
                     </td>
@@ -441,7 +460,10 @@ export default function SalaryPayslips() {
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-red-600">
                       {employee.totalPenalties > 0 ? `৳${employee.totalPenalties.toLocaleString()}` : '-'}
                     </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">৳{salary.netSalary.toLocaleString()}</td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-orange-600">
+                      {employee.advance > 0 ? `৳${employee.advance.toLocaleString()}` : '-'}
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">৳{salary.payableSalary.toFixed(0)}</td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
                       <button
                         onClick={() => handlePaySlip(employee)}
@@ -483,8 +505,8 @@ export default function SalaryPayslips() {
             <div className="text-sm text-gray-500">Bonuses</div>
           </div>
           <div className="text-center">
-            <div className="text-xl font-semibold text-green-600">৳{totalNetSalary.toLocaleString()}</div>
-            <div className="text-sm text-gray-500">Net Salary</div>
+            <div className="text-xl font-semibold text-green-600">৳{totalPayableSalary.toLocaleString()}</div>
+            <div className="text-sm text-gray-500">Payable Salary</div>
           </div>
         </div>
       </div>
@@ -509,49 +531,81 @@ export default function SalaryPayslips() {
               </div>
 
               {/* Employee Information Section */}
-              <div className="grid grid-cols-2 gap-6 mb-6">
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
                 <div className="space-y-3">
+                  <h3 className="text-lg font-semibold text-blue-600 mb-3 border-b border-blue-200 pb-2">Personal Information</h3>
                   <div className="flex justify-between">
                     <span className="font-medium text-gray-700">Employee ID:</span>
                     <span className="font-semibold">{selectedEmployee.id}</span>
                   </div>
                   <div className="flex justify-between">
-                    <span className="font-medium text-gray-700">Name:</span>
+                    <span className="font-medium text-gray-700">Full Name:</span>
                     <span className="font-semibold">{selectedEmployee.name}</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="font-medium text-gray-700">Mobile Number:</span>
+                    <span className="font-semibold">{selectedEmployee.mobile}</span>
                   </div>
                   <div className="flex justify-between">
                     <span className="font-medium text-gray-700">Designation:</span>
                     <span className="font-semibold">{selectedEmployee.designation}</span>
                   </div>
+                </div>
+                <div className="space-y-3">
+                  <h3 className="text-lg font-semibold text-green-600 mb-3 border-b border-green-200 pb-2">Work Information</h3>
                   <div className="flex justify-between">
                     <span className="font-medium text-gray-700">Department:</span>
                     <span className="font-semibold">{selectedEmployee.department}</span>
                   </div>
-                </div>
-                <div className="space-y-3">
                   <div className="flex justify-between">
                     <span className="font-medium text-gray-700">Level of Work:</span>
-                    <span className="font-semibold">{selectedEmployee.levelOfWork}</span>
+                    <span className={`font-semibold px-2 py-1 rounded-full text-xs ${
+                      selectedEmployee.levelOfWork === 'Worker' ? 'bg-blue-100 text-blue-800' : 'bg-green-100 text-green-800'
+                    }`}>
+                      {selectedEmployee.levelOfWork}
+                    </span>
                   </div>
                   <div className="flex justify-between">
-                    <span className="font-medium text-gray-700">Mobile:</span>
-                    <span className="font-semibold">{selectedEmployee.mobile}</span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span className="font-medium text-gray-700">Month:</span>
+                    <span className="font-medium text-gray-700">Pay Period:</span>
                     <span className="font-semibold">{filters.month} {filters.year}</span>
                   </div>
+                  <div className="flex justify-between">
+                    <span className="font-medium text-gray-700">Payslip Date:</span>
+                    <span className="font-semibold">{(() => {
+                      const date = new Date()
+                      const day = String(date.getDate()).padStart(2, '0')
+                      const month = String(date.getMonth() + 1).padStart(2, '0')
+                      const year = date.getFullYear()
+                      return `${day}/${month}/${year}`
+                    })()}</span>
+                  </div>
+                </div>
+                <div className="space-y-3">
+                  <h3 className="text-lg font-semibold text-purple-600 mb-3 border-b border-purple-200 pb-2">Attendance Summary</h3>
                   <div className="flex justify-between">
                     <span className="font-medium text-gray-700">Total Working Days:</span>
                     <span className="font-semibold">{selectedEmployee.attendance.totalDays}</span>
                   </div>
+                  <div className="flex justify-between">
+                    <span className="font-medium text-gray-700">Present Days:</span>
+                    <span className="font-semibold text-green-600">{selectedEmployee.attendance.presentDays}</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="font-medium text-gray-700">Absent Days:</span>
+                    <span className="font-semibold text-red-600">{selectedEmployee.attendance.absentDays}</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="font-medium text-gray-700">Leave Days:</span>
+                    <span className="font-semibold text-yellow-600">{selectedEmployee.attendance.leaveDays}</span>
+                  </div>
                 </div>
               </div>
 
-              {/* Salary Breakdown Section */}
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+              {/* Comprehensive Salary Breakdown Section */}
+              <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-6">
+                {/* Basic Earnings */}
                 <div className="border border-gray-200 rounded-lg p-4">
-                  <h3 className="text-lg font-semibold text-green-600 mb-3 border-b border-green-200 pb-2">Earnings</h3>
+                  <h3 className="text-lg font-semibold text-green-600 mb-3 border-b border-green-200 pb-2">Basic Earnings</h3>
                   <div className="space-y-2">
                     <div className="flex justify-between">
                       <span className="text-gray-600">Basic Salary</span>
@@ -573,82 +627,70 @@ export default function SalaryPayslips() {
                       <span className="text-gray-600">Other Allowances</span>
                       <span className="font-semibold">৳{selectedEmployee.otherAllowances.toLocaleString()}</span>
                     </div>
-                    {selectedEmployee.attendanceBonus > 0 && (
-                      <div className="flex justify-between text-green-600">
-                        <span className="font-medium">Attendance Bonus</span>
-                        <span className="font-semibold">৳{selectedEmployee.attendanceBonus.toLocaleString()}</span>
-                      </div>
-                    )}
                     <hr className="my-2 border-gray-300" />
                     <div className="flex justify-between text-lg font-bold text-green-600">
-                      <span>Gross Salary</span>
+                      <span>Basic Gross</span>
                       <span>৳{(selectedEmployee.basicSalary + selectedEmployee.houseRentAllowance + selectedEmployee.medicalAllowance + selectedEmployee.transportAllowance + selectedEmployee.otherAllowances).toLocaleString()}</span>
                     </div>
                   </div>
                 </div>
 
-                {/* Overtime Section */}
-                {selectedEmployee.levelOfWork === 'Worker' && (selectedEmployee.overtime > 0 || selectedEmployee.extraOvertime > 0) && (
-                  <div className="border border-gray-200 rounded-lg p-4 mb-6">
-                    <h3 className="text-lg font-semibold text-blue-600 mb-3 border-b border-blue-200 pb-2">Overtime Payments</h3>
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                      <div>
-                        <h4 className="font-medium text-blue-700 mb-2">Regular Overtime</h4>
-                        <div className="space-y-2">
-                          <div className="flex justify-between">
-                            <span className="text-gray-600">Hours Worked</span>
-                            <span className="font-semibold">{selectedEmployee.overtime} hours</span>
-                          </div>
-                          <div className="flex justify-between">
-                            <span className="text-gray-600">Rate per Hour</span>
-                            <span className="font-semibold">৳200</span>
-                          </div>
-                          <div className="flex justify-between text-blue-600">
-                            <span className="font-medium">Total Overtime</span>
-                            <span className="font-semibold">৳{(selectedEmployee.overtime * 200).toLocaleString()}</span>
-                          </div>
-                        </div>
+                {/* Additional Earnings */}
+                <div className="border border-gray-200 rounded-lg p-4">
+                  <h3 className="text-lg font-semibold text-blue-600 mb-3 border-b border-blue-200 pb-2">Additional Earnings</h3>
+                  <div className="space-y-2">
+                    {selectedEmployee.attendanceBonus > 0 && (
+                      <div className="flex justify-between text-green-600">
+                        <span className="font-medium">Attendance Bonus</span>
+                        <span className="font-semibold">+৳{selectedEmployee.attendanceBonus.toLocaleString()}</span>
                       </div>
-                      <div>
-                        <h4 className="font-medium text-purple-700 mb-2">Extra Overtime</h4>
-                        <div className="space-y-2">
-                          <div className="flex justify-between">
-                            <span className="text-gray-600">Hours Worked</span>
-                            <span className="font-semibold">{selectedEmployee.extraOvertime} hours</span>
-                          </div>
-                          <div className="flex justify-between">
-                            <span className="text-gray-600">Rate per Hour</span>
-                            <span className="font-semibold">৳300</span>
-                          </div>
-                          <div className="flex justify-between text-purple-600">
-                            <span className="font-medium">Total Extra Overtime</span>
-                            <span className="font-semibold">৳{(selectedEmployee.extraOvertime * 300).toLocaleString()}</span>
-                          </div>
-                        </div>
+                    )}
+                    {selectedEmployee.levelOfWork === 'Worker' && selectedEmployee.overtime > 0 && (
+                      <div className="flex justify-between text-blue-600">
+                        <span className="font-medium">Overtime Payment</span>
+                        <span className="font-semibold">+৳{calculateSalary(selectedEmployee).overtimePayment.toLocaleString()}</span>
                       </div>
+                    )}
+                    {selectedEmployee.levelOfWork === 'Worker' && selectedEmployee.extraOvertime > 0 && (
+                      <div className="flex justify-between text-purple-600">
+                        <span className="font-medium">Extra Overtime</span>
+                        <span className="font-semibold">+৳{calculateSalary(selectedEmployee).extraOvertimePayment.toLocaleString()}</span>
+                      </div>
+                    )}
+                    <hr className="my-2 border-gray-300" />
+                    <div className="flex justify-between text-lg font-bold text-blue-600">
+                      <span>Total Additional</span>
+                      <span>+৳{(selectedEmployee.attendanceBonus + calculateSalary(selectedEmployee).overtimePayment + calculateSalary(selectedEmployee).extraOvertimePayment).toLocaleString()}</span>
                     </div>
                   </div>
-                )}
+                </div>
 
+                {/* Deductions */}
                 <div className="border border-gray-200 rounded-lg p-4">
                   <h3 className="text-lg font-semibold text-red-600 mb-3 border-b border-red-200 pb-2">Deductions</h3>
                   <div className="space-y-2">
                     {selectedEmployee.attendance.absentDays > 0 && (
                       <div className="flex justify-between">
                         <span className="text-gray-600">Absent Days ({selectedEmployee.attendance.absentDays})</span>
-                        <span className="font-semibold text-red-600">-৳{((selectedEmployee.attendance.absentDays / selectedEmployee.attendance.totalDays) * selectedEmployee.basicSalary).toFixed(0)}</span>
+                        <span className="font-semibold text-red-600">-৳{calculateSalary(selectedEmployee).absentDeduction.toFixed(0)}</span>
                       </div>
                     )}
                     {selectedEmployee.attendance.lateDays > 0 && (
                       <div className="flex justify-between">
                         <span className="text-gray-600">Late Days ({selectedEmployee.attendance.lateDays})</span>
-                        <span className="font-semibold text-red-600">-৳{((selectedEmployee.attendance.lateDays / selectedEmployee.attendance.totalDays) * (selectedEmployee.basicSalary * 0.5)).toFixed(0)}</span>
+                        <span className="font-semibold text-red-600">-৳{calculateSalary(selectedEmployee).lateDeduction.toFixed(0)}</span>
                       </div>
                     )}
                     {selectedEmployee.totalPenalties > 0 && (
                       <div className="flex justify-between">
                         <span className="text-gray-600">Penalties</span>
                         <span className="font-semibold text-red-600">-৳{selectedEmployee.totalPenalties.toLocaleString()}</span>
+                      </div>
+                    )}
+                    {selectedEmployee.advance > 0 && (
+                      <div className="flex justify-between">
+                        <span className="text-gray-600">Advance</span>
+                        <span className="font-semibold text-orange-600">-৳{selectedEmployee.advance.toLocaleString()}</span>
                       </div>
                     )}
                     <hr className="my-2 border-gray-300" />
@@ -660,67 +702,23 @@ export default function SalaryPayslips() {
                 </div>
               </div>
 
-              {/* Attendance Summary Section */}
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
-                <div className="border border-gray-200 rounded-lg p-4">
-                  <h3 className="text-lg font-semibold text-blue-600 mb-3 border-b border-blue-200 pb-2">Attendance Summary</h3>
-                  <div className="space-y-2">
-                    <div className="flex justify-between">
-                      <span className="text-gray-600">Total Working Days</span>
-                      <span className="font-semibold">{selectedEmployee.attendance.totalDays}</span>
-                    </div>
-                    <div className="flex justify-between">
-                      <span className="text-gray-600">Present Days</span>
-                      <span className="font-semibold text-green-600">{selectedEmployee.attendance.presentDays}</span>
-                    </div>
-                    <div className="flex justify-between">
-                      <span className="text-gray-600">Absent Days</span>
-                      <span className="font-semibold text-red-600">{selectedEmployee.attendance.absentDays}</span>
-                    </div>
-                    <div className="flex justify-between">
-                      <span className="text-gray-600">Leave Days</span>
-                      <span className="font-semibold text-blue-600">{selectedEmployee.attendance.leaveDays}</span>
-                    </div>
-                    <div className="flex justify-between">
-                      <span className="text-gray-600">Late Days</span>
-                      <span className="font-semibold text-yellow-600">{selectedEmployee.attendance.lateDays}</span>
-                    </div>
+              {/* Company Footer */}
+              <div className="mt-8 border-t-2 border-gray-300 pt-6">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  <div className="text-center">
+                    <h4 className="font-semibold text-gray-700 mb-2">Employee Signature</h4>
+                    <div className="border-b border-gray-400 h-12"></div>
+                    <p className="text-sm text-gray-500 mt-1">Date: _______________</p>
+                  </div>
+                  <div className="text-center">
+                    <h4 className="font-semibold text-gray-700 mb-2">Authorized Signature</h4>
+                    <div className="border-b border-gray-400 h-12"></div>
+                    <p className="text-sm text-gray-500 mt-1">Date: _______________</p>
                   </div>
                 </div>
-
-                <div className="border border-gray-200 rounded-lg p-4">
-                  <h3 className="text-lg font-semibold text-purple-600 mb-3 border-b border-purple-200 pb-2">Final Calculation</h3>
-                  <div className="space-y-2">
-                    <div className="flex justify-between">
-                      <span className="text-gray-600">Gross Salary</span>
-                      <span className="font-semibold">৳{calculateSalary(selectedEmployee).grossSalary.toLocaleString()}</span>
-                    </div>
-                    {selectedEmployee.levelOfWork === 'Worker' && selectedEmployee.overtime > 0 && (
-                      <div className="flex justify-between">
-                        <span className="text-gray-600">Overtime Payment</span>
-                        <span className="font-semibold text-blue-600">+৳{calculateSalary(selectedEmployee).overtimePayment.toLocaleString()}</span>
-                      </div>
-                    )}
-                    {selectedEmployee.levelOfWork === 'Worker' && selectedEmployee.extraOvertime > 0 && (
-                      <div className="flex justify-between">
-                        <span className="text-gray-600">Extra Overtime Payment</span>
-                        <span className="font-semibold text-purple-600">+৳{calculateSalary(selectedEmployee).extraOvertimePayment.toLocaleString()}</span>
-                      </div>
-                    )}
-                    <div className="flex justify-between">
-                      <span className="text-gray-600">Attendance Bonus</span>
-                      <span className="font-semibold text-green-600">+৳{selectedEmployee.attendanceBonus.toLocaleString()}</span>
-                    </div>
-                    <div className="flex justify-between">
-                      <span className="text-gray-600">Total Deductions</span>
-                      <span className="font-semibold text-red-600">-৳{calculateSalary(selectedEmployee).totalDeductions.toFixed(0)}</span>
-                    </div>
-                    <hr className="my-2 border-gray-300" />
-                    <div className="flex justify-between text-xl font-bold text-green-600">
-                      <span>Net Salary</span>
-                      <span>৳{calculateSalary(selectedEmployee).netSalary.toFixed(0)}</span>
-                    </div>
-                  </div>
+                <div className="mt-6 text-center text-sm text-gray-500">
+                  <p>This is a computer generated payslip and does not require signature.</p>
+                  <p className="mt-1">For any queries, please contact HR Department.</p>
                 </div>
               </div>
 

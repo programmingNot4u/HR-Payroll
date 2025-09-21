@@ -241,7 +241,7 @@ const AssetReturn = () => {
       // Create return data
       const returnData = {
         returnDate: returnDate ? formatDateToDDMMYYYY(returnDate) : returnDate,
-        returnCondition,
+      returnCondition,
         receivedBy
       }
       
@@ -364,15 +364,15 @@ const AssetReturn = () => {
             </div>
 
             {selectedEmployee && (
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">Select Assignment *</label>
-                <select
-                  value={selectedAssignment}
-                  onChange={(e) => setSelectedAssignment(e.target.value)}
-                  required
-                  className="w-full h-10 rounded border border-gray-300 px-3 focus:outline-none focus:ring-2 focus:ring-orange-500"
-                >
-                  <option value="">Choose an assignment...</option>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">Select Assignment *</label>
+              <select
+                value={selectedAssignment}
+                onChange={(e) => setSelectedAssignment(e.target.value)}
+                required
+                className="w-full h-10 rounded border border-gray-300 px-3 focus:outline-none focus:ring-2 focus:ring-orange-500"
+              >
+                <option value="">Choose an assignment...</option>
                   {employeeAssignments.map(assignment => {
                     console.log('Assignment in dropdown:', assignment)
                     const formatDate = (dateStr) => {
@@ -389,16 +389,16 @@ const AssetReturn = () => {
                       return formatDateToDDMMYYYY(dateStr)
                     }
                     return (
-                      <option key={assignment.id} value={assignment.id}>
+                  <option key={assignment.id} value={assignment.id}>
                         {assignment.asset} - {formatDate(assignment.assignedDate)}
-                      </option>
+                  </option>
                     )
                   })}
-                </select>
+              </select>
                 {employeeAssignments.length === 0 && (
                   <p className="text-sm text-gray-500 mt-1">No active assignments found for this employee.</p>
                 )}
-              </div>
+            </div>
             )}
 
             {selectedAssignmentData && (
@@ -552,22 +552,22 @@ const AssetReturn = () => {
               {allAssignments.length > 0 ? (
                 allAssignments.map(assignment => (
                   <div key={assignment.id} className="p-3 border border-gray-200 rounded hover:bg-gray-50">
-                    <div className="flex items-center justify-between mb-2">
-                      <div className="font-medium text-gray-900">{assignment.asset}</div>
-                      <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${getStatusColor(assignment.status)}`}>
-                        {assignment.status}
-                      </span>
-                    </div>
-                    <div className="text-sm text-gray-500 mb-2">
+                  <div className="flex items-center justify-between mb-2">
+                    <div className="font-medium text-gray-900">{assignment.asset}</div>
+                    <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${getStatusColor(assignment.status)}`}>
+                      {assignment.status}
+                    </span>
+                  </div>
+                  <div className="text-sm text-gray-500 mb-2">
                       {assignment.employee} • {assignment.employeeId}
-                    </div>
-                    <div className="text-xs text-gray-400">
+                  </div>
+                  <div className="text-xs text-gray-400">
                       Assigned: {formatDateToDDMMYYYY(assignment.assignedDate)}
                     </div>
                     <div className="text-xs text-gray-400 mt-1">
                       Assigned By: {assignment.assignedBy || 'N/A'}
-                    </div>
                   </div>
+                </div>
                 ))
               ) : (
                 <div className="text-center py-8 text-gray-500">
@@ -616,16 +616,16 @@ const AssetReturn = () => {
             <tbody className="bg-white divide-y divide-gray-200">
               {recentReturns.length > 0 ? (
                 recentReturns.map((returnItem) => (
-                  <tr key={returnItem.id} className="hover:bg-gray-50">
+                <tr key={returnItem.id} className="hover:bg-gray-50">
                     <td className="px-6 py-4 whitespace-nowrap">
                       <div className="text-sm font-medium text-gray-900">{returnItem.id.replace('RET-', '')}</div>
                     </td>
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <div className="text-sm font-medium text-gray-900">{returnItem.asset}</div>
-                      <div className="text-sm text-gray-500">{returnItem.assetValue}</div>
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <div className="text-sm text-gray-900">{returnItem.employee}</div>
+                  <td className="px-6 py-4 whitespace-nowrap">
+                    <div className="text-sm font-medium text-gray-900">{returnItem.asset}</div>
+                    <div className="text-sm text-gray-500">{returnItem.assetValue}</div>
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap">
+                    <div className="text-sm text-gray-900">{returnItem.employee}</div>
                       <div className="text-xs text-gray-500">{returnItem.employeeId}</div>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
@@ -633,21 +633,21 @@ const AssetReturn = () => {
                         {returnItem.assignedDate ? formatDateToDDMMYYYY(returnItem.assignedDate) : 'N/A'}
                       </div>
                       {console.log('Assigned date for', returnItem.asset, ':', returnItem.assignedDate)}
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap">
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap">
                       <div className="text-sm text-gray-900">{formatDateToDDMMYYYY(returnItem.returnDate)}</div>
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${getConditionColor(returnItem.returnCondition)}`}>
-                        {returnItem.returnCondition}
-                      </span>
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap">
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap">
+                    <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${getConditionColor(returnItem.returnCondition)}`}>
+                      {returnItem.returnCondition}
+                    </span>
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap">
                       <div className="text-sm text-gray-900">{returnItem.duration || 'N/A'}</div>
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <div className="text-sm text-gray-900">{returnItem.receivedBy}</div>
-                    </td>
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap">
+                    <div className="text-sm text-gray-900">{returnItem.receivedBy}</div>
+                  </td>
                   </tr>
                 ))
               ) : (

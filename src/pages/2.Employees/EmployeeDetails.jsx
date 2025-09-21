@@ -2818,6 +2818,8 @@ function EmergencyContactSection({ employee, isEditMode, onUpdate }) {
 // Administrative Info Section Component
 function AdministrativeInfoSection({ employee, formatDate, isEditMode, onUpdate }) {
   const [salaryGrades, setSalaryGrades] = useState({})
+  const [departments, setDepartments] = useState([])
+  const [designations, setDesignations] = useState([])
 
   // Load organizational data and listen for changes
   useEffect(() => {
@@ -2851,6 +2853,10 @@ function AdministrativeInfoSection({ employee, formatDate, isEditMode, onUpdate 
       })
       
       setSalaryGrades(gradesObject)
+      
+      // Load departments and designations
+      setDepartments(organizationalDataService.getDepartments())
+      setDesignations(organizationalDataService.getDesignations())
     }
 
     loadOrganizationalData()
@@ -3018,13 +3024,18 @@ function AdministrativeInfoSection({ employee, formatDate, isEditMode, onUpdate 
         <div>
           <label className="block text-sm font-medium text-gray-700 mb-1">Designation</label>
           {isEditMode ? (
-            <input
-              type="text"
+            <select
               value={employee.designation || ''}
               onChange={(e) => handleFieldChange('designation', e.target.value)}
               className="w-full p-3 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-              placeholder="Enter designation"
-            />
+            >
+              <option value="">Select Designation</option>
+              {designations.map(designation => (
+                <option key={designation.id} value={designation.name}>
+                  {designation.name}
+                </option>
+              ))}
+            </select>
           ) : (
             <div className="p-3 bg-gray-50 rounded-md border">
               <p className="text-gray-900">{employee.designation || 'Not provided'}</p>
@@ -3036,13 +3047,18 @@ function AdministrativeInfoSection({ employee, formatDate, isEditMode, onUpdate 
         <div>
           <label className="block text-sm font-medium text-gray-700 mb-1">Department</label>
           {isEditMode ? (
-            <input
-              type="text"
+            <select
               value={employee.department || ''}
               onChange={(e) => handleFieldChange('department', e.target.value)}
               className="w-full p-3 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-              placeholder="Enter department"
-            />
+            >
+              <option value="">Select Department</option>
+              {departments.map(department => (
+                <option key={department.id} value={department.name}>
+                  {department.name}
+                </option>
+              ))}
+            </select>
           ) : (
             <div className="p-3 bg-gray-50 rounded-md border">
               <p className="text-gray-900">{employee.department || 'Not provided'}</p>
