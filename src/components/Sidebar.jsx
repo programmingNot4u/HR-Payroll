@@ -108,7 +108,7 @@ const sections = [
   },
   {
     title: 'Recruitment',
-    items: ['Job Openings', 'Candidates', 'Onboarding'],
+    items: ['Job Openings', 'Candidates'],
   },
   {
     title: 'Performance',

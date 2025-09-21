@@ -76,9 +76,45 @@ const OrganizationalMetrics = () => {
 
   const handleAdd = (type = 'processExpertise') => {
     setEditingItem(null)
-    setFormData({})
+    setFormData({
+      name: '',
+      department: '',
+      skillsArray: type === 'softSkill' || type === 'technicalSkill' ? [''] : [],
+      designation: '',
+      operation: '',
+      machine: ''
+    })
     setSalaryGradeType('worker')
     setAddType(type)
+    setShowAddModal(true)
+  }
+
+  const handleEdit = (item) => {
+    setEditingItem(item)
+    
+    // Ensure skillsArray is properly initialized
+    const skillsArray = Array.isArray(item.skills) ? item.skills : (item.skills ? [item.skills] : [])
+    
+    const formDataToSet = {
+      name: item.name || '',
+      skillsArray: skillsArray,
+      skill: '',
+      designation: item.designation || item.name || '', // For technical skills, use name as designation
+      department: item.department || '',
+      operation: item.operation || '',
+      machine: item.machine || ''
+    }
+    
+    setFormData(formDataToSet)
+    console.log('Editing item:', item)
+    console.log('Form data set:', formDataToSet)
+    
+    // Set the correct addType based on item type
+    if (item.type === 'soft') {
+      setAddType('softSkill')
+    } else if (item.type === 'technical') {
+      setAddType('technicalSkill')
+    }
     setShowAddModal(true)
   }
 
@@ -98,7 +134,10 @@ const OrganizationalMetrics = () => {
           setSalaryGrades(prev => prev.filter(item => item.id !== id))
         }
       } else if (activeTab === 'skillMetrics') {
+        // Delete skill
         organizationalDataService.deleteSkillMetric(id)
+        // Update local state
+        setSkillMetrics(prev => prev.filter(item => item.id !== id))
       } else if (activeTab === 'processExpertise') {
         organizationalDataService.deleteProcessExpertise(id)
       }
@@ -113,6 +152,11 @@ const OrganizationalMetrics = () => {
   }
 
   const handleSave = () => {
+    console.log('HandleSave called with editingItem:', editingItem)
+    console.log('Current formData:', formData)
+    console.log('Current addType:', addType)
+    console.log('Current activeTab:', activeTab)
+    
     if (editingItem) {
       // Update existing item
       if (activeTab === 'designations') {
@@ -130,6 +174,53 @@ const OrganizationalMetrics = () => {
           setSalaryGrades(prev => prev.map(item => 
             item.id === editingItem.id ? { ...formData, id: editingItem.id } : item
           ))
+        }
+      } else if (activeTab === 'skillMetrics') {
+        if (addType === 'softSkill') {
+          // Convert skills array
+          const skillsArray = formData.skillsArray ? formData.skillsArray.filter(skill => skill.trim()) : []
+          const skillData = {
+            ...formData,
+            skills: skillsArray,
+            type: 'soft'
+          }
+          try {
+            organizationalDataService.updateSkillMetric(editingItem.id, skillData)
+            // Update local state
+            setSkillMetrics(prev => prev.map(item => 
+              item.id === editingItem.id ? { ...skillData, id: editingItem.id } : item
+            ))
+            console.log('Soft skill updated successfully:', skillData)
+          } catch (error) {
+            console.error('Error updating soft skill:', error)
+            // Still update local state even if service fails
+            setSkillMetrics(prev => prev.map(item => 
+              item.id === editingItem.id ? { ...skillData, id: editingItem.id } : item
+            ))
+          }
+        } else if (addType === 'technicalSkill') {
+          // Multiple skills input
+          const skillsArray = formData.skillsArray ? formData.skillsArray.filter(skill => skill.trim()) : []
+          const skillData = {
+            name: formData.designation,
+            skills: skillsArray,
+            department: formData.department,
+            type: 'technical'
+          }
+          try {
+            organizationalDataService.updateSkillMetric(editingItem.id, skillData)
+            // Update local state
+            setSkillMetrics(prev => prev.map(item => 
+              item.id === editingItem.id ? { ...skillData, id: editingItem.id } : item
+            ))
+            console.log('Technical skill updated successfully:', skillData)
+          } catch (error) {
+            console.error('Error updating technical skill:', error)
+            // Still update local state even if service fails
+            setSkillMetrics(prev => prev.map(item => 
+              item.id === editingItem.id ? { ...skillData, id: editingItem.id } : item
+            ))
+          }
         }
       } else if (activeTab === 'processExpertise') {
         if (addType === 'operation') {
@@ -158,26 +249,59 @@ const OrganizationalMetrics = () => {
           setSalaryGrades(prev => [...prev, { ...formData, id: newId, isActive: true }])
         }
       } else if (activeTab === 'skillMetrics') {
-        organizationalDataService.addSkillMetric(formData)
+        if (addType === 'softSkill') {
+          // Convert skills array
+          const skillsArray = formData.skillsArray ? formData.skillsArray.filter(skill => skill.trim()) : []
+          const skillData = {
+            ...formData,
+            skills: skillsArray,
+            type: 'soft'
+          }
+          organizationalDataService.addSkillMetric(skillData)
+          // Update local state
+          const newId = Math.max(...skillMetrics.map(item => item.id), 0) + 1
+          setSkillMetrics(prev => [...prev, { ...skillData, id: newId }])
+        } else if (addType === 'technicalSkill') {
+          // Multiple skills input
+          const skillsArray = formData.skillsArray ? formData.skillsArray.filter(skill => skill.trim()) : []
+          const skillData = {
+            name: formData.designation,
+            skills: skillsArray,
+            department: formData.department,
+            type: 'technical'
+          }
+          organizationalDataService.addSkillMetric(skillData)
+          // Update local state
+          const newId = Math.max(...skillMetrics.map(item => item.id), 0) + 1
+          setSkillMetrics(prev => [...prev, { ...skillData, id: newId }])
+        }
       } else if (activeTab === 'processExpertise') {
         if (addType === 'operation') {
           organizationalDataService.addOperation(formData)
         } else if (addType === 'machine') {
           organizationalDataService.addMachine(formData)
+        } else if (addType === 'technicalSkill') {
+          // Single skill input
+          const skillData = {
+            name: formData.designation,
+            skills: formData.skill ? [formData.skill] : []
+          }
+          organizationalDataService.addSkillMetric(skillData)
         } else {
           organizationalDataService.addProcessExpertise(formData)
         }
       }
     }
     
-    // Refresh data from service
-    setDesignations(organizationalDataService.getDesignations())
-    setDepartments(organizationalDataService.getDepartments())
-    setProcessExpertise(organizationalDataService.getProcessExpertise())
-    setSkillMetrics(organizationalDataService.getSkillMetrics())
-    setStaffSalaryGrades(organizationalDataService.getStaffSalaryGrades())
-    setOperations(organizationalDataService.getOperations())
-    setMachines(organizationalDataService.getMachines())
+    // Refresh data from service (except for skill metrics which are already updated locally)
+    if (activeTab !== 'skillMetrics') {
+      setDesignations(organizationalDataService.getDesignations())
+      setDepartments(organizationalDataService.getDepartments())
+      setProcessExpertise(organizationalDataService.getProcessExpertise())
+      setStaffSalaryGrades(organizationalDataService.getStaffSalaryGrades())
+      setOperations(organizationalDataService.getOperations())
+      setMachines(organizationalDataService.getMachines())
+    }
     
     setShowAddModal(false)
     setEditingItem(null)
@@ -203,6 +327,144 @@ const OrganizationalMetrics = () => {
 
 
   const renderFormFields = () => {
+    // Handle skill metrics add types
+    if (activeTab === 'skillMetrics') {
+      switch (addType) {
+        case 'softSkill':
+          return (
+            <div className="space-y-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Skill Category Name</label>
+                <input
+                  type="text"
+                  value={formData.name || ''}
+                  onChange={(e) => setFormData(prev => ({ ...prev, name: e.target.value }))}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-orange-500"
+                  placeholder="e.g., Communication Skills"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Skills</label>
+                <div className="space-y-2">
+                  {formData.skillsArray && formData.skillsArray.map((skill, index) => (
+                    <div key={index} className="flex gap-2">
+                      <input
+                        type="text"
+                        value={skill}
+                        onChange={(e) => {
+                          const newSkills = [...formData.skillsArray]
+                          newSkills[index] = e.target.value
+                          setFormData(prev => ({ ...prev, skillsArray: newSkills }))
+                        }}
+                        className="flex-1 px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-orange-500"
+                        placeholder={`Skill ${index + 1}`}
+                      />
+                      <button
+                        type="button"
+                        onClick={() => {
+                          const newSkills = formData.skillsArray.filter((_, i) => i !== index)
+                          setFormData(prev => ({ ...prev, skillsArray: newSkills }))
+                        }}
+                        className="px-3 py-2 text-red-600 bg-red-50 rounded-md hover:bg-red-100 transition-colors"
+                      >
+                        Remove
+                      </button>
+                    </div>
+                  ))}
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setFormData(prev => ({ 
+                        ...prev, 
+                        skillsArray: [...(prev.skillsArray || []), ''] 
+                      }))
+                    }}
+                    className="w-full px-3 py-2 text-blue-600 bg-blue-50 rounded-md hover:bg-blue-100 transition-colors"
+                  >
+                    + Add Skill
+                  </button>
+                </div>
+              </div>
+            </div>
+          )
+        case 'technicalSkill':
+          return (
+            <div className="space-y-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Designation</label>
+                <select
+                  value={formData.designation || ''}
+                  onChange={(e) => setFormData(prev => ({ ...prev, designation: e.target.value }))}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-orange-500"
+                >
+                  <option value="">Select Designation</option>
+                  {designations.map(designation => (
+                    <option key={designation.id} value={designation.name}>{designation.name}</option>
+                  ))}
+                </select>
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Department</label>
+                <select
+                  value={formData.department || ''}
+                  onChange={(e) => setFormData(prev => ({ ...prev, department: e.target.value }))}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-orange-500"
+                >
+                  <option value="">Select Department</option>
+                  {departments.map(department => (
+                    <option key={department.id} value={department.name}>{department.name}</option>
+                  ))}
+                </select>
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Skills</label>
+                <div className="space-y-2">
+                  {formData.skillsArray && formData.skillsArray.map((skill, index) => (
+                    <div key={index} className="flex gap-2">
+                      <input
+                        type="text"
+                        value={skill}
+                        onChange={(e) => {
+                          const newSkills = [...formData.skillsArray]
+                          newSkills[index] = e.target.value
+                          setFormData(prev => ({ ...prev, skillsArray: newSkills }))
+                        }}
+                        className="flex-1 px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-orange-500"
+                        placeholder={`Skill ${index + 1}`}
+                      />
+                      <button
+                        type="button"
+                        onClick={() => {
+                          const newSkills = formData.skillsArray.filter((_, i) => i !== index)
+                          setFormData(prev => ({ ...prev, skillsArray: newSkills }))
+                        }}
+                        className="px-3 py-2 text-red-600 bg-red-50 rounded-md hover:bg-red-100 transition-colors"
+                      >
+                        Remove
+                      </button>
+                    </div>
+                  ))}
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setFormData(prev => ({ 
+                        ...prev, 
+                        skillsArray: [...(prev.skillsArray || []), ''] 
+                      }))
+                    }}
+                    className="w-full px-3 py-2 text-green-600 bg-green-50 rounded-md hover:bg-green-100 transition-colors"
+                  >
+                    + Add Skill
+                  </button>
+                </div>
+              </div>
+            </div>
+          )
+        default:
+          return null
+      }
+    }
+    
     // Handle process expertise add types
     if (activeTab === 'processExpertise') {
       switch (addType) {
@@ -410,15 +672,27 @@ const OrganizationalMetrics = () => {
       
       case 'skillMetrics':
         return (
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Name</label>
-            <input
-              type="text"
-              value={formData.name || ''}
-              onChange={(e) => setFormData(prev => ({ ...prev, name: e.target.value }))}
-              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-orange-500"
-              placeholder="e.g., Technical Skills"
-            />
+          <div className="space-y-4">
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Skill Category Name</label>
+              <input
+                type="text"
+                value={formData.name || ''}
+                onChange={(e) => setFormData(prev => ({ ...prev, name: e.target.value }))}
+                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-orange-500"
+                placeholder="e.g., Communication Skills"
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Skills (one per line)</label>
+              <textarea
+                value={formData.skills || ''}
+                onChange={(e) => setFormData(prev => ({ ...prev, skills: e.target.value }))}
+                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-orange-500"
+                rows={5}
+                placeholder="Enter each skill on a new line&#10;e.g.,&#10;Verbal communication&#10;Written communication&#10;Active listening"
+              />
+            </div>
           </div>
         )
       
@@ -750,6 +1024,169 @@ const OrganizationalMetrics = () => {
                     </div>
                   </div>
                 ))}
+              </div>
+            </div>
+          </div>
+        )
+      }
+      
+      // Skill Metrics layout
+      if (activeTab === 'skillMetrics') {
+
+
+        return (
+          <div className="space-y-8">
+            {/* Soft Skills Section */}
+            <div className="bg-white rounded-lg border border-gray-200 overflow-hidden">
+              <div className="px-6 py-4 border-b border-gray-200 flex justify-between items-center">
+                <div className="flex items-center gap-3">
+                  <div className="w-8 h-8 rounded-lg flex items-center justify-center bg-orange-100">
+                    <svg className="w-4 h-4 text-orange-600" fill="currentColor" viewBox="0 0 20 20">
+                      <path d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                    </svg>
+                  </div>
+                  <div>
+                    <h3 className="text-lg font-medium text-gray-900">Soft Skills</h3>
+                    <p className="text-sm text-gray-500">Interpersonal and behavioral competencies</p>
+                  </div>
+                </div>
+                <button
+                  onClick={() => handleAdd('softSkill')}
+                  className="text-white px-4 py-2 rounded transition-colors flex items-center gap-2"
+                  style={{ background: 'linear-gradient(135deg, #ffb366, #ff8c42)' }}
+                  onMouseEnter={(e) => e.target.style.background = 'linear-gradient(135deg, #ff9f4d, #ff7a2e)'}
+                  onMouseLeave={(e) => e.target.style.background = 'linear-gradient(135deg, #ffb366, #ff8c42)'}
+                >
+                  <span>+</span>
+                  Add Soft Skills
+                </button>
+              </div>
+              
+              <div className="p-6">
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+                  {/* Soft Skills */}
+                  {data.filter(item => item.type === 'soft').map((skill) => (
+                    <div key={skill.id} className="bg-gradient-to-br from-orange-50 to-orange-100 border border-orange-200 rounded-lg p-5 hover:shadow-lg transition-all duration-200 hover:scale-105">
+                      <div className="text-center mb-4">
+                        <div className="w-12 h-12 mx-auto mb-3 rounded-full bg-orange-200 flex items-center justify-center">
+                          <svg className="w-6 h-6 text-orange-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                          </svg>
+                        </div>
+                        <h4 className="text-sm font-semibold text-gray-900 mb-3">{skill.name}</h4>
+                      </div>
+                      <div className="space-y-2">
+                        {skill.skills && skill.skills.map((skillItem, index) => (
+                          <div key={index} className="flex items-center text-xs text-gray-700">
+                            <div className="w-1.5 h-1.5 rounded-full bg-orange-400 mr-2 flex-shrink-0"></div>
+                            <span>{skillItem}</span>
+                          </div>
+                        ))}
+                      </div>
+                      <div className="flex gap-2 justify-center mt-4">
+                        <button
+                          onClick={() => handleEdit(skill)}
+                          className="px-3 py-1.5 text-xs font-medium text-orange-600 bg-orange-50 rounded-md hover:bg-orange-100 transition-colors flex items-center gap-1"
+                        >
+                          <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                          </svg>
+                          Edit
+                        </button>
+                        <button
+                          onClick={() => handleDelete(skill.id)}
+                          className="px-3 py-1.5 text-xs font-medium text-red-600 bg-red-50 rounded-md hover:bg-red-100 transition-colors flex items-center gap-1"
+                        >
+                          <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                          </svg>
+                          Delete
+                        </button>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </div>
+
+            {/* Technical Skills Section */}
+            <div className="bg-white rounded-lg border border-gray-200 overflow-hidden">
+              <div className="px-6 py-4 border-b border-gray-200 flex justify-between items-center">
+                <div className="flex items-center gap-3">
+                  <div className="w-8 h-8 rounded-lg flex items-center justify-center bg-orange-100">
+                    <svg className="w-4 h-4 text-orange-600" fill="currentColor" viewBox="0 0 20 20">
+                      <path fillRule="evenodd" d="M11.3 1.046A1 1 0 0112 2v5h4a1 1 0 01.82 1.573l-7 10A1 1 0 018 18v-5H4a1 1 0 01-.82-1.573l7-10a1 1 0 011.12-.38z" clipRule="evenodd" />
+                    </svg>
+                  </div>
+                  <div>
+                    <h3 className="text-lg font-medium text-gray-900">Technical Skills</h3>
+                    <p className="text-sm text-gray-500">Job-specific technical competencies</p>
+                  </div>
+                </div>
+                <button
+                  onClick={() => {
+                    setAddType('technicalSkill')
+                    handleAdd('technicalSkill')
+                  }}
+                  className="text-white px-4 py-2 rounded transition-colors flex items-center gap-2"
+                  style={{ background: 'linear-gradient(135deg, #ffb366, #ff8c42)' }}
+                  onMouseEnter={(e) => e.target.style.background = 'linear-gradient(135deg, #ff9f4d, #ff7a2e)'}
+                  onMouseLeave={(e) => e.target.style.background = 'linear-gradient(135deg, #ffb366, #ff8c42)'}
+                >
+                  <span>+</span>
+                  Add Technical Skill
+                </button>
+              </div>
+              
+              <div className="p-6">
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-3 gap-6">
+                  {/* Technical Skills */}
+                  {data.filter(item => item.type === 'technical').map((skill) => (
+                    <div key={skill.id} className="bg-gradient-to-br from-orange-50 to-orange-100 border border-orange-200 rounded-lg p-5 hover:shadow-lg transition-all duration-200 hover:scale-105">
+                      <div className="text-center mb-4">
+                        <div className="w-12 h-12 mx-auto mb-3 rounded-full bg-orange-200 flex items-center justify-center">
+                          <svg className="w-6 h-6 text-orange-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 20l4-16m4 4l4 4-4 4M6 16l-4-4 4-4" />
+                          </svg>
+                        </div>
+                        <h3 className="text-sm font-semibold text-gray-900 mb-2">{skill.name}</h3>
+                        {skill.department && (
+                          <p className="text-xs text-orange-600 bg-orange-100 px-2 py-1 rounded-full mb-3">
+                            {skill.department}
+                          </p>
+                        )}
+                      </div>
+                      <div className="space-y-2">
+                        {skill.skills && skill.skills.map((skillItem, index) => (
+                          <div key={index} className="flex items-center text-xs text-gray-700">
+                            <div className="w-1.5 h-1.5 rounded-full bg-orange-400 mr-2 flex-shrink-0"></div>
+                            <span>{skillItem}</span>
+                          </div>
+                        ))}
+                      </div>
+                      <div className="flex gap-2 justify-center mt-4">
+                        <button
+                          onClick={() => handleEdit(skill)}
+                          className="px-3 py-1.5 text-xs font-medium text-orange-600 bg-orange-50 rounded-md hover:bg-orange-100 transition-colors flex items-center gap-1"
+                        >
+                          <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                          </svg>
+                          Edit
+                        </button>
+                        <button
+                          onClick={() => handleDelete(skill.id)}
+                          className="px-3 py-1.5 text-xs font-medium text-red-600 bg-red-50 rounded-md hover:bg-red-100 transition-colors flex items-center gap-1"
+                        >
+                          <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                          </svg>
+                          Delete
+                        </button>
+                      </div>
+                    </div>
+                  ))}
+                </div>
               </div>
             </div>
           </div>

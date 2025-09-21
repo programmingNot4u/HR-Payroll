@@ -22,9 +22,6 @@ import Holidays from './pages/4.Attendance/Holidays'
 import LeavePolicies from './pages/4.Attendance/LeavePolicies'
 import JobOpenings from './pages/5.Recruitment/JobOpenings'
 import Candidates from './pages/5.Recruitment/Candidates'
-import InterviewSchedule from './pages/5.Recruitment/InterviewSchedule'
-import Onboarding from './pages/5.Recruitment/Onboarding'
-import Appraisals from './pages/5.Recruitment/Appraisals'
 import GoalsKPIs from './pages/6.Performance/GoalsKPIs'
 import Feedback from './pages/6.Performance/Feedback'
 import Promotions from './pages/6.Performance/Promotions'
@@ -141,12 +138,6 @@ function App() {
         return <JobOpenings />
       case 'Candidates':
         return <Candidates />
-      case 'Interview Schedule':
-        return <InterviewSchedule />
-      case 'Onboarding':
-        return <Onboarding />
-      case 'Appraisals':
-        return <Appraisals />
       case 'Goals & KPIs':
         return <GoalsKPIs />
       case 'Feedback':

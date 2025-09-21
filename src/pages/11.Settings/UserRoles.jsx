@@ -65,7 +65,7 @@ const mockRoles = [
     id: 6,
     name: 'Recruiter',
     description: 'Recruitment and candidate management',
-    permissions: ['recruitment_management', 'candidate_view', 'interview_schedule', 'reports_view'],
+    permissions: ['recruitment_management', 'candidate_view', 'reports_view'],
     userCount: 4,
     status: 'Active',
     createdAt: '2024-01-06',
@@ -114,7 +114,7 @@ const permissionCategories = [
   },
   {
     name: 'Recruitment',
-    permissions: ['recruitment_view', 'candidate_management', 'interview_schedule', 'onboarding']
+    permissions: ['recruitment_view', 'candidate_management']
   },
   {
     name: 'Performance Management',
